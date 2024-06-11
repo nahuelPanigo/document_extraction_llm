@@ -1,0 +1,11 @@
+# created by virtualenv automatically
+*.pdf
+*.json
+__pycache__/
+bin/
+lib/
+pyvenv.cfg
+!*output.json
+/fine_tunning/results
+/fine_tunning/fine-tuned-model
+/api/app/fine-tuned-model

@@ -1,0 +1,7 @@
+sentence-transformers
+umap-learn
+pandas
+torch
+BeautifoulSoup
+beautifulsoup4
+wordcloud
