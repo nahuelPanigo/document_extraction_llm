@@ -8,8 +8,12 @@ packaging
 ninja
 setuptools
 #flash-attn
-bs4
 requests
 PdfReader
 accelerate
 peft
+beautifulsoup4
+wordcloud
+# Instalar torch_xla solo si se va a utilizar TPU
+torch-xla==1.10; platform_machine == 'x86_64' and platform_system == 'Linux'
+

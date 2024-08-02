@@ -1,8 +1,5 @@
 DATA_FOLDER= "C:/Users/Nahuel/Documents/document_extraction_llm/fine_tunning/data/sedici/"
-PDFS_FOLDER=DATA_FOLDER+"pdfs/"
-XMLS_FOLDER=DATA_FOLDER + "xmls/"
 JSONS_FOLDER=DATA_FOLDER+ "jsons/"
-#DATASET_URL_BASE = "https://arxiv.org/pdf/"
 KEYS_DATA = {
     "general": [
         "dc.date.accessioned",
@@ -49,9 +46,7 @@ DATASET_FILENAME="output.json"
 LOG_DIR = "/log"
 BASE_MODEL="allenai/led-base-16384"
 MAX_TOKENS_INPUT= 16384
+COLUMNS_DATA = ['id', 'title', 'abstract', 'categories','authors']
 MAX_TOKENS_OUTPUT= 512 
 FINAL_MODEL_PATH = "/fine-tuned-model"
 CHECKPOINT_MODEL_PATH = "./results"
-
-
-{'Objeto de conferencia', 'Articulo', 'Reporte', 'Tesis'}
