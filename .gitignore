@@ -1,6 +1,9 @@
 # created by virtualenv automatically
 *.pdf
 *.json
+*.csv
+*.txt
+*.xml
 __pycache__/
 bin/
 lib/

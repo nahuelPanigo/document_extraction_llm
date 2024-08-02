@@ -11,7 +11,6 @@ class PdfReader:
             text_with_tags = ""
             prev_style = None
             tag = None  # Inicializamos 'tag' aquí para asegurarnos de que siempre tenga un valor asignado
-            count = 1
             for page in pdf.pages:
                 for obj in page.extract_words():
                     fontname = obj.get('fontname', '')  # Obtener el valor de 'fontname' o usar una cadena vacía si no está presente
@@ -33,7 +32,4 @@ class PdfReader:
                     prev_style = {'height': obj['height'], 'fontname': fontname, 'tag': tag}
                 if prev_style is not None and prev_style['tag'] is not None:  # Comprobamos si prev_style['tag'] no es None
                     text_with_tags += f"</{prev_style['tag']}> "  # Cerrar la última etiqueta al final de la página
-                if count == 1:
-                    #obtenemos solo la primera pagina
-                    break
             return text_with_tags

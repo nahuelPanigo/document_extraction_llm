@@ -5,8 +5,8 @@ import psutil
 import logging
 from transformers import LEDTokenizer, LEDForConditionalGeneration, Trainer, TrainingArguments
 from datasets import Dataset,DatasetDict
-from constant import LOG_DIR,DATA_FOLDER,DATASET_FILENAME,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
-
+from constant import LOG_DIR,JSONS_FOLDER,PDFS_FOLDER,XMLS_FOLDER,DATASET_FILENAME,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
@@ -26,7 +26,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger.info(f"Using device: {device}")
 
 
-with open(DATA_FOLDER+DATASET_FILENAME, 'r', encoding='latin-1') as jsonfile:
+print(device)
+
+with open(JSONS_FOLDER+DATASET_FILENAME, 'r', encoding='latin-1') as jsonfile:
     data_dict = json.load(jsonfile)
 
 data = {}
@@ -62,6 +64,8 @@ datasets =  DatasetDict(dataset_dict)
 tokenizer = LEDTokenizer.from_pretrained(BASE_MODEL)
 model = LEDForConditionalGeneration.from_pretrained(BASE_MODEL)
 
+device_ids = [0, 1]  # Lista de IDs de dispositivos de GPU a utilizar
+model = DDP(model, device_ids=device_ids)
 
 
 # Tokenizar el conjunto de datos
@@ -82,8 +86,8 @@ training_args = TrainingArguments(
     logging_dir= LOG_DIR,            # Directorio de los registros
     logging_steps=10,     
     learning_rate=2e-5,
-    per_device_train_batch_size=1,
-    per_device_eval_batch_size=1,
+ #   per_device_train_batch_size=1,
+ #   per_device_eval_batch_size=1,
     num_train_epochs=3,
     weight_decay=0.01,
     save_total_limit=2,
