@@ -1,11 +1,10 @@
-DATA_FOLDER= "/data"
-DATASET_URL_BASE = "https://arxiv.org/pdf/"
+DATA_FOLDER= "/home/nahuel/Documents/tesis/fine_tunning/data/sedici/"
+JSON_FOLDER=DATA_FOLDER+"jsons/"
 COLUMNS_DATA = ['id', 'title', 'abstract', 'categories','authors']
-ORIGINAL_FILENAME= "arxiv-metadata-oai-snapshot.json"
-DATASET_FILENAME="output2.json"
-LOG_DIR = "/log"
+DATASET_FILENAME="metadata_sedici_files.json"
+LOG_DIR = "./log"
 BASE_MODEL="allenai/led-base-16384"
-MAX_TOKENS_INPUT=512
+MAX_TOKENS_INPUT=16384
 MAX_TOKENS_OUTPUT= 512 
 FINAL_MODEL_PATH = "/fine-tuned-model"
 CHECKPOINT_MODEL_PATH = "./results"
