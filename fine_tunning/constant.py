@@ -1,5 +1,7 @@
-DATA_FOLDER= "C:/Users/Nahuel/Documents/document_extraction_llm/fine_tunning/data/sedici/"
-JSONS_FOLDER=DATA_FOLDER+ "jsons/"
+DATA_FOLDER = "C:/Users/cd/Documents/document_extraction_llm/fine_tunning/data/sedici/"
+JSONS_FOLDER = DATA_FOLDER+ "jsons/"
+DATASET_WITH_METADATA_CHECKED = "final_metadata_Chekced.json"
+DATASET_WITH_TEXT_DOC = "metadata_and_text.json"
 KEYS_DATA = {
     "general": [
         "dc.date.accessioned",
@@ -41,12 +43,9 @@ KEYS_DATA = {
         "sedici.date.exposure"
     ]
 }
-ORIGINAL_FILENAME= "metadata_sedici_files.json"
-DATASET_FILENAME="output.json"
-LOG_DIR = "/log"
 BASE_MODEL="allenai/led-base-16384"
 MAX_TOKENS_INPUT= 16384
-COLUMNS_DATA = ['id', 'title', 'abstract', 'categories','authors']
-MAX_TOKENS_OUTPUT= 512 
+MAX_TOKENS_OUTPUT= 1024
+LOG_DIR = "/log"
 FINAL_MODEL_PATH = "/fine-tuned-model"
 CHECKPOINT_MODEL_PATH = "./results"

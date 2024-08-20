@@ -1,13 +1,17 @@
 import torch
+import torch.distributed as dist
+#from torch.nn.parallel import DistributedDataParallel as DDP
 import json
 import os
 import psutil
 import logging
 from transformers import LEDTokenizer, LEDForConditionalGeneration, Trainer, TrainingArguments
 from datasets import Dataset,DatasetDict
-from constant import LOG_DIR,JSONS_FOLDER,PDFS_FOLDER,XMLS_FOLDER,DATASET_FILENAME,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
-from torch.nn.parallel import DistributedDataParallel as DDP
+from constant import LOG_DIR,JSONS_FOLDER,DATASET_WITH_TEXT_DOC,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
+from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding
 
+
+#Loging config
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
@@ -21,36 +25,33 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-# Verificar CPU
+
+# Verify CPU/GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger.info(f"Using device: {device}")
-
-
 print(device)
 
-with open(JSONS_FOLDER+DATASET_FILENAME, 'r', encoding='latin-1') as jsonfile:
-    data_dict = json.load(jsonfile)
+
+#preparing Dataset 
+filename_dataset = JSONS_FOLDER+DATASET_WITH_TEXT_DOC
+enc = detect_encoding(filename_dataset)["encoding"]
+dict_dataset =  read_data_json(filename_dataset,enc)
 
 data = {}
-total_len = len(data_dict)
+total_len = len(dict_dataset)
 train_end = int(total_len * 0.8)
 test_end = int(total_len * 0.9)
-data["training"]=data_dict[:train_end]
-data["test"] = data_dict[train_end:test_end]
-data["validation"] = data_dict[test_end:]
-
+list_items_dataset = list(dict_dataset.values())
+data["training"]=list_items_dataset[:train_end]
+data["test"] = list_items_dataset[train_end:test_end]
+data["validation"] = list_items_dataset[test_end:]
 
 formatted_data = {}
-
 for step in data.keys():
     step_data = []
-    for item in data[step]:
+    for item in data[step]:  
         input_text = f"Document: {item['original_text']}"
-        output_text = json.dumps({
-            "title": item["title"],
-            "authors": item["authors"],
-            "category": item["cat"]
-        })
+        output_text = json.dumps({k: v for k, v in item.items() if k != "original_text"})
         step_data.append({"input": input_text, "output": output_text})
     formatted_data[step] = step_data
 
@@ -60,15 +61,11 @@ for step, step_data in formatted_data.items():
 
 datasets =  DatasetDict(dataset_dict)
 
-# Cargar el modelo preentrenado y el tokenizador
+# Charge model and tokenizer
 tokenizer = LEDTokenizer.from_pretrained(BASE_MODEL)
 model = LEDForConditionalGeneration.from_pretrained(BASE_MODEL)
 
-device_ids = [0, 1]  # Lista de IDs de dispositivos de GPU a utilizar
-model = DDP(model, device_ids=device_ids)
-
-
-# Tokenizar el conjunto de datos
+# Tokenize dataset
 def preprocess_function(examples):
     inputs = examples['input']
     targets = examples['output']
@@ -86,13 +83,13 @@ training_args = TrainingArguments(
     logging_dir= LOG_DIR,            # Directorio de los registros
     logging_steps=10,     
     learning_rate=2e-5,
- #   per_device_train_batch_size=1,
- #   per_device_eval_batch_size=1,
+    per_device_train_batch_size=1,
+    per_device_eval_batch_size=1,
     num_train_epochs=3,
     weight_decay=0.01,
     save_total_limit=2,
     save_steps=10,
-    fp16=False,  
+    fp16=True,  
 )
 
 # Inicializar el entrenador
@@ -103,14 +100,20 @@ trainer = Trainer(
     eval_dataset=tokenized_datasets["validation"]
 )
 
+
+#convert model tu gpu
+model = model.to('cuda')
+model = torch.nn.DataParallel(model)
+
 # Habilitar la depuración en PyTorch
 torch.autograd.set_detect_anomaly(True)
 process = psutil.Process(os.getpid())
 logger.info(f"Memory usage before training: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 
 logger.info("START")
-# Ajuste fino del modelo
+
 trainer.train()
+
 logger.info("FINISH")
 
 # Verificar el uso de memoria después de finalizar el entrenamiento

@@ -2,11 +2,12 @@ import pandas as pd
 import  json
 from bs4 import BeautifulSoup
 from constant import DATA_FOLDER,DATASET_SEDICI_URL_BASE,DATASET_FILENAME,PDF_FOLDER,PDF_URL
+from utils.read_and_write_files import write_to_json
 import requests
 import re
 import os
 import time
-from pdf_reader import PdfReader
+from utils.pdf_reader import PdfReader
 
 
 def get_list_sedici_files_and_meta(page_param):
@@ -108,11 +109,7 @@ def add_text_input_to_Dataset():
         data_dict[doc[2]] = {k: v for k, v in data_dict[doc[2]].items() if k != "abstract"}
         data.append(data_dict[doc[2]])
 
-
-    # Save the filtered dictionary back to the JSON file
-    with open(DATA_FOLDER+DATASET_FILENAME, 'w', encoding='latin-1') as jsonfile:
-        json.dump(data, jsonfile, indent=4)
-
+    write_to_json(DATA_FOLDER+DATASET_FILENAME,data,'utf-8')
 
 
 

@@ -9,7 +9,7 @@ ninja
 setuptools
 #flash-attn
 requests
-PdfReader
+pdfplumber
 accelerate
 peft
 beautifulsoup4

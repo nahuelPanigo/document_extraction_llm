@@ -1,27 +1,32 @@
 import json
 from transformers import LEDTokenizer, LEDForConditionalGeneration
+from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding
+from constant import JSONS_FOLDER,DATASET_WITH_METADATA_CHECKED,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
+
+filename_dataset = JSONS_FOLDER+DATASET_WITH_METADATA_CHECKED
+enc = detect_encoding(filename_dataset)["encoding"]
+dict_dataset =  read_data_json(filename_dataset,enc)
 
 
-with open('data/output2.json', 'r', encoding='latin-1') as jsonfile:
-    data_dict = json.load(jsonfile)
 
 model_name = "allenai/led-base-16384"
 tokenizer = LEDTokenizer.from_pretrained(model_name)
 model = LEDForConditionalGeneration.from_pretrained("./fine-tuned-model")
 
 data = {}
-total_len = len(data_dict)
+total_len = len(dict_dataset)
 train_end = int(total_len * 0.8)
 test_end = int(total_len * 0.9)
-data["training"]=data_dict[:train_end]
-data["test"] = data_dict[train_end:test_end]
-data["validation"] = data_dict[test_end:]
+list_items_dataset = list(dict_dataset.items())
+data["training"]=list_items_dataset[:train_end]
+data["test"] = list_items_dataset[train_end:test_end]
+data["validation"] = list_items_dataset[test_end:]
 
 predictions = []
 
 for doc in data["test"]:
-    inputs = tokenizer(f"Document: {doc}", return_tensors="pt", max_length=512, truncation=True)
-    outputs = model.generate(**inputs, max_length=512)
+    inputs = tokenizer(f"Document: {doc}", return_tensors="pt", max_length=MAX_TOKENS_INPUT, truncation=True)
+    outputs = model.generate(**inputs, max_length=MAX_TOKENS_OUTPUT)
     prediction = tokenizer.decode(outputs[0], skip_special_tokens=True)
     try:
         # Validar y limpiar el JSON generado

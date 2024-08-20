@@ -1,28 +1,9 @@
-import json
 import os
 import requests
-import pdfplumber
-import re
-
-ROUTE = "/home/nahuel/Documents/tesis/fine_tunning/data/sedici/"
-JSON_ROUTE = ROUTE + "jsons/"
-XML_ROUTE = ROUTE + "xmls/"
-PDF_ROUTE = ROUTE + "pdfs/"
-METADATA_FILE = "metadata_sedici_files.json"
-URL_GROBID_SERVICES = "http://localhost:8070/api/processFulltextDocument"
+from constant import JSON_FOLDER,XML_FOLDER,PDF_FOLDER,DATASET_FILENAME,GROBID_URL
+from utils.read_and_write_files import read_data_json,write_to_json
 
 
-
-#return data from json filename args
-def get_data_from_json_file(filename):
-    with open(filename, 'r', encoding='utf-8') as file:
-        data2 = json.load(file)         
-    return data2
-
-#write data to json filename args
-def write_data_to_json_file(filename,data):
-    with open(filename, 'w', encoding='utf-8') as final_output:
-        json.dump(data, final_output, ensure_ascii=False, indent=4)
 
 #make a str extracting type from file [TDG,TPG,ART,DIS] + type + subtype
 def get_key_format(key,dict):
@@ -33,7 +14,7 @@ def get_key_format(key,dict):
 
 #make json all attributes for each type_subtype  {TDG {tot=cant1 dc.type=cant2}...}
 def make_files_types_json():
-    data = get_data_from_json_file(os.path.join(JSON_ROUTE,METADATA_FILE))
+    data = read_data_json(os.path.join(JSON_FOLDER,DATASET_FILENAME),"utf-8")
     dict = {}       
     for id_key in data.keys():
         new_key = get_key_format(id_key,data[id_key])
@@ -47,12 +28,12 @@ def make_files_types_json():
                     dict[new_key][key] = dict[new_key][key] + 1
                 else:
                     dict[new_key][key] = 1
-    write_data_to_json_file(os.path.join(JSON_ROUTE,"metadata_by_type.json"),dict)
+    write_to_json(os.path.join(JSON_FOLDER,"metadata_by_type.json"),dict,"utf-8")
 
 
 #make json type_subtype for each attr  {dc.type{TDG:cant1,TPG:cant2..}..}
 def make_attr_json():
-    data = get_data_from_json_file(os.path.join(JSON_ROUTE,METADATA_FILE))
+    data = read_data_json(os.path.join(JSON_FOLDER,DATASET_FILENAME),"utf-8")
     dict = {}       
     for id_key in data.keys():
         new_key = get_key_format(id_key,data[id_key])
@@ -64,12 +45,12 @@ def make_attr_json():
                     dict[key][new_key] = dict[key][new_key]+1
                 else:
                     dict[key][new_key] = 1
-    write_data_to_json_file(os.path.join(JSON_ROUTE,"metadata_by_type2.json"),dict)
+    write_to_json(os.path.join(JSON_FOLDER,"metadata_by_type2.json"),dict,"utf-8")
 
 #make json withe the final subtypes and agrouping in general commons attr
 def make_final_json():
-    data2 = get_data_from_json_file(os.path.join(JSON_ROUTE, "metadata_by_type2.json"))
-    data = get_data_from_json_file(os.path.join(JSON_ROUTE, "metadata_by_type.json")) 
+    data2 = read_data_json(os.path.join(JSON_FOLDER, "metadata_by_type2.json"),"utf-8")
+    data = read_data_json(os.path.join(JSON_FOLDER, "metadata_by_type.json"),"utf-8") 
     cant_type_subtype= len(data.keys())   
     final_json = {y : [] for y in data.keys()}
     final_json ["general"] = []
@@ -88,36 +69,35 @@ def make_final_json():
             for t_s in type_subtype:
                 final_json[t_s].append(attribute_tuple[0])
     
-    write_data_to_json_file(os.path.join(JSON_ROUTE,"metadata_by_type3.json"),final_json)
+    write_to_json(os.path.join(JSON_FOLDER,"metadata_by_type3.json"),final_json,"utf-8")
 
 #send pdf to GROBID services and save xml
 def make_xml():
     id_con_errores=[]
-    with open(os.path.join(JSON_ROUTE, METADATA_FILE), 'r', encoding='utf-8') as file:
-        data = json.load(file)      
-        for id_key in data.keys():
-            pdf_filename = id_key + ".pdf"
-            pdf_path = os.path.join(PDF_ROUTE, pdf_filename)
-            with open(pdf_path, 'rb') as pdf_file:
-                pdf = {'input': pdf_file}
-                response = requests.post(URL_GROBID_SERVICES, files=pdf, headers={})
-                if response.status_code == 200:
-                    xml_filename = id_key + ".xml"
-                    xml_filepath = os.path.join(XML_ROUTE, xml_filename)
-                    with open(xml_filepath, 'wb') as xml_file:
-                        xml_file.write(response.content)
-                    print(f"XML generado y guardado para {id_key}")
-                else:
-                    id_con_errores.append(id_key)
-                    print(f"Error al procesar {pdf_filename}: {response.status_code}")
+    data = read_data_json(os.path.join(JSON_FOLDER, DATASET_FILENAME),"utf-8")     
+    for id_key in data.keys():
+        pdf_filename = id_key + ".pdf"
+        pdf_path = os.path.join(PDF_FOLDER, pdf_filename)
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf = {'input': pdf_file}
+            response = requests.post(GROBID_URL, files=pdf, headers={})
+            if response.status_code == 200:
+                xml_filename = id_key + ".xml"
+                xml_filepath = os.path.join(XML_FOLDER, xml_filename)
+                with open(xml_filepath, 'wb') as xml_file:
+                    xml_file.write(response.content)
+                print(f"XML generado y guardado para {id_key}")
+            else:
+                id_con_errores.append(id_key)
+                print(f"Error al procesar {pdf_filename}: {response.status_code}")
     return id_con_errores
 
 #delete pdf with no xml(GROBID bad responses)
 def delete_files_no_xml():
-    xmls = [x.replace(".xml","") for x in os.listdir(XML_ROUTE)]
-    pdfs_to_delete = [x for x in os.listdir(PDF_ROUTE) if(x.replace(".pdf","") not in xmls)]
+    xmls = [x.replace(".xml","") for x in os.listdir(XML_FOLDER)]
+    pdfs_to_delete = [x for x in os.listdir(PDF_FOLDER) if(x.replace(".pdf","") not in xmls)]
     for filename in pdfs_to_delete:
-        os.remove(PDF_ROUTE+filename)
+        os.remove(PDF_FOLDER+filename)
 
 #removes pdf xml and json keys corresponding to unnecessary subtype files
 def delete_unused_file_type():
@@ -125,8 +105,7 @@ def delete_unused_file_type():
                   ("DIS","Articulo","Articulo") :[] , ("REV","Articulo", "Revision") : [],("REV","Articulo","Revision"):[],
                   ("PAR","Imagen en movimiento","Video"):[],("PAR","Imagen fija","Imagen fija"):[],("TPG","Libro","Libro"):[],
                   ("TDG","Tesis","Tesis de maestria"):[],("TPG","Tesis","Tesis de grado"):[]}
-    with open(os.path.join(JSON_ROUTE, METADATA_FILE), 'r', encoding='utf-8') as file:
-        data = json.load(file)
+    data = read_data_json(os.path.join(JSON_FOLDER, DATASET_FILENAME),"utf-8")
     final_data = {}
     for key in data.keys():
         try:
@@ -134,14 +113,13 @@ def delete_unused_file_type():
             print(tuple_key_type_subtype)
             if(tuple_key_type_subtype in files_type):
                 files_type[tuple_key_type_subtype].append(key)
-                os.remove(PDF_ROUTE+key+".pdf")
-                os.remove(XML_ROUTE+key+".xml")
+                os.remove(PDF_FOLDER+key+".pdf")
+                os.remove(XML_FOLDER+key+".xml")
             else:
                 final_data[key] = data[key]
         except:
             print(key)
-    with open(os.path.join(JSON_ROUTE,METADATA_FILE), 'w', encoding='utf-8') as final_output:
-        json.dump(final_data, final_output, ensure_ascii=False, indent=4)    
+    write_to_json(os.path.join(JSON_FOLDER,DATASET_FILENAME),final_data,"utf-8")
     return files_type
 
 #group_json()
