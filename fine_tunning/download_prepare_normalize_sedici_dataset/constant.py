@@ -1,4 +1,7 @@
-DATA_FOLDER= "C:/Users/Nahuel/Documents/document_extraction_llm/fine_tunning/data/sedici/"
+import os
+from pathlib import Path
+ROOT_DIR = Path(__file__).resolve().parents[2]
+DATA_FOLDER = Path(os.getenv("DATA_FOLDER", ROOT_DIR / "fine_tunning" / "data" / "sedici"))
 JSON_FOLDER = DATA_FOLDER + "jsons/"
 PDF_FOLDER = DATA_FOLDER + "pdfs/"
 TXT_FOLDER = DATA_FOLDER + "texts/"

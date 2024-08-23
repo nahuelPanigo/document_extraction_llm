@@ -8,8 +8,9 @@ import logging
 from transformers import LEDTokenizer, LEDForConditionalGeneration, Trainer, TrainingArguments
 from datasets import Dataset,DatasetDict
 from constant import LOG_DIR,JSONS_FOLDER,DATASET_WITH_TEXT_DOC,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
-from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding
-
+from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding,write_to_json
+from peft import LoraConfig, TaskType,get_peft_model
+from hugging_face_connection import get_dataset
 
 #Loging config
 if not os.path.exists(LOG_DIR):
@@ -32,19 +33,27 @@ logger.info(f"Using device: {device}")
 print(device)
 
 
+if not (DATASET_WITH_TEXT_DOC) in os.listdir(JSONS_FOLDER):
+    print("donwloading dataset from huggingface....")
+    data = get_dataset(DATASET_WITH_TEXT_DOC)
+    write_to_json(DATASET_WITH_TEXT_DOC,data,"utf-8")
+
 #preparing Dataset 
 filename_dataset = JSONS_FOLDER+DATASET_WITH_TEXT_DOC
+
+
 enc = detect_encoding(filename_dataset)["encoding"]
 dict_dataset =  read_data_json(filename_dataset,enc)
 
 data = {}
 total_len = len(dict_dataset)
+#total_len = 100
 train_end = int(total_len * 0.8)
 test_end = int(total_len * 0.9)
 list_items_dataset = list(dict_dataset.values())
 data["training"]=list_items_dataset[:train_end]
 data["test"] = list_items_dataset[train_end:test_end]
-data["validation"] = list_items_dataset[test_end:]
+data["validation"] = list_items_dataset[test_end:total_len]
 
 formatted_data = {}
 for step in data.keys():
@@ -64,6 +73,10 @@ datasets =  DatasetDict(dataset_dict)
 # Charge model and tokenizer
 tokenizer = LEDTokenizer.from_pretrained(BASE_MODEL)
 model = LEDForConditionalGeneration.from_pretrained(BASE_MODEL)
+peft_config = LoraConfig(task_type=TaskType.FEATURE_EXTRACTION, inference_mode=False, r=8, lora_alpha=16, lora_dropout=0.1, target_modules=["query", "key", "value"])
+model = get_peft_model(model,peft_config)
+model.print_trainable_parameters()
+
 
 # Tokenize dataset
 def preprocess_function(examples):
@@ -111,7 +124,7 @@ process = psutil.Process(os.getpid())
 logger.info(f"Memory usage before training: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 
 logger.info("START")
-
+torch.cuda.empty_cache()
 trainer.train()
 
 logger.info("FINISH")

@@ -4,16 +4,24 @@ pandas
 torch
 torchvision
 torchaudio
+python-dotenv
 packaging
 ninja
 setuptools
-#flash-attn
 requests
 pdfplumber
-accelerate
 peft
-beautifulsoup4
 wordcloud
-# Instalar torch_xla solo si se va a utilizar TPU
-torch-xla==1.10; platform_machine == 'x86_64' and platform_system == 'Linux'
 
+#to make dataset finetunning not required
+#beautifulsoup4
+
+#only if tpu is used
+#torch-xla==1.10; platform_machine == 'x86_64' and platform_system == 'Linux'
+
+#for yanr and other models that requires flash attention
+#flash-attn
+#packaging
+
+#for multiprocess gpu
+#accelerate
