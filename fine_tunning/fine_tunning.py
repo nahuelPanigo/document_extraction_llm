@@ -73,7 +73,7 @@ datasets =  DatasetDict(dataset_dict)
 # Charge model and tokenizer
 tokenizer = LEDTokenizer.from_pretrained(BASE_MODEL)
 model = LEDForConditionalGeneration.from_pretrained(BASE_MODEL)
-peft_config = LoraConfig(task_type=TaskType.FEATURE_EXTRACTION, inference_mode=False, r=8, lora_alpha=16, lora_dropout=0.1, target_modules=["query", "key", "value"])
+peft_config = LoraConfig(task_type=TaskType.FEATURE_EXTRACTION, inference_mode=False, r=128, lora_alpha=16, lora_dropout=0.1, target_modules=["query", "key", "value"])
 model = get_peft_model(model,peft_config)
 model.print_trainable_parameters()
 
