@@ -32,17 +32,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger.info(f"Using device: {device}")
 print(device)
 
+filename_dataset = JSONS_FOLDER / DATASET_WITH_TEXT_DOC
 
 if not (DATASET_WITH_TEXT_DOC) in os.listdir(JSONS_FOLDER):
     print("donwloading dataset from huggingface....")
     data = get_dataset(DATASET_WITH_TEXT_DOC)
-    write_to_json(DATASET_WITH_TEXT_DOC,data,"utf-8")
-
-#preparing Dataset 
-filename_dataset = JSONS_FOLDER+DATASET_WITH_TEXT_DOC
+    write_to_json(filename_dataset,data,"utf-8")
 
 
 enc = detect_encoding(filename_dataset)["encoding"]
+
 dict_dataset =  read_data_json(filename_dataset,enc)
 
 data = {}

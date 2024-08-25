@@ -12,6 +12,7 @@ requests
 pdfplumber
 peft
 wordcloud
+chardet
 
 #to make dataset finetunning not required
 #beautifulsoup4

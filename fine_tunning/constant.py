@@ -3,7 +3,7 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_FOLDER = Path(os.getenv("DATA_FOLDER", ROOT_DIR / "fine_tunning" / "data" / "sedici"))
-JSONS_FOLDER = DATA_FOLDER+ "jsons/"
+JSONS_FOLDER = DATA_FOLDER / "jsons/"
 DATASET_WITH_METADATA_CHECKED = "final_metadata_Chekced.json"
 DATASET_WITH_TEXT_DOC = "metadata_and_text.json"
 KEYS_DATA = {

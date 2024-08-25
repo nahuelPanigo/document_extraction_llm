@@ -11,6 +11,6 @@ def get_dataset(datasetname):
     headers = {"Authorization": f"Bearer {api_token}"}
     url = f"https://huggingface.co/datasets/Nahpanigo99/university_docs_with_metadata/resolve/main/{datasetname}"
     response = requests.get(url, headers=headers)
-    return response.content
+    return response.json()
 
 
