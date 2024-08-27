@@ -91,17 +91,17 @@ tokenized_datasets = datasets.map(preprocess_function, batched=True)
 # Configurar los argumentos de entrenamiento
 training_args = TrainingArguments(
     output_dir= CHECKPOINT_MODEL_PATH,
-    evaluation_strategy="epoch",
+    eval_strategy="epoch",
     logging_dir= LOG_DIR,            # Directorio de los registros
     logging_steps=10,     
     learning_rate=2e-5,
     per_device_train_batch_size=1,
     per_device_eval_batch_size=1,
-    num_train_epochs=3,
+    num_train_epochs=2,
     weight_decay=0.01,
     save_total_limit=2,
     save_steps=10,
-    fp16=True,  
+    fp16=False,  
 )
 
 # Inicializar el entrenador
@@ -131,5 +131,12 @@ logger.info("FINISH")
 # Verificar el uso de memoria después de finalizar el entrenamiento
 logger.info(f"Memory usage after training: {process.memory_info().rss / 1024 ** 2:.2f} MB")
 # Guardar el modelo afinado
-model.save_pretrained(FINAL_MODEL_PATH)
+print(FINAL_MODEL_PATH)
+os.makedirs(FINAL_MODEL_PATH)
+# Assuming `model` is your DataParallel model
+model_to_save = model.module if isinstance(model, torch.nn.DataParallel) else model
+print(type(model_to_save))
+print(FINAL_MODEL_PATH)
+model_to_save.save_pretrained(FINAL_MODEL_PATH)
+
 tokenizer.save_pretrained(FINAL_MODEL_PATH)

@@ -1,8 +1,7 @@
-import os
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-DATA_FOLDER = Path(os.getenv("DATA_FOLDER", ROOT_DIR / "fine_tunning" / "data" / "sedici"))
+ROOT_DIR = Path(__file__).resolve().parents[1]  / "fine_tunning"
+DATA_FOLDER = ROOT_DIR / "data" / "sedici"
 JSONS_FOLDER = DATA_FOLDER / "jsons/"
 DATASET_WITH_METADATA_CHECKED = "final_metadata_Chekced.json"
 DATASET_WITH_TEXT_DOC = "metadata_and_text.json"
@@ -50,6 +49,6 @@ KEYS_DATA = {
 BASE_MODEL="allenai/led-base-16384"
 MAX_TOKENS_INPUT= 16384
 MAX_TOKENS_OUTPUT= 1024
-LOG_DIR = "/log"
-FINAL_MODEL_PATH = "/fine-tuned-model"
-CHECKPOINT_MODEL_PATH = "./results"
+LOG_DIR = ROOT_DIR /  "log"
+FINAL_MODEL_PATH =ROOT_DIR / "fine-tuned-model"
+CHECKPOINT_MODEL_PATH = ROOT_DIR / "results"

@@ -15,5 +15,7 @@ lib/
 pyvenv.cfg
 !*output.json
 /fine_tunning/results
+/results
 /fine_tunning/fine-tuned-model
 /api/app/fine-tuned-model
+/fine_tunning/log
