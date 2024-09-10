@@ -13,6 +13,7 @@ pdfplumber
 peft
 wordcloud
 chardet
+bitsandbytes
 
 #to make dataset finetunning not required
 #beautifulsoup4

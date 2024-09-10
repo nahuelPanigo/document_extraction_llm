@@ -56,7 +56,7 @@ token = os.getenv("TOKEN_HUGGING_FACE")
 
 login(token=token)
 tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
-model = AutoModelForCausalLM.from_pretrained(BASE_MODEL,quantization_config=bnb_config,low_cpu_mem_usage=True,torch_dtype=torch.float16)#, config=config)
+model = AutoModelForCausalLM.from_pretrained(BASE_MODEL,quantization_config=bnb_config,low_cpu_mem_usage=True)#, config=config)
 model = get_peft_model(model, get_peft_config(model))
 
 
@@ -133,7 +133,6 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     save_total_limit=2,
     save_steps=50,
-    fp16=True,  
     warmup_steps=100,
 )
 
@@ -168,13 +167,17 @@ print(FINAL_MODEL_PATH)
 os.makedirs(FINAL_MODEL_PATH)
 # Assuming `model` is your DataParallel model
 model_to_save = model.module if isinstance(model, torch.nn.DataParallel) else model
+
+model_to_save.save_pretrained(FINAL_MODEL_PATH)
+tokenizer.save_pretrained(FINAL_MODEL_PATH)
+
 print(type(model_to_save))
 print(FINAL_MODEL_PATH)
 
 
 #merge peft model with base model
-base_model = AutoModelForCausalLM.from_pretrained(BASE_MODEL,quantization_config=bnb_config,low_cpu_mem_usage=True,torch_dtype=torch.float16)#, config=config)
-peft_model = PeftModel.from_pretrained(base_model, model_to_save)
+base_model = AutoModelForCausalLM.from_pretrained(BASE_MODEL,quantization_config=bnb_config,low_cpu_mem_usage=True)#, config=config)
+peft_model = PeftModel.from_pretrained(base_model, FINAL_MODEL_PATH)
 merged_model = peft_model.merge_and_unload()
 merged_model.save_pretrained(FINAL_MODEL_PATH,safe_serialization=True)
 
