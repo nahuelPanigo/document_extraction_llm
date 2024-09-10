@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DATA_FOLDER = Path(os.getenv("DATA_FOLDER", ROOT_DIR / "fine_tunning" / "data" / "sedici"))
-JSON_FOLDER = DATA_FOLDER + "jsons/"
-PDF_FOLDER = DATA_FOLDER + "pdfs/"
-TXT_FOLDER = DATA_FOLDER + "texts/"
-XML_FOLDER = DATA_FOLDER + "xmls/"
-CSV_FOLDER = DATA_FOLDER + "csv/"
+JSON_FOLDER = DATA_FOLDER / "jsons/"
+PDF_FOLDER = DATA_FOLDER / "pdfs/"
+TXT_FOLDER = DATA_FOLDER / "texts/"
+XML_FOLDER = DATA_FOLDER / "xmls/"
+CSV_FOLDER = DATA_FOLDER / "csv/"
 DATASET_SEDICI_URL_BASE = "https://sedici.unlp.edu.ar/oai/openaire?verb=ListRecords&resumptionToken=oai_dc////"
 DOWNLOAD_URL = "https://sedici.unlp.edu.ar"
 PDF_URL = DOWNLOAD_URL + "/bitstream/handle/"

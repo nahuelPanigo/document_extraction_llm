@@ -46,9 +46,10 @@ KEYS_DATA = {
         "sedici.date.exposure"
     ]
 }
-BASE_MODEL="allenai/led-base-16384"
-MAX_TOKENS_INPUT= 16384
-MAX_TOKENS_OUTPUT= 1024
+#BASE_MODEL="allenai/led-base-16384"
+BASE_MODEL="google/gemma-2-2b"
+MAX_TOKENS_INPUT= 512
+MAX_TOKENS_OUTPUT= 512
 LOG_DIR = ROOT_DIR /  "log"
 FINAL_MODEL_PATH =ROOT_DIR / "fine-tuned-model"
 CHECKPOINT_MODEL_PATH = ROOT_DIR / "results"

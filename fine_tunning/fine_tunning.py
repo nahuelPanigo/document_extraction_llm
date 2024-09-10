@@ -1,16 +1,19 @@
 import torch
-import torch.distributed as dist
-#from torch.nn.parallel import DistributedDataParallel as DDP
 import json
 import os
 import psutil
 import logging
-from transformers import LEDTokenizer, LEDForConditionalGeneration, Trainer, TrainingArguments
+#from transformers import LEDTokenizer, LEDForConditionalGeneration, Trainer, TrainingArguments
+from transformers import AutoTokenizer, Trainer, TrainingArguments #LlamaForCausalLM,LlamaConfig
+from transformers import AutoModelForCausalLM , AutoTokenizer,BitsAndBytesConfig
 from datasets import Dataset,DatasetDict
 from constant import LOG_DIR,JSONS_FOLDER,DATASET_WITH_TEXT_DOC,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
 from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding,write_to_json
-from peft import LoraConfig, TaskType,get_peft_model
+from peft import get_peft_model,PeftModel
 from hugging_face_connection import get_dataset
+from huggingface_hub import login
+from dotenv import load_dotenv
+from peft_configuration import get_peft_config
 
 #Loging config
 if not os.path.exists(LOG_DIR):
@@ -32,6 +35,31 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 logger.info(f"Using device: {device}")
 print(device)
 
+# config = LlamaConfig.from_pretrained(BASE_MODEL)
+
+# # Correct the rope_scaling configuration
+# config.rope_scaling = {
+#     "type": "linear",  # Example type
+#     "factor": 1.5      # Example factor
+# }
+
+#quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16
+)
+
+load_dotenv()
+token = os.getenv("TOKEN_HUGGING_FACE")
+
+login(token=token)
+tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+model = AutoModelForCausalLM.from_pretrained(BASE_MODEL,quantization_config=bnb_config,low_cpu_mem_usage=True,torch_dtype=torch.float16)#, config=config)
+model = get_peft_model(model, get_peft_config(model))
+
+
 filename_dataset = JSONS_FOLDER / DATASET_WITH_TEXT_DOC
 
 if not (DATASET_WITH_TEXT_DOC) in os.listdir(JSONS_FOLDER):
@@ -46,10 +74,12 @@ dict_dataset =  read_data_json(filename_dataset,enc)
 
 data = {}
 total_len = len(dict_dataset)
+# Crear un nuevo diccionario sin el campo "abstract"
+new_dict = {x: {k: v for k, v in y.items() if k != "abstract"} for x, y in dict_dataset.items()}
 #total_len = 100
 train_end = int(total_len * 0.8)
 test_end = int(total_len * 0.9)
-list_items_dataset = list(dict_dataset.values())
+list_items_dataset = list(new_dict.values())
 data["training"]=list_items_dataset[:train_end]
 data["test"] = list_items_dataset[train_end:test_end]
 data["validation"] = list_items_dataset[test_end:total_len]
@@ -70,11 +100,13 @@ for step, step_data in formatted_data.items():
 datasets =  DatasetDict(dataset_dict)
 
 # Charge model and tokenizer
-tokenizer = LEDTokenizer.from_pretrained(BASE_MODEL)
-model = LEDForConditionalGeneration.from_pretrained(BASE_MODEL)
-peft_config = LoraConfig(task_type=TaskType.FEATURE_EXTRACTION, inference_mode=False, r=128, lora_alpha=16, lora_dropout=0.1, target_modules=["query", "key", "value"])
-model = get_peft_model(model,peft_config)
-model.print_trainable_parameters()
+#tokenizer = LEDTokenizer.from_pretrained(BASE_MODEL)
+# tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+# #model = LEDForConditionalGeneration.from_pretrained(BASE_MODEL)
+# model = LlamaForCausalLM.from_pretrained(BASE_MODEL)
+#peft_config = LoraConfig(task_type=TaskType.FEATURE_EXTRACTION, inference_mode=False, r=128, lora_alpha=16, lora_dropout=0.1, target_modules=["query", "key", "value"])
+#model = get_peft_model(model,peft_config)
+#model.print_trainable_parameters()
 
 
 # Tokenize dataset
@@ -97,11 +129,12 @@ training_args = TrainingArguments(
     learning_rate=2e-5,
     per_device_train_batch_size=1,
     per_device_eval_batch_size=1,
-    num_train_epochs=2,
+    num_train_epochs=3,
     weight_decay=0.01,
     save_total_limit=2,
-    save_steps=10,
-    fp16=False,  
+    save_steps=50,
+    fp16=True,  
+    warmup_steps=100,
 )
 
 # Inicializar el entrenador
@@ -137,6 +170,12 @@ os.makedirs(FINAL_MODEL_PATH)
 model_to_save = model.module if isinstance(model, torch.nn.DataParallel) else model
 print(type(model_to_save))
 print(FINAL_MODEL_PATH)
-model_to_save.save_pretrained(FINAL_MODEL_PATH)
+
+
+#merge peft model with base model
+base_model = AutoModelForCausalLM.from_pretrained(BASE_MODEL,quantization_config=bnb_config,low_cpu_mem_usage=True,torch_dtype=torch.float16)#, config=config)
+peft_model = PeftModel.from_pretrained(base_model, model_to_save)
+merged_model = peft_model.merge_and_unload()
+merged_model.save_pretrained(FINAL_MODEL_PATH,safe_serialization=True)
 
 tokenizer.save_pretrained(FINAL_MODEL_PATH)

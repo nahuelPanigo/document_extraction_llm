@@ -17,5 +17,6 @@ pyvenv.cfg
 /fine_tunning/results
 /results
 /fine_tunning/fine-tuned-model
+/fine_tunning/fine-tuned-model2
 /api/app/fine-tuned-model
 /fine_tunning/log
