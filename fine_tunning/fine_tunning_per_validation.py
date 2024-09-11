@@ -1,5 +1,6 @@
 import json
-from transformers import LEDTokenizer, LEDForConditionalGeneration
+#from transformers import LEDTokenizer, LEDForConditionalGeneration
+from transformers import AutoModelForCausalLM , AutoTokenizer,BitsAndBytesConfig
 from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding
 from constant import JSONS_FOLDER,DATASET_WITH_TEXT_DOC,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT,FINAL_MODEL_PATH
 import torch
@@ -19,8 +20,24 @@ data["validation"] = items_list[test_end:]
 
 input_text = data["validation"][1]
 # Cargar el tokenizador y el modelo ajustado
-tokenizer = LEDTokenizer.from_pretrained(FINAL_MODEL_PATH)
-model = LEDForConditionalGeneration.from_pretrained(FINAL_MODEL_PATH)
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16
+)
+
+model = AutoModelForCausalLM.from_pretrained(
+    FINAL_MODEL_PATH,
+    quantization_config=bnb_config,  # Aplicar configuración de cuantización
+    low_cpu_mem_usage=True
+)
+
+tokenizer = AutoTokenizer.from_pretrained(FINAL_MODEL_PATH)
+
+#tokenizer = LEDTokenizer.from_pretrained(FINAL_MODEL_PATH)
+#model = LEDForConditionalGeneration.from_pretrained(FINAL_MODEL_PATH)
 
 # # Mover el modelo a la GPU si está disponible
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -42,7 +59,7 @@ inputs = {k: v.to(device) for k, v in inputs.items()}
 
 # Realizar inferencia
 with torch.no_grad():
-    outputs = model.generate(**inputs,max_length=MAX_TOKENS_OUTPUT)
+    outputs = model.generate(**inputs,max_new_tokens=MAX_TOKENS_OUTPUT)
 
 # Decodificar la salida
 decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)

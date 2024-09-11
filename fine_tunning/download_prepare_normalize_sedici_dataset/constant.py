@@ -16,6 +16,7 @@ COLUMNS_DATA = ['id', 'title', 'abstract', 'categories','authors']
 DATASET_FILENAME = "metadata_sedici_files.json"
 DATASET_WITH_METADATA_CHECKED = "final_metadata_Chekced.json"
 DATASET_WITH_TEXT_DOC = "metadata_and_text.json"
+DATASET_WITH_TEXT_DOC2 = "metadata_and_text2.json"
 CANT_TOKENS = 14000
 TOKENS_LENGTH = 4
 VALID_ACCENTS = "áéíóúüñÁÉÍÓÚÜÑ"

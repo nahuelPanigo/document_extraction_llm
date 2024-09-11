@@ -29,7 +29,7 @@ def find_all_linear_names(model):
 def get_peft_config(model):
     modules = find_all_linear_names(model)
     return LoraConfig(
-        r=32,
+        r=128,
         lora_alpha=32,
         target_modules=modules,
         lora_dropout=0.05,

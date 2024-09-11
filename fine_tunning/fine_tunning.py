@@ -59,6 +59,8 @@ tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
 model = AutoModelForCausalLM.from_pretrained(BASE_MODEL,quantization_config=bnb_config,low_cpu_mem_usage=True)#, config=config)
 model = get_peft_model(model, get_peft_config(model))
 
+#si estas utilizandoLPeft puedes imprimir los parametros a entrenar
+print(model.print_trainable_parameters())
 
 filename_dataset = JSONS_FOLDER / DATASET_WITH_TEXT_DOC
 

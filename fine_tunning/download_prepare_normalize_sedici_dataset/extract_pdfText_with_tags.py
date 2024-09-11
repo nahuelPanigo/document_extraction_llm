@@ -12,12 +12,13 @@ def process_pdf_data_wrapper(args):
 def process_pdf_data(pdf_path, pdf_id):
     pdfreader = PdfReader()
     text = pdfreader.extract_text_with_xml_tags(pdf_path)
-    txt_filename=TXT_FOLDER2+pdf_id+".pdf"
+    txt_filename=TXT_FOLDER2 / f"{pdf_id}.txt"
+    print(txt_filename)
     write_to_text(txt_filename,text)
 
 
 def extract_text():
-    pdf_paths = [os.path.join(PDF_FOLDER,x) for x in os.listdir(PDF_FOLDER)]   
+    pdf_paths = [(os.path.join(PDF_FOLDER,x),x.replace(".pdf","")) for x in os.listdir(PDF_FOLDER)]   
     with Pool(2) as pool:
         pool.map(process_pdf_data_wrapper, pdf_paths)
     return
