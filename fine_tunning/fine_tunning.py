@@ -7,7 +7,7 @@ import logging
 from transformers import AutoTokenizer, Trainer, TrainingArguments #LlamaForCausalLM,LlamaConfig
 from transformers import AutoModelForCausalLM , AutoTokenizer,BitsAndBytesConfig
 from datasets import Dataset,DatasetDict
-from constant import LOG_DIR,JSONS_FOLDER,DATASET_WITH_TEXT_DOC,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
+from constant import LOG_DIR,JSONS_FOLDER,DATASET_WITH_TEXT_DOC,BASE_MODEL,FINAL_MODEL_PATH,CHECKPOINT_MODEL_PATH,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT,PROMPT
 from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding,write_to_json
 from peft import get_peft_model,PeftModel
 from hugging_face_connection import get_dataset
@@ -90,7 +90,7 @@ formatted_data = {}
 for step in data.keys():
     step_data = []
     for item in data[step]:  
-        input_text = f"Document: {item['original_text']}"
+        input_text = f"{PROMPT}Document: {item['original_text']}"
         output_text = json.dumps({k: v for k, v in item.items() if k != "original_text"})
         step_data.append({"input": input_text, "output": output_text})
     formatted_data[step] = step_data

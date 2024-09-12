@@ -48,8 +48,9 @@ KEYS_DATA = {
 }
 #BASE_MODEL="allenai/led-base-16384"
 BASE_MODEL="google/gemma-2-2b"
-MAX_TOKENS_INPUT= 512
-MAX_TOKENS_OUTPUT= 512
+MAX_TOKENS_INPUT= 4096
+MAX_TOKENS_OUTPUT= 1024
 LOG_DIR = ROOT_DIR /  "log"
 FINAL_MODEL_PATH =ROOT_DIR / "fine-tuned-model"
 CHECKPOINT_MODEL_PATH = ROOT_DIR / "results"
+PROMPT = "give me a json structure with the keys and values that has to extract from the text: dc.language, dc.subject, dc.title, dc.type, sedici.creator.person, sedici.subject.materias and could also have this keys sedici.contributor.director, sedici.contributor.codirector,sedici.title.subtitle,sedici.relation.journalVolumeAndIssue,sedici.relation.journalTitle,sedici.identifier.issn"
