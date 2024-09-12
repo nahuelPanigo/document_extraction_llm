@@ -77,7 +77,7 @@ dict_dataset =  read_data_json(filename_dataset,enc)
 data = {}
 total_len = len(dict_dataset)
 # Crear un nuevo diccionario sin el campo "abstract"
-new_dict = {x: {k: v for k, v in y.items() if k != "abstract"} for x, y in dict_dataset.items()}
+new_dict = {x: {k: v for k, v in y.items() if k != "dc.description.abstract"} for x, y in dict_dataset.items()}
 #total_len = 100
 train_end = int(total_len * 0.8)
 test_end = int(total_len * 0.9)

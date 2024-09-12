@@ -47,7 +47,7 @@ model.to(device)
 model.eval()
 
 # # Ejemplo de texto de entrada
-input_to_check = data["validation"][1]
+input_to_check = data["validation"][3]
 input_text = input_to_check["original_text"]
 
 input_to_check.pop("original_text")
@@ -55,7 +55,7 @@ input_to_check.pop("original_text")
 inputs = tokenizer(input_text, return_tensors="pt", truncation=True, padding=True,max_length=MAX_TOKENS_INPUT)
 
 # Mover datos a la misma GPU/CPU que el modelo
-inputs = {k: v.to(device) for k, v in inputs.items()}
+inputs = {k: v.to(device) for k, v in inputs.items()}                   
 
 # Realizar inferencia
 with torch.no_grad():
