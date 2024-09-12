@@ -2,7 +2,7 @@ import json
 #from transformers import LEDTokenizer, LEDForConditionalGeneration
 from transformers import AutoModelForCausalLM , AutoTokenizer,BitsAndBytesConfig
 from download_prepare_normalize_sedici_dataset.utils.read_and_write_files import read_data_json,detect_encoding
-from constant import JSONS_FOLDER,DATASET_WITH_TEXT_DOC,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT,FINAL_MODEL_PATH
+from constant import JSONS_FOLDER,DATASET_WITH_TEXT_DOC,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT,FINAL_MODEL_PATH,PROMPT
 import torch
 
 filename_dataset = JSONS_FOLDER / DATASET_WITH_TEXT_DOC
@@ -52,7 +52,8 @@ input_text = input_to_check["original_text"]
 
 input_to_check.pop("original_text")
 # Tokenizar la entrada
-inputs = tokenizer(input_text, return_tensors="pt", truncation=True, padding=True,max_length=MAX_TOKENS_INPUT)
+inputs = tokenizer(f"{PROMPT}{input_text}", return_tensors="pt", truncation=True, padding=True,max_length=MAX_TOKENS_INPUT)
+
 
 # Mover datos a la misma GPU/CPU que el modelo
 inputs = {k: v.to(device) for k, v in inputs.items()}                   

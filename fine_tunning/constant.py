@@ -46,11 +46,47 @@ KEYS_DATA = {
         "sedici.date.exposure"
     ]
 }
-#BASE_MODEL="allenai/led-base-16384"
+BASE_MODEL_LED="allenai/led-base-16384"
+BASE_MODEL_GEMMA="google/gemma-2-2b"
+BASE_MODEL_LLAMA="Meta-Llama-3.1-8B"
+BASE_MODEL_MISTRAL="mistralai/Mistral-7B-v0.1"
 BASE_MODEL="google/gemma-2-2b"
 MAX_TOKENS_INPUT= 4096
-MAX_TOKENS_OUTPUT= 4096
+MAX_TOKENS_OUTPUT= 512
 LOG_DIR = ROOT_DIR /  "log"
 FINAL_MODEL_PATH =ROOT_DIR / "fine-tuned-model"
 CHECKPOINT_MODEL_PATH = ROOT_DIR / "results"
-PROMPT = "give me a json structure with the keys and values that has to extract from the text: dc.language, dc.subject, dc.title, dc.type, sedici.creator.person, sedici.subject.materias and could also have this keys sedici.contributor.director, sedici.contributor.codirector,sedici.title.subtitle,sedici.relation.journalVolumeAndIssue,sedici.relation.journalTitle,sedici.identifier.issn"
+PROMPT =""" Extract the following information from the text and provide it in JSON format:
+Required keys:
+- dc.language
+- dc.subject
+- dc.title
+- dc.type
+- sedici.creator.person
+- sedici.subject.materias
+
+Optional keys (if available in the text):
+- sedici.contributor.director
+- sedici.contributor.codirector
+- sedici.title.subtitle
+- sedici.relation.journalVolumeAndIssue
+- sedici.relation.journalTitle
+- sedici.identifier.issn
+
+Example JSON output format:
+
+{
+  "dc.language": "value",
+  "dc.subject": "value",
+  "dc.title": "value",
+  "dc.type": "value",
+  "sedici.creator.person": "value",
+  "sedici.subject.materias": "value",
+  "sedici.contributor.director": "value",
+  "sedici.contributor.codirector": "value",
+  "sedici.title.subtitle": "value",
+  "sedici.relation.journalVolumeAndIssue": "value",
+  "sedici.relation.journalTitle": "value",
+  "sedici.identifier.issn": "value"
+}
+Now, extract the information from the following text and provide it in the specified JSON format:"""
