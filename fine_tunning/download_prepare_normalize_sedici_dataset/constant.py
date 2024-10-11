@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DATA_FOLDER = Path(os.getenv("DATA_FOLDER", ROOT_DIR / "fine_tunning" / "data" / "sedici"))
 JSON_FOLDER = DATA_FOLDER / "jsons/"
@@ -11,8 +12,6 @@ DATASET_SEDICI_URL_BASE = "https://sedici.unlp.edu.ar/oai/openaire?verb=ListReco
 DOWNLOAD_URL = "https://sedici.unlp.edu.ar"
 PDF_URL = DOWNLOAD_URL + "/bitstream/handle/"
 GROBID_URL = "http://localhost:8070/api/processFulltextDocument"
-DATASET_SEDICI_URL_BASE = "https://sedici.unlp.edu.ar/oai/openaire?verb=ListRecords&resumptionToken=oai_dc////"
-COLUMNS_DATA = ['id', 'title', 'abstract', 'categories','authors']
 DATASET_FILENAME = "metadata_sedici_files.json"
 DATASET_WITH_METADATA_CHECKED = "final_metadata_Chekced.json"
 DATASET_WITH_TEXT_DOC = "metadata_and_text.json"

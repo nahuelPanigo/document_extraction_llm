@@ -32,14 +32,14 @@ def build_pattern_issn(issn):
 def build_pattern_volume(volume):
     # Extraer los números del volumen y del número usando expresiones regulares
     volume_number_match = re.search(r'vol[.\s]*(\d+)', volume, re.IGNORECASE)
-    number_number_match = re.search(r'(?:no|nro|nr|n)\s*[.\s]*(\d+)', volume, re.IGNORECASE)
+    number_number_match = re.search(r'(?:no|nro|nr|n|N°|No°)\s*[.\s]*(\d+)', volume, re.IGNORECASE)
     
     volume_number = volume_number_match.group(1) if volume_number_match else ''
     number_number = number_number_match.group(1) if number_number_match else ''
     
     # Define los patrones para volumen y número
     volume_abbreviations = ['vol', 'volumen', 'vols']
-    number_abbreviations = ['nro', 'nr', 'n', 'no']
+    number_abbreviations = ['nro', 'nr', 'n', 'no','n°','no°']
     
     volume_patterns = [f'{abbr}[.]?\\s*' for abbr in volume_abbreviations]
     number_patterns = [f'{abbr}[.]?\\s*' for abbr in number_abbreviations]

@@ -1,13 +1,14 @@
 import re
-from constant import DATA_FOLDER,TXT_FOLDER,JSON_FOLDER
+from constant import DATA_FOLDER,JSON_FOLDER
 from utils.normalice_data import normalize_text,build_pattern_issn,build_pattern_volume
 from utils.read_and_write_files import read_data_json, read_data_txt,detect_encoding
 from utils.colors_terminal import Bcolors
 
+TXT_FOLDER = DATA_FOLDER / "texts2"
 
 csv_file =  "results_from_14k_pfd_text.csv"
 json_file = "metadata_to_check4.json"
-file_metada = "metadata_sedici_files_changes2.json"
+file_metada = "final_metadata_Chekced2.json"
 check_changes_file = "check_results.json"
 
 
@@ -72,13 +73,14 @@ def process_txt_data(file_path, reg, pdf_id):
 
 
 
-dict = read_data_json(DATA_FOLDER+json_file,"utf-8")
-metadata = read_data_json(JSON_FOLDER+file_metada,"utf-8")
-# metada = read_data_json(JSON_FOLDER+file_metada,"utf-8")
+#lo que hay que chequear
+dict = read_data_json(JSON_FOLDER / json_file,"utf-8")
+#la metadata de los archivos solamente las que validaremos en finetunnig
+metadata = read_data_json(JSON_FOLDER / file_metada,"utf-8")
 check_dict = {}
 print(len(dict.keys()))
 for key in dict.keys():
-    file_path=TXT_FOLDER+key+".txt"
+    file_path=TXT_FOLDER / f"{key}.txt"
     check_dict [key] = {}
     # enc=detect_encoding(file_path)['encoding']
     # pdf_text = read_data_txt(file_path,enc)
@@ -96,7 +98,7 @@ for key in dict.keys():
         pdf_text = read_data_txt(file_path,enc)
         text=normalize_text(pdf_text)
         print("------------")
-        print(text[0:2000])
+        print(text[0:900])
         # print(reg["dc.title"])
         # a =  normalize_text(text[72:228])
         # b =  normalize_text(reg["dc.title"])
