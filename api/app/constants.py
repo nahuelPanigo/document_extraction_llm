@@ -3,15 +3,16 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parents[0]
 
 MODEL_PARAMETERS = {
-    "LOCATION" : ROOT_DIR / "fine-tuned-model",
+    "LOCATION" : ROOT_DIR / "fine-tuned-model2",
     "NAME" : "allenai/led-base-16384",
-    "MAX_TOKENS_INPUT" : 8192,
+    "MAX_TOKENS_INPUT" : 4096,
     "MAX_TOKENS_OUTPUT" : 512 
 }
 
 
 
 FILETYPES = [".pdf", ".docx"]
+
 
 PROMPT =""" Extract the following information from the text and provide it in JSON format:
 Required keys:
@@ -46,23 +47,4 @@ Example JSON output format:
   "sedici.relation.journalTitle": "value",
   "sedici.identifier.issn": "value"
 }
-
-The values from the key sedici.subject.materias must be one or more of the following:
-
-['Ingeniería', 'Ingeniería Química', 'Química', 'Ciencias Veterinarias', 'Veterinaria', 'Ciencias Jurídicas', 
-'Relaciones Internacionales', 'Ciencias Agrarias', 'Ingeniería Agronómica', 'Comunicación Social', 'Periodismo',
-'Comunicación', 'Ciencias Astronómicas', 'Astronomía', 'Trabajo Social', 'Odontología', 'Educación', 'Ciencias Informáticas', 
-'Ciencias Exactas', 'Bioquímica', 'Software', 'Matemática', 'Biología', 'Física', 'Humanidades', 'Psicología', 'Historia', 'Bibliotecología', 
-'Filosofía', 'Letras', 'Ciencias de la Educación', 'Educación Física', 'Sociología', 'Ciencias Naturales', 'Geografía', 'Ciencias Sociales', 'Política', 
-'Ciencias Económicas', 'Turismo', 'Economía', 'Salud', 'Sistemas', 'Redes y Seguridad', 'Informática', 'Ingeniería Civil', 'Bellas Artes', 'Música', 'Zoología', 
-'Botánica', 'Paleontología', 'Arqueología', 'Antropología', 'Ecología', 'Geología']
-
-If dc.type is "Tesis", the following keys must not be present:
--"sedici.relation.journalVolumeAndIssue
--"sedici.relation.journalTitle"
--"sedici.identifier.issn"
-If dc.type is "Artículo", the following keys must not be present:
--"sedici.contributor.director"
--"sedici.contributor.codirector"
-
 Now, extract the information from the following text and provide it in the specified JSON format:"""

@@ -1,6 +1,7 @@
 from constant import PROMPT,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
 import json
 from datasets import Dataset,DatasetDict
+from constant import JSONS_FOLDER,DATASET_WITH_TEXT_DOC
 
 def split_dataset(dict_dataset):
     data = {}
@@ -8,6 +9,10 @@ def split_dataset(dict_dataset):
     #total_len = 100
     # Crear un nuevo diccionario sin el campo "abstract"
     new_dict = {x: {k: v for k, v in y.items() if k != "dc.description.abstract"} for x, y in dict_dataset.items()}
+    # new_dict = {
+    #     x: {**y , "id":x}
+    #     for x ,y in dict_dataset.items()
+    # }
     train_end = int(total_len * 0.8)
     test_end = int(total_len * 0.9)
     list_items_dataset = list(new_dict.values())
@@ -47,3 +52,21 @@ def get_tokens(dict_dataset,model,tokenizer):
     # Tokenize dataset
     return datasets.map(preprocess_function, batched=True, fn_kwargs={'model': model , "tokenizer" : tokenizer})
 
+
+def read_data_json(json_filename,enc):
+    with open(json_filename, 'r', encoding=enc) as file:
+        return json.load(file)
+
+
+
+
+# if __name__ == "__main__" :
+#     dict_dataset =  read_data_json(JSONS_FOLDER / DATASET_WITH_TEXT_DOC ,"utf-8")
+#     data1 = split_dataset(dict_dataset)
+#     data2 = split_dataset(dict_dataset)
+#     set1 = set([x["id"]for x in data1["test"]])
+#     set2 = set([x["id"]for x in data2["test"]])
+#     print(set1)
+#     if set1 == set2 :
+#         print("ok")
+#         print(f"longitud set1 {len(set1)} , longitud set2 {len(set2)}")
