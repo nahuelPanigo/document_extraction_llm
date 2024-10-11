@@ -1,18 +1,23 @@
 import pandas as pd
 import  json
 from bs4 import BeautifulSoup
-from constant import DATA_FOLDER,DATASET_SEDICI_URL_BASE,DATASET_FILENAME,PDF_FOLDER,PDF_URL
+from constant import JSON_FOLDER,DATASET_SEDICI_URL_BASE,PDF_URL,DATA_FOLDER
 from utils.read_and_write_files import write_to_json
 import requests
 import re
 import os
 import time
 from utils.pdf_reader import PdfReader
+from utils.read_and_write_files import write_to_json
 
+
+
+PDF_FOLDER = DATA_FOLDER / "pdfs2/"
+DATASET_FILENAME = "metadata_sedici_files3.json"
 
 def get_list_sedici_files_and_meta(page_param):
     response = requests.get(DATASET_SEDICI_URL_BASE+str(page_param))
-    soup = BeautifulSoup(response.content, 'xml')
+    soup = BeautifulSoup(response.content, features="lxml-xml")
     return soup.find_all("oai_dc:dc")
 
 def sedici_file_and_meta_page(record,dc_identifier_url):
@@ -34,14 +39,14 @@ def extract_metadata_from_tag(tag,metadata):
 
 def download_file(metadata,dc_identifier_url,final_metadata):
     try:
-        id=metadata["sedici2003.identifier"]
         dc_id=dc_identifier_url.split("e/")[1]
+        id=dc_id.replace("/","-")
         resp = requests.get(PDF_URL+dc_id+"/Documento_completo.pdf?sequence=1&isAllowed=y")
         if resp.status_code == 200:
-            file_path = os.path.join(PDF_FOLDER, id + ".pdf")
+            file_path = PDF_FOLDER / f"{id}.pdf"
             with open(file_path, "wb") as f:
                 f.write(resp.content)
-            print("bajo")
+            print("bajo",id)
             final_metadata[id] = metadata
         else:
             print("no esta el archivo")
@@ -51,7 +56,7 @@ def download_file(metadata,dc_identifier_url,final_metadata):
 
 
 def download_files_and_metadata():
-    array_parameter_page = [x*100 for x in range(0,40)]
+    array_parameter_page = [x*100 for x in range(1400,1410)]
     final_metadata = {}
     #100 resultados por paginas iteramos por 40 paginas
     for page_param in array_parameter_page:
@@ -67,8 +72,8 @@ def download_files_and_metadata():
             #obtenemos el archivo
             download_file(metadata,dc_identifier_url,final_metadata)
         time.sleep(40)
-    with open(DATA_FOLDER+DATASET_FILENAME, 'w', encoding='latin-1') as jsonfile:
-        json.dump(final_metadata, jsonfile, indent=4)
+    write_to_json(JSON_FOLDER / DATASET_FILENAME ,final_metadata,"utf-8")
+
 
 
 def get_documents():
@@ -98,7 +103,7 @@ def get_files():
 
 
 def add_text_input_to_Dataset():
-    with open(DATA_FOLDER+DATASET_FILENAME, 'r', encoding='latin-1') as jsonfile:
+    with open(JSON_FOLDER+DATASET_FILENAME, 'r', encoding='latin-1') as jsonfile:
         data_dict = json.load(jsonfile)
     docs = get_files()
     data = []
@@ -109,7 +114,7 @@ def add_text_input_to_Dataset():
         data_dict[doc[2]] = {k: v for k, v in data_dict[doc[2]].items() if k != "abstract"}
         data.append(data_dict[doc[2]])
 
-    write_to_json(DATA_FOLDER+DATASET_FILENAME,data,'utf-8')
+    write_to_json(JSON_FOLDER+DATASET_FILENAME,data,'utf-8')
 
 
 

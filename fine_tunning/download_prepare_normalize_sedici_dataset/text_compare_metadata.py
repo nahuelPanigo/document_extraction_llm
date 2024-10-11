@@ -4,10 +4,11 @@ import os
 import re
 import csv
 
-from constant import DATA_FOLDER,DATASET_FILENAME,TXT_FOLDER,JSON_FOLDER,XML_FOLDER,CANT_TOKENS,TOKENS_LENGTH
+from constant import DATA_FOLDER,DATASET_FILENAME,JSON_FOLDER,XML_FOLDER,CANT_TOKENS,TOKENS_LENGTH
 from utils.normalice_data import normalize_text,build_pattern_issn,build_pattern_volume
 from utils.read_and_write_files import read_data_json,detect_encoding,read_data_txt
 
+TXT_FOLDER = DATA_FOLDER / "texts2/"
 
 def parse_and_search_patters_ids(value, pdf_text,key):
     try:
@@ -80,9 +81,8 @@ def process_txt_data(file_path, reg, pdf_id):
         return pdf_id,{}
 
 def verificar_metadatos():
-    filenames = os.listdir(TXT_FOLDER)
-    keys = [filename.replace(".txt","") for filename in filenames]
-    file_json = JSON_FOLDER+"metadata_sedici_files_changes3.json"
+    keys = [filename.replace(".txt","") for filename in os.listdir(TXT_FOLDER)]
+    file_json = JSON_FOLDER / f"metadata_sedici_files2.json"
     enc=detect_encoding(file_json)['encoding']
     data_dict = read_data_json(file_json,enc)
     txt_paths = [(os.path.join(TXT_FOLDER, f"{key}.txt"), data_dict[key], key) for key in keys]
@@ -92,7 +92,7 @@ def verificar_metadatos():
 
 
 def exportar_a_csv(combined_results,enc,csv_filename):
-    with open(DATA_FOLDER+csv_filename, mode='w', newline='', encoding=enc) as file:
+    with open(DATA_FOLDER / f"{csv_filename}", mode='w', newline='', encoding=enc) as file:
         writer = csv.writer(file)
         writer.writerow(["id", "clave", "valor","valor_normalizado" ,"resultado"])
         for id_key, value_dict in combined_results.items():
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     combined_results = {}
     for pdf_id, result_dict in results:
         combined_results[pdf_id] = result_dict
-        csv_filename= "results_full_pdf_text_patter_ids.csv"
+        csv_filename= "results_full_pdf_text_patter_ids2.csv"
     exportar_a_csv(combined_results,"utf-8",csv_filename)
 
 

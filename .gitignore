@@ -12,6 +12,7 @@
 __pycache__/
 bin/
 lib/
+*venv/
 pyvenv.cfg
 !*output.json
 /fine_tunning/results

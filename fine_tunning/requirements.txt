@@ -14,7 +14,7 @@ peft
 wordcloud
 chardet
 bitsandbytes
-
+tokenizers
 #to make dataset finetunning not required
 #beautifulsoup4
 
