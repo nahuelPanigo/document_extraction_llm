@@ -3,11 +3,13 @@ from constant import DATA_FOLDER,JSON_FOLDER
 from utils.normalice_data import normalize_text,build_pattern_issn,build_pattern_volume
 from utils.read_and_write_files import read_data_json, read_data_txt,detect_encoding
 from utils.colors_terminal import Bcolors
+import pandas as pd
 
-TXT_FOLDER = DATA_FOLDER / "texts2"
+TXT_FOLDER = DATA_FOLDER / "texts3"
 
-csv_file =  "results_from_14k_pfd_text.csv"
-json_file = "metadata_to_check4.json"
+csv_file =  "results_from_pfd_text.csv"
+#initial_metadata = "metadata_to_check4.json"   #metadata a chequear
+initial_metadata = "sedici_filtered_2018_2024.csv"   #metadata a chequear
 file_metada = "final_metadata_Chekced2.json"
 check_changes_file = "check_results.json"
 
@@ -74,7 +76,8 @@ def process_txt_data(file_path, reg, pdf_id):
 
 
 #lo que hay que chequear
-dict = read_data_json(JSON_FOLDER / json_file,"utf-8")
+#dict = read_data_json(JSON_FOLDER / initial_metadata,"utf-8")
+df = pd.read_csv(DATA_FOLDER / initial_metadata)
 #la metadata de los archivos solamente las que validaremos en finetunnig
 metadata = read_data_json(JSON_FOLDER / file_metada,"utf-8")
 check_dict = {}
