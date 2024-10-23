@@ -5,8 +5,8 @@ from multiprocessing import Pool
 from constant import DATA_FOLDER
 
 
-PDF_FOLDER = DATA_FOLDER / "pdfs2"
-TXT_FOLDER2 = DATA_FOLDER / "texts2"
+PDF_FOLDER = DATA_FOLDER / "pdfs3"
+TXT_FOLDER2 = DATA_FOLDER / "texts3"
 
 def process_pdf_data_wrapper(args):
     return process_pdf_data(*args)
@@ -33,3 +33,4 @@ def extract_text():
 
 if __name__ == '__main__':
     extract_text()
+    #print(process_pdf_data(PDF_FOLDER /"10915-94897.pdf","10915-94897"))

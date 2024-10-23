@@ -29,6 +29,16 @@ def build_pattern_issn(issn):
     pattern = re.compile(rf'{first_part}.*{second_part}')
     return pattern
 
+def build_pattern_license(license):
+    number_license = re.search(r'(\d.\d)', license)
+    if number_license:
+        return re.compile(rf"(?i)"  # Hacer el patrón insensible a mayúsculas
+                    r"(Creative\s*Commons.*{number})|"  # Cualquier cosa que empiece con Creative Commons seguido por el número
+                    r"(Atribuci[oó]n.*{number})|"  # Variante en español que empiece con Atribución seguido por el número
+                    r"(Atribucion.*{number})"  # Otra variante sin acento en "Atribución"
+                    )
+    return ""
+
 def build_pattern_volume(volume):
     # Extraer los números del volumen y del número usando expresiones regulares
     volume_number_match = re.search(r'vol[.\s]*(\d+)', volume, re.IGNORECASE)
