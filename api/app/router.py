@@ -21,6 +21,7 @@ async def upload_file(file: UploadFile):
     if(error is not None):
         raise HTTPException(status_code=error, detail=response_extraction.get("error", "Unknown error during text extraction"))
     response_ml,error = model_extraction(response_extraction["text"])
+    print(response_ml)
     if (error is not None):
          raise HTTPException(status_code=error, detail=response_ml.get("error", "Unknown error during model extraction"))
     return response_ml
