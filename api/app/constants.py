@@ -21,6 +21,7 @@ Required keys:
 - dc.title
 - dc.type
 - sedici.creator.person
+
 - sedici.subject.materias
 
 Optional keys (if available in the text):

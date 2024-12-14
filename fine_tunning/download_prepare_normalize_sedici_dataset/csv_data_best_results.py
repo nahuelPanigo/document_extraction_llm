@@ -5,7 +5,7 @@ import ast
 import json
 
 # csv con los matchs
-csv_file =  "results_full_pdf_text_patter_ids2.csv"
+csv_file =  "results_full_pdf_text_patter_ids3.csv"
 #csv_file =  "results_full_pfd_text.csv"
 check_json_file = "metadata_to_check4.json"
 #json to read metadata to make results dict and remove false determinate attr
@@ -15,7 +15,11 @@ values_to_add =["dc.language","dc.description.abstract","dc.subject","dc.title",
                 "sedici.creator.person","sedici.subject.materias","mods.originInfo.place",
                 "sedici.relation.journalTitle","sedici.relation.journalVolumeAndIssue",
                 "sedici.identifier.issn","sedici.title.subtitle",#"sedici.date.exposure",
-                "sedici.contributor.director","sedici.contributor.codirector","sedici.identifier.isbn"
+                "sedici.contributor.director","sedici.contributor.codirector","sedici.identifier.isbn",
+                "sedici.rights.license","sedici.rights.uri","sedici.relation.isRelatedWith",
+                "sedici.identifier.uri","dc.identifier.uri","sedici.contributor.editor",
+                "sedici.contributor.compiler","dc.publisher","dc.date.issued","sedici.contributor.colaborator",
+                "sedici.institucionDesarrollo","thesis.degree.name","thesis.degree.grantor","sedici.relation.event"
                 ]#,"sedici.description.fulltext","sedici.subtype"]
 
 
@@ -25,7 +29,7 @@ def make_dict_best_averge_metadata(csv_file,min_avg):
     actual_id=  df["id"].iloc[0]
     results = {}
     r = {}
-    col_pass = ["dc.subject","dc.type","dc.title","sedici.subject.materias","dc.description.abstract","sedici.relation.journalVolumeAndIssue" ,"sedici.relation.journalTitle"]
+    col_pass = []# ["dc.subject","dc.type","dc.title","sedici.subject.materias","dc.description.abstract","sedici.relation.journalVolumeAndIssue" ,"sedici.relation.journalTitle"]
     for index, row in df.iterrows():
         if(row["clave"] in values_to_add):
             id = row["id"]
@@ -95,11 +99,11 @@ def make_dict_values_to_check(results):
     #write_to_json(JSON_FOLDER+metadata_json,dict_metadata,"utf-8")
     return final_dict
 
-results = make_dict_best_averge_metadata(DATA_FOLDER / csv_file,0.85)
-dict_to_check=make_dict_values_to_check(results)
+results = make_dict_best_averge_metadata(DATA_FOLDER / csv_file,0.1)
+#dict_to_check=make_dict_values_to_check(results)
 #new_dict_metadata = make_final_metadata(results.keys())
 #write_to_json(JSON_FOLDER / "final_metadata_Chekced2.json",new_dict_metadata,"utf-8")
-write_to_json(JSON_FOLDER / check_json_file,dict_to_check,"utf-8")
+#write_to_json(JSON_FOLDER / check_json_file,dict_to_check,"utf-8")
 
 #make avg for each key (avg of author, avg of director, avg of title)...
 types=make_dict_avg_by_types(results)

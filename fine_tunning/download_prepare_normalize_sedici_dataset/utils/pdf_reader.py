@@ -1,10 +1,14 @@
 import pdfplumber
-from PIL import Image
-import numpy as np
+#from PIL import Image
+#import numpy as np
 import cv2
 import numpy as np
-from easyocr import Reader
-from transformers import AutoProcessor, AutoModelForCausalLM
+#from easyocr import Reader
+#from transformers import AutoProcessor, AutoModelForCausalLM
+from paddleocr import PaddleOCR
+import time
+
+
 
 class PdfReader:
     def __new__(cls):
@@ -38,53 +42,75 @@ class PdfReader:
     #         return ""
 
        
-    # def initialize_tags_and_current(self,current_text,current_tag,font_size,text_with_tags,sizes_dict):
-    #     text_with_tags += " ".join(current_text)
-    #     text_with_tags += f"</{current_tag}>"
-    #     current_fontsize = font_size
-    #     current_tag = self.get_correct_tag(current_fontsize, sizes_dict)
-    #     text_with_tags += f"<{current_tag}>"
-    #     return [],current_tag,current_fontsize,text_with_tags
 
-    # def extract_page_pdf_plumber(self, page, current_tag, current_text, current_fontsize, text_with_tags, sizes_dict):
-    #     # Extraer tanto las palabras como las imágenes
-    #     words = page.extract_words()  # Extrae texto
-    #     images = page.images  # Extrae imágenes
-    #     # Crear un índice tanto de palabras como imágenes, con su respectiva posición
-    #     contenido = []
-    #     # Agregar palabras con su posición en el índice
-    #     for word in words:
-    #         contenido.append({
-    #             'tipo': 'text',
-    #             'obj': word,
-    #             'x0': word['x0'],
-    #             'top': word['top']
-    #         })
-    #     # Agregar imágenes con su posición en el índice
-    #     for img in images:
-    #         contenido.append({
-    #             'tipo': 'image',
-    #             'obj': img,
-    #             'x0': img['x0'],
-    #             'top': img['top']
-    #         })
 
-    #     contenido.sort(key=lambda item: (item['top'], item['x0']))
-    #     for item in contenido:
-    #         if item['tipo'] == 'text':
-    #             palabra = item['obj']
-    #             font_size = round(float(palabra['height']))  
-    #             if current_fontsize != font_size:
-    #                 current_text,current_tag,current_fontsize,text_with_tags = self.initialize_tags_and_current(current_text,current_tag,font_size,text_with_tags,sizes_dict)
-    #             current_text.append(palabra['text'])
-    #         elif item['tipo'] == 'image':
-    #             if current_text != []:
-    #                 current_text,current_tag,current_fontsize,text_with_tags = self.initialize_tags_and_current(current_text,current_tag,font_size,text_with_tags,sizes_dict)
-    #             imagen = item['obj']
-    #             text_with_tags += self.extract_ocr(imagen["stream"].get_data())
-    #     text_with_tags += " ".join(current_text)
-    #     text_with_tags += f"</{current_tag}>"  
-    #     return text_with_tags
+    def extract_text_with_xml_tags2(self, pdf_path):
+        with pdfplumber.open(pdf_path) as pdf:
+            sizes_dict =  self.get_fontsizes(pdf_path)
+            current_tag,current_fontsize = self.get_first_tag(pdf.pages[0],sizes_dict)
+            text_with_tags = f"<{current_tag}>"
+            current_text = []
+            for page in pdf.pages:
+                text_with_tags,current_tag,current_text,current_fontsize = self.extract_page_pdf_plumber(page,current_tag,current_text,current_fontsize,text_with_tags,sizes_dict)
+                if(len(text_with_tags.split(" ")) > 4000):
+                    return text_with_tags
+            text_with_tags += " ".join(current_text)
+            text_with_tags += f"</{current_tag}>"
+            return text_with_tags
+
+    def read_text_from_image_paddle(image):
+        nparray = np.frombuffer(image,np.uint8)
+        image = cv2.imdecode(nparray, cv2.IMREAD_COLOR)
+        ocr = PaddleOCR(lang = 'es')
+        result = ocr.ocr(image,cls = False)
+        result = " ".join([word_info[1][0] for line in result for word_info in line])
+        return result
+   
+    def initialize_tags_and_current(self,current_text,current_tag,font_size,text_with_tags,sizes_dict):
+        text_with_tags += " ".join(current_text)
+        text_with_tags += f"</{current_tag}>"
+        current_fontsize = font_size
+        current_tag = self.get_correct_tag(current_fontsize, sizes_dict)
+        text_with_tags += f"<{current_tag}>"
+        return [],current_tag,current_fontsize,text_with_tags
+    
+    def initialize_tags_and_current2(self,current_text,current_tag,font_size,text_with_tags,sizes_dict):
+        text_with_tags += " ".join(current_text)
+        text_with_tags += f"</{current_tag}>"
+        current_fontsize = font_size
+        current_tag = self.get_correct_tag(current_fontsize, sizes_dict)
+        return [],current_tag,current_fontsize,text_with_tags
+
+    def extract_page_pdf_plumber(self, page, current_tag, current_text, current_fontsize, text_with_tags, sizes_dict):
+        # Extraer tanto las palabras como las imágenes
+        words = page.extract_words()  # Extrae texto
+        images = [
+            {
+                'data': image['stream'].get_data(),
+                'top': image['top'],
+                'left': image['left']
+            }
+            for image in page.images
+        ]
+        images.sort(key=lambda x: (x['top'], x['left']))
+        for word in words:
+            if(len(images > 0)):
+                if (word['top'] < images[0]['top']) or ((word['top'] == images[0]['top']) and (word['left'] < images[0]['left'])):
+                    font_size = round(float(word['height']))  
+                    if current_fontsize != font_size:
+                        current_text,current_tag,current_fontsize,text_with_tags = self.initialize_tags_and_current(current_text,current_tag,font_size,text_with_tags,sizes_dict)     
+                    current_text.append(word['text'])
+                else: 
+                    font_size = round(float(word['height']))
+                    current_text,current_tag,current_fontsize,text_with_tags = self.initialize_tags_and_current2(current_text,current_tag,font_size,text_with_tags,sizes_dict)  
+                    current_text += f"<image_extracted>{self.read_text_from_image_paddle(image["data"])}<image_extracted>"
+                    text_with_tags += f"<{current_tag}>"
+        if(len(images) != 0 ):
+            for image in images:
+                current_text,current_tag,current_fontsize,text_with_tags = self.initialize_tags_and_current2(current_text,current_tag,font_size,text_with_tags,sizes_dict)
+                text_with_tags = f"<image_extracted>{self.read_text_from_image_paddle(image["data"])}<image_extracted>"
+                text_with_tags += f"<{current_tag}>"
+        return text_with_tags,current_tag,current_text,current_fontsize 
 
 
     def get_correct_tag(self,font_size,sizes):
@@ -178,9 +204,9 @@ if __name__ == '__main__':
     ROOT_DIR = Path(__file__).resolve().parents[2]
     DATA_FOLDER = Path(os.getenv("DATA_FOLDER", ROOT_DIR / "data" / "sedici"))
     PDF_FOLDER = DATA_FOLDER / "pdfs3/"
-    file = "10915-68695.pdf"
+    file = "10915-103423.pdf"
     filepath = PDF_FOLDER / file
-    extracted_text = pdf_reader.extract_text_with_xml_tags(filepath)
+    extracted_text = pdf_reader.extract_text_with_xml_tags2(filepath)
     print(extracted_text[0:1000])
     end_time = time.time()
     print("The time of execution of above program is :",

@@ -75,7 +75,12 @@ def transform_institution(institution):
         return None
 
 
-
+def transform_degree(degree):
+    try:
+        degree_split = degree.split("::")
+        return degree_split [0] 
+    except:
+        return degree
 
 
 columns_types = {
@@ -178,6 +183,11 @@ filtered_df['id'] = filtered_df['dc.identifier.uri'].apply(transform_uri)
 filtered_df = filtered_df.loc[filtered_df['id'].isin(texts)]
 
 
+degrees = ["thesis.degree.name","thesis.degree.grantor"]
+for degree in degrees:
+    print("DEGREEEEE",degree)
+    filtered_df[degree] = filtered_df[degree].apply(lambda x: x.split("::")[0] if pd.notna(x) else None)
+
 
 filtered_df['dc.subject.ford'] = filtered_df['sedici.subject.materias'].apply(transform_subject)
 filtered_df.drop('sedici.subject.materias',axis=1,inplace=True)
@@ -195,14 +205,16 @@ for institution in institutions:
 filtered_df["dc.subject"] = filtered_df["dc.subject"].apply(lambda x: x.split("||") if pd.notna(x) else None)
 
 
-# guardar csv con los metadatos extraidos y cambiados
-filtered_df.to_csv(DATA_FOLDER / "sedici_filtered_2018_2024.csv", index=False)  
-
 # Convertir listas a strings en la columna "sedici.institucionDesarrollo"
 filtered_df["sedici.institucionDesarrollo"] = filtered_df["sedici.institucionDesarrollo"].apply(lambda x: ', '.join(x) if isinstance(x, list) else x)
 
+
+# guardar csv con los metadatos extraidos y cambiados
+filtered_df.to_csv(DATA_FOLDER / "sedici_filtered_2018_2024.csv", index=False)  
+
+
 # Ahora puedes obtener los valores únicos sin problemas
-print(filtered_df["sedici.institucionDesarrollo"].unique())
+
 
 # for uri in filtered_df['dc.identifier.uri'].head(5000):
 #     try:

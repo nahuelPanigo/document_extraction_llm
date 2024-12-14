@@ -23,7 +23,10 @@ def parse_and_search_patters_ids(value, pdf_text,key):
             return re.search(pattern, pdf_text, re.IGNORECASE) is not None
         else:
             pattern = build_pattern_license(value)
-            return re.search(pattern, pdf_text) is not None
+            print(pattern)
+            result = re.search(pattern, pdf_text) is not None
+            print (result)
+            return result
     except:
         return False
 
@@ -91,10 +94,17 @@ def process_txt_data(file_path, reg, pdf_id):
         return pdf_id,{}
 
 def verificar_metadatos():
-    keys = [filename.replace(".txt","") for filename in os.listdir(TXT_FOLDER)]
+    #keys = [filename.replace(".txt","") for filename in os.listdir(TXT_FOLDER)]
+    keys = ["10915-65740"]
     file_csv = DATA_FOLDER / "sedici_filtered_2018_2024.csv"
     metadata =  pd.read_csv(file_csv)
-    txt_paths = [(os.path.join(TXT_FOLDER, f"{key}.txt"), metadata.loc[metadata['id'] == key].to_dict(orient='records')[0], key) for key in keys]
+    txt_paths = []
+    for elem in keys:
+        try:
+           elem_clean = elem.strip()
+           txt_paths.append((TXT_FOLDER / f"{elem}.txt",metadata.loc[metadata['id'].astype(str) == elem_clean].to_dict(orient='records')[0],elem_clean))
+        except Exception as e:
+            print("no encontro el elemento ", metadata.loc[metadata['id'] == elem] , e)
     results = []
     for element in txt_paths:
         results.append(process_txt_data(element[0],element[1],element[2]))
@@ -117,11 +127,11 @@ def exportar_a_csv(combined_results,enc,csv_filename):
 
 if __name__ == '__main__':
     results = verificar_metadatos()
-    combined_results = {}
-    for pdf_id, result_dict in results:
-        combined_results[pdf_id] = result_dict
-        csv_filename= "results_full_pdf_text_patter_ids3.csv"
-    exportar_a_csv(combined_results,"utf-8",csv_filename)
+    # combined_results = {}
+    # for pdf_id, result_dict in results:
+    #     combined_results[pdf_id] = result_dict
+    #     csv_filename= "results_full_pdf_text_patter_ids3.csv"
+    #exportar_a_csv(combined_results,"utf-8",csv_filename)
 
 
 

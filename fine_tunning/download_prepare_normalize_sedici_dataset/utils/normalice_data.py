@@ -33,9 +33,9 @@ def build_pattern_license(license):
     number_license = re.search(r'(\d.\d)', license)
     if number_license:
         return re.compile(rf"(?i)"  # Hacer el patrón insensible a mayúsculas
-                    r"(Creative\s*Commons.*{number})|"  # Cualquier cosa que empiece con Creative Commons seguido por el número
-                    r"(Atribuci[oó]n.*{number})|"  # Variante en español que empiece con Atribución seguido por el número
-                    r"(Atribucion.*{number})"  # Otra variante sin acento en "Atribución"
+                    rf"(Creative\s*Commons.*{number_license[0]})|"  # Cualquier cosa que empiece con Creative Commons seguido por el número
+                    rf"(Atribuci[oó]n.*{number_license[0]})|"  # Variante en español que empiece con Atribución seguido por el número
+                    rf"(Atribucion.*{number_license[0]})"  # Otra variante sin acento en "Atribución"
                     )
     return ""
 
