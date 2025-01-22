@@ -9,10 +9,6 @@ def split_dataset(dict_dataset):
     #total_len = 100
     # Crear un nuevo diccionario sin el campo "abstract"
     new_dict = {x: {k: v for k, v in y.items() if k != "dc.description.abstract"} for x, y in dict_dataset.items()}
-    # new_dict = {
-    #     x: {**y , "id":x}
-    #     for x ,y in dict_dataset.items()
-    # }
     train_end = int(total_len * 0.8)
     test_end = int(total_len * 0.9)
     list_items_dataset = list(new_dict.values())
@@ -38,7 +34,7 @@ def add_prompt_and_structure(dict_dataset):
     return DatasetDict(dataset_dict)
 
 
-def preprocess_function(examples,model,tokenizer):
+def preprocess_function(examples,tokenizer):
     inputs = examples['input']
     targets = examples['output']
     model_inputs = tokenizer(inputs, max_length=MAX_TOKENS_INPUT, truncation=True, padding="max_length")
@@ -50,7 +46,7 @@ def preprocess_function(examples,model,tokenizer):
 def get_tokens(dict_dataset,model,tokenizer):
     datasets = add_prompt_and_structure(dict_dataset)
     # Tokenize dataset
-    return datasets.map(preprocess_function, batched=True, fn_kwargs={'model': model , "tokenizer" : tokenizer})
+    return datasets.map(preprocess_function, batched=True, fn_kwargs={"tokenizer" : tokenizer})
 
 
 def read_data_json(json_filename,enc):

@@ -8,69 +8,6 @@ class PdfReader:
         return cls.instance
         
 
-    def extract_page_pdf_plumber(self, page, current_tag, current_text, current_fontsize, text_with_tags, sizes_dict):
-        # Extraer tanto las palabras como las imágenes
-        words = page.extract_words()  # Extrae texto
-        images = page.images  # Extrae imágenes
-        
-        # Crear un índice tanto de palabras como imágenes, con su respectiva posición
-        contenido = []
-        
-        # Agregar palabras con su posición en el índice
-        for word in words:
-            contenido.append({
-                'tipo': 'text',
-                'obj': word,
-                'x0': word['x0'],
-                'top': word['top']
-            })
-        
-        # Agregar imágenes con su posición en el índice
-        for img in images:
-            contenido.append({
-                'tipo': 'image',
-                'obj': img,
-                'x0': img['x0'],
-                'top': img['top']
-            })
-        
-        # Ordenar el contenido por la posición vertical (top), luego horizontal (x0)
-        contenido.sort(key=lambda item: (item['top'], item['x0']))
-        
-        # Iterar sobre el contenido (palabras e imágenes)
-        for item in contenido:
-            if item['tipo'] == 'texto':
-                # Procesar el texto
-                palabra = item['obj']
-                font_size = round(float(palabra['height']))  # Redondear a entero más cercano
-                
-                # Verificar si el tamaño de fuente cambió
-                if current_fontsize != font_size:
-                    text_with_tags += " ".join(current_text)
-                    text_with_tags += f"</{current_tag}>"
-                    current_text = []
-                    current_fontsize = font_size
-                    current_tag = self.get_correct_tag(current_fontsize, sizes_dict)
-                    text_with_tags += f"<{current_tag}>"
-                
-                # Agregar el texto extraído
-                current_text.append(palabra['text'])
-            
-            elif item['tipo'] == 'imagen':
-                # Procesar la imagen: llamar al OCR para obtener el texto
-                imagen = item['obj']
-                ocr_text = self.extraxt_ocr(imagen["stream"].get_data())
-                
-                # Insertar el texto OCR con las etiquetas que estás usando
-            text_with_tags +=f" {ocr_text} "
-
-        # Añadir el texto finalizado
-        text_with_tags += " ".join(current_text)
-        text_with_tags += f"</{current_tag}>"
-        
-        return text_with_tags
-
-
     def get_correct_tag(self,font_size,sizes):
         """this function returns the correct tag based on the font size"""
         if font_size >= sizes['h1']:
@@ -164,9 +101,13 @@ class PdfReader:
             
     def get_fontsizes(self,pdf_path):
         fontsizes = []
+        count = 0
         with pdfplumber.open(pdf_path) as pdf:
             print(pdf.metadata)
             for page in pdf.pages:
+                count +=1
+                if(count == 3):
+                    break
                 for obj in page.extract_words():
                     if round(float(obj["height"])) not in fontsizes and obj["height"] < 40:
                         fontsizes.append(round((float(obj["height"]))))

@@ -1,7 +1,7 @@
 
-from app.utils.extraction.text_extraction import get_text
-from app.utils.model_manipulation.llms_extraction import model_extraction
-from app.errors import ROUTE_ERRORS as RO_E
+from .utils.extraction.text_extraction import get_text
+from .utils.model_manipulation.llms_extraction import model_extraction
+from .errors import ROUTE_ERRORS as RO_E
 from fastapi import APIRouter,HTTPException,UploadFile
 
 router = APIRouter()
