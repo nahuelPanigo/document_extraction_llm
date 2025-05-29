@@ -1,25 +1,34 @@
 import requests
 from pathlib import Path
-import json
-
-def write_to_json(json_filename,data,enc):
-  with open(json_filename, 'w', encoding=enc) as jsonfile:
-        json.dump(data, jsonfile, indent=4)
+import os
+from ..utils.text_extraction.read_and_write_files import read_data_json,write_to_json
+from ..constants import URL_SERVICES_EXTRACTION,JSON_FILENAME,PDF_FOLDER,JSON_FOLDER,RESULT_FOLDER_VALIDATION
 
 
-url_sevices_extraction = "http://localhost:8000/upload"
-ROOT_DIR = Path(__file__).resolve().parents[1]  / "fine_tunning" 
-PDF_FOLDER = ROOT_DIR  / "data/sedici/pdfs/"
-
+original_metadata = {}
 final_dict = {}
-for id in test_keys:
-    filename= PDF_FOLDER  / f"{id}.pdf"
-    with open(str(filename), 'rb') as file :
-        data = {'file' : (str(filename), file)}
-        response = requests.post(url=url_sevices_extraction,files=data)
+for filename in os.listdir(PDF_FOLDER):
+    id = filename.replace(".pdf","")
+    metadata =read_data_json(JSON_FOLDER / JSON_FILENAME)
+    with open(str(PDF_FOLDER / filename), 'rb') as file :
+        type = metadata[id]["dc.type"]
+        files = {'file' : (str(filename), file,'application/pdf')}
+        response = requests.post(url=URL_SERVICES_EXTRACTION,files=files, data = {"type" : "General"})
+        final_dict[id] = []
+        print("procesando el id :",id)
         if response.status_code == 200:
-            final_dict[id] =  response.json()
+            final_dict[id].append(response.json())
+        else:
+            print(f"problem in id: {id} status code : {response.status_code} con el error: {response.text}")
+        type = metadata[id]["dc.type"]
+        file.seek(0)
+        data = {'file' : (str(filename), file), 'type' : type}
+        response = requests.post(url=URL_SERVICES_EXTRACTION,files=files, data = {"type" : type})
+        if response.status_code == 200:
+            final_dict[id].append(response.json())
         else:
             print(f"problem in id: {id} status code : {response.status_code}")
-
-write_to_json("result_finetunnig_4096_prompt1.json",final_dict,"utf-8")
+        metadata[id].pop("original_text")
+        original_metadata[id] = metadata[id] 
+write_to_json(RESULT_FOLDER_VALIDATION + "result_test_2048_prompt_by_type.json",final_dict,"utf-8")
+write_to_json(RESULT_FOLDER_VALIDATION + "result_test_original_metadata.json",original_metadata,"utf-8")

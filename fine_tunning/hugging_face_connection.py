@@ -9,7 +9,7 @@ def get_dataset(datasetname):
     api_token = os.getenv("TOKEN_HUGGING_FACE")
    
     headers = {"Authorization": f"Bearer {api_token}"}
-    url = f"https://huggingface.co/datasets/Nahpanigo99/university_docs_with_metadata/resolve/main/{datasetname}"
+    url = f"https://huggingface.co/datasets/Nahpanigo99/metadata_correjida/resolve/main/{datasetname}"
     response = requests.get(url, headers=headers)
     return response.json()
 

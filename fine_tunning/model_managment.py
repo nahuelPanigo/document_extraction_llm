@@ -1,7 +1,55 @@
 import torch
 from peft import PeftModel
-from peft_configuration import get_peft_config
-from transformers import BitsAndBytesConfig
+from fine_tunning.peft_configuration import get_peft_config
+from transformers import BitsAndBytesConfig,AutoModelForSeq2SeqLM,AutoModelForCausalLM
+from constants import BASE_MODEL_GEMMA,BASE_MODEL_LLAMA,BASE_MODEL_LED,BASE_MODEL_DEEPSEK_QWEN,BASE_MODEL_NUEXTRACT,BASE_MODEL_LED_SPANISH,BASE_MODEL_LED_LARGE,BASE_MODEL_T5
+
+
+
+def get_model_type(model_name):
+    try:
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)  # Try for encoder-decoder
+        model.config.is_encoder_decoder  # If True, it's likely an encoder-decoder model
+        return "seq2seq"
+    except:
+        try:
+            # Try causal model (Decoder-Only)
+            model = AutoModelForCausalLM.from_pretrained(model_name)
+            return "causal"
+        except:
+            raise ValueError("Model architecture not recognized")
+            return "unknown"
+
+
+
+def get_model(model_name,quantized=False,peft=False):
+    model_mapping = {
+    "LED": LedModel,
+    "LLAMA": AutoModelForCausalLM,
+    "GEMMA": AutoModelForCausalLM,
+    "LED_SPANISH": LedModel,
+    "DEEPSEK_QWEN": AutoModelForCausalLM,
+    "LED_LARGE": LedModel,
+    "NUEXTRACT": AutoModelForCausalLM,
+    "T5": T5Model
+    }
+
+    model_name_mapping = {
+        "LED": BASE_MODEL_LED,
+        "LLAMA": BASE_MODEL_LLAMA,
+        "GEMMA": BASE_MODEL_GEMMA,
+        "LED_SPANISH": BASE_MODEL_LED_SPANISH,
+        "DEEPSEK_QWEN": BASE_MODEL_DEEPSEK_QWEN,
+        "LED_LARGE": BASE_MODEL_LED_LARGE,
+        "NUEXTRACT": BASE_MODEL_NUEXTRACT,
+        "T5": BASE_MODEL_T5
+    }
+
+    model_class = model_mapping.get(model_name)
+    model_name = model_name_mapping.get(model_name)
+    return model_class(model_name,quantized,peft)
+
+
 
 # Clase base para todos los modelos
 class BaseModel:
@@ -14,6 +62,10 @@ class BaseModel:
         # Cargar el modelo y el tokenizador al crear la instancia
         self.load_model_and_tokenizer()
 
+
+    def get_model_name(self):
+        return self.base_model_name
+    
     def load_quantized_configuration(self):
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
@@ -59,34 +111,25 @@ class BaseModel:
         raise NotImplementedError("Este método debe ser implementado por las subclases.")
 
 
-# Subclase para el modelo Llama
-class LlamaModel(BaseModel):
-    def __init__(self, quantized=True, peft=True):
-        from constant import BASE_MODEL_LLAMA
-        super().__init__(BASE_MODEL_LLAMA, quantized, peft)
-
-    def get_base_model_class(self):
-        from transformers import LlamaTokenizer, LlamaForCausalLM
-        return LlamaForCausalLM, LlamaTokenizer
-
-
-# Subclase para el modelo Gemma
-class GemmaModel(BaseModel):
-    def __init__(self, quantized=True, peft=True):
-        from constant import BASE_MODEL_GEMMA
-        super().__init__(BASE_MODEL_GEMMA, quantized, peft)
-
-    def get_base_model_class(self):
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        return AutoModelForCausalLM, AutoTokenizer
-
-
 # Subclase para el modelo LED
 class LedModel(BaseModel):
-    def __init__(self, quantized=False, peft=False):
-        from constant import BASE_MODEL_LED
-        super().__init__(BASE_MODEL_LED, quantized, peft)
-
     def get_base_model_class(self):
         from transformers import LEDTokenizer, LEDForConditionalGeneration
         return LEDForConditionalGeneration, LEDTokenizer
+
+    
+class AutoModelForCausalLM(BaseModel):
+    def get_base_model_class(self):
+        from transformers import AutoTokenizer, AutoModelForCausalLM
+        return AutoModelForCausalLM, AutoTokenizer
+    
+
+class T5Model(BaseModel):
+    def get_base_model_class(self):
+        from transformers import T5Tokenizer, T5ForConditionalGeneration
+        return T5ForConditionalGeneration, T5Tokenizer
+    
+
+
+
+    

@@ -1,32 +1,63 @@
-from constant import PROMPT,MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT
+from constants import MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT#, PROMPT
+from constants import PROMPT_ARTICULO,PROMPT_GENERAL,PROMPT_LIBRO,PROMPT_TESIS
+from constants import SCHEMA_ARTICULO,SCHEMA_GENERAL,SCHEMA_LIBRO,SCHEMA_TESIS
 import json
 from datasets import Dataset,DatasetDict
-from constant import JSONS_FOLDER,DATASET_WITH_TEXT_DOC
-
-def split_dataset(dict_dataset):
-    data = {}
-    total_len = len(dict_dataset)
-    #total_len = 100
-    # Crear un nuevo diccionario sin el campo "abstract"
-    new_dict = {x: {k: v for k, v in y.items() if k != "dc.description.abstract"} for x, y in dict_dataset.items()}
-    train_end = int(total_len * 0.8)
-    test_end = int(total_len * 0.9)
-    list_items_dataset = list(new_dict.values())
-    data["training"]=list_items_dataset[:train_end]
-    data["test"] = list_items_dataset[train_end:test_end]
-    data["validation"] = list_items_dataset[test_end:total_len]
-    return data
+import torch
 
 
-def add_prompt_and_structure(dict_dataset):
-    data = split_dataset(dict_dataset)
+def input_text_schema( text, schema, example=["","",""]):
+    schema = json.dumps(json.loads(schema), indent=4)
+    input_llm =  "<|input|>\n### Template:\n" +  schema + "\n"
+    for i in example:
+      if i != "":
+          input_llm += "### Example:\n"+ json.dumps(json.loads(i), indent=4)+"\n"
+    
+    input_llm +=  "### Text:\n"+text +"\n<|output|>\n"
+    return input_llm
+
+
+def input_text(text,prompt):
+    return  f"{prompt} Document: {text}"
+
+def get_prompt_by_type(type):
+    if type == "Articulo":
+        return PROMPT_ARTICULO
+    if type == "Tesis":
+        return PROMPT_TESIS
+    return PROMPT_LIBRO
+
+def get_schema_by_type(type):
+    if type == "Articulo":
+        return SCHEMA_ARTICULO
+    if type == "Tesis":
+        return SCHEMA_TESIS
+    return SCHEMA_LIBRO
+
+
+
+def  get_general_dict(dict):
+    items_to_add = {"dc.language" : "language","dc.title" : "title" ,"dc.title.subtitle" : "subtitle" , "sedici.creator.person" : "creator" ,
+                     "dc.subject.ford" : "subject","sedici.rights.license" : "rights", "sedici.rights.uri" : "rightsurl","dc.date.issued" : "date",
+                    "mods.originInfo.place" : "originPlaceInfo","sedici.relation.isRelatedWith":"isrelatedwith"}
+    #"dc.identifier.uri": "dc.uri" ,"sedici.rights.uri":"sedici.uri"
+    return {k: v for k, v in dict.items() if k in items_to_add.values()}
+
+
+
+
+def add_schema_and_structure(dict_dataset):
     formatted_data = {}
-    for step in data.keys():
+    for step in dict_dataset.keys():
         step_data = []
-        for item in data[step]:  
-            input_text = f"{PROMPT} Document: {item['original_text']}"
-            output_text = json.dumps({k: v for k, v in item.items() if k != "original_text"})
-            step_data.append({"input": input_text, "output": output_text})
+        for item in dict_dataset[step]:  
+            original_text = item["original_text"]
+            schema_type =get_schema_by_type(item["dc.type"]) 
+            output_text = json.dumps(get_general_dict(item))
+            step_data.append({"input": input_text_schema(original_text,SCHEMA_GENERAL), "output": output_text})
+            final_dict = {k: v for k, v in item.items() if  k != "dc.type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract"}
+            output_text = json.dumps(final_dict)
+            step_data.append({"input": input_text_schema(original_text,schema_type), "output": output_text})
         formatted_data[step] = step_data
     dataset_dict = {}
     for step, step_data in formatted_data.items():
@@ -34,19 +65,67 @@ def add_prompt_and_structure(dict_dataset):
     return DatasetDict(dataset_dict)
 
 
-def preprocess_function(examples,tokenizer):
+
+
+def add_prompt_and_structure(dict_dataset):
+    formatted_data = {}
+    for step in dict_dataset.keys():
+        step_data = []
+        for item in dict_dataset[step]:
+            original_text = item["original_text"]
+            prompt_type =get_prompt_by_type(item["dc.type"]) 
+            output_text = json.dumps(get_general_dict(item))
+            step_data.append({"input": input_text(original_text,PROMPT_GENERAL), "output": output_text})
+            final_dict = {k: v for k, v in item.items() if  k != "dc.type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract"}
+            output_text = json.dumps(final_dict)
+            step_data.append({"input": input_text(original_text,prompt_type), "output": output_text})
+        formatted_data[step] = step_data
+    print(formatted_data["training"][0]["output"])
+    print(formatted_data["training"][1]["output"])
+    dataset_dict = {}
+    for step, step_data in formatted_data.items():
+      dataset_dict[step] = Dataset.from_list(step_data)
+    return DatasetDict(dataset_dict)
+
+
+def preprocess_function(examples,tokenizer,model_type="causal"):
     inputs = examples['input']
     targets = examples['output']
     model_inputs = tokenizer(inputs, max_length=MAX_TOKENS_INPUT, truncation=True, padding="max_length")
     labels = tokenizer(targets, max_length=MAX_TOKENS_OUTPUT, truncation=True, padding="max_length")
-    model_inputs["labels"] = labels["input_ids"]
+    if model_type == "causal":
+        input_ids = torch.tensor(model_inputs["input_ids"])  # Convertir a tensor
+        label_ids = torch.tensor(labels["input_ids"])  # Convertir a tensor
+        attention_mask = torch.tensor(model_inputs["attention_mask"])  # Convertir a tensor
+        # 1️⃣ Concatenamos input_ids con label_ids
+        combined_input_ids = torch.cat([input_ids, label_ids], dim=-1)  # [1, 1536]
+
+        # 2️⃣ Extendemos la attention_mask
+        combined_attention_mask = torch.cat([attention_mask, torch.ones(label_ids.shape, dtype=torch.long)], dim=-1)
+
+        # 3️⃣ Creamos los labels con -100 en la parte de input
+        labels_padded = combined_input_ids.clone()
+        labels_padded[:, :input_ids.shape[1]] = -100  # Ignorar tokens de entrada en la pérdida
+        # Asignamos los valores correctos
+        model_inputs["input_ids"] = combined_input_ids
+        model_inputs["attention_mask"] = combined_attention_mask
+        model_inputs["labels"] = labels_padded   
+    else:
+        model_inputs["labels"] = labels["input_ids"]
     return model_inputs
 
 
-def get_tokens(dict_dataset,model,tokenizer):
-    datasets = add_prompt_and_structure(dict_dataset)
-    # Tokenize dataset
-    return datasets.map(preprocess_function, batched=True, fn_kwargs={"tokenizer" : tokenizer})
+
+def get_tokens(dict_dataset,tokenizer,type_of_model="prompt",model_type="causal"):
+    if type_of_model == "prompt":
+        datasets = add_prompt_and_structure(dict_dataset)
+    else:
+        datasets = add_schema_and_structure(dict_dataset)
+    dataset = datasets.map(preprocess_function, batched=True, fn_kwargs={"tokenizer" : tokenizer,"model_type":model_type})
+    print(f"len of labels : {len(dataset['training'][0]['labels'])}")
+    print(f"len of input_ids : {len(dataset['training'][0]['input_ids'])}")
+    print(f"len of attention_mask : {len(dataset['training'][0]['attention_mask'])}")
+    return dataset
 
 
 def read_data_json(json_filename,enc):
@@ -54,15 +133,3 @@ def read_data_json(json_filename,enc):
         return json.load(file)
 
 
-
-
-# if __name__ == "__main__" :
-#     dict_dataset =  read_data_json(JSONS_FOLDER / DATASET_WITH_TEXT_DOC ,"utf-8")
-#     data1 = split_dataset(dict_dataset)
-#     data2 = split_dataset(dict_dataset)
-#     set1 = set([x["id"]for x in data1["test"]])
-#     set2 = set([x["id"]for x in data2["test"]])
-#     print(set1)
-#     if set1 == set2 :
-#         print("ok")
-#         print(f"longitud set1 {len(set1)} , longitud set2 {len(set2)}")
