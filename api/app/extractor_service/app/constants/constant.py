@@ -1,0 +1,1 @@
+FILETYPES = [".pdf", ".docx"]

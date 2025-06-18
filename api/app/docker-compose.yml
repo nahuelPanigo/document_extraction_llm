@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build:
+      context: ./orchestrator
+    container_name: orchestrator
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVICE_TOKEN=${ORCHESTRATOR_TOKEN}
+      - EXTRACTOR_TOKEN=${EXTRACTOR_TOKEN}
+      - LLM_LED_TOKEN=${LLM_LED_TOKEN}
+      - IDENTIFIER_PATH_MODEL=${IDENTIFIER_PATH_MODEL}
+      - IDENTIFIER_PATH_VECTORIZER=${IDENTIFIER_PATH_VECTORIZER}
+    depends_on:
+      - extractor_service
+      - llm_service_led
+
+  extractor_service:
+    build:
+      context: ./extractor_service
+    container_name: extractor_service
+    ports:
+      - "8001:8001"
+    environment:
+      - SERVICE_TOKEN=${EXTRACTOR_TOKEN}
+
+  llm_service_led:
+    build:
+      context: ./llm_service
+    container_name: llm_service_led
+    ports:
+      - "8002:8002"
+    environment:
+      - SERVICE_TOKEN=${LLM_LED_TOKEN}
+      - IS_LOCAL_MODEL=${IS_LOCAL_MODEL}
+      - MODEL_SELECTED=${MODEL_SELECTED_SERVICE1}
+      - MODEL_PATH=${MODEL_PATH_SERVICE1}
+      - MAX_TOKENS_INPUT=${MAX_TOKENS_INPUT_SERVICE1}
+      - MAX_TOKENS_OUTPUT=${MAX_TOKENS_OUTPUT_SERVICE1}
+      - TRUNACTION=${TRUNACTION_SERVICE1}
+      - SPECIAL_TOKENS_TREATMENT=${SPECIAL_TOKENS_TREATMENT_SERVICE1}
+      - ERRORS_TREATMENT=${ERRORS_TREATMENT_SERVICE1}
+      - QUANTIZATION=${QUANTIZATION_SERVICE1}
+    volumes:
+      - ./models:/models

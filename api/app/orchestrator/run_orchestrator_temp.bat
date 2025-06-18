@@ -1,0 +1,8 @@
+set SERVICE_TOKEN=397e50621c2cbc17bc9cf132e95d644ce1bebed3a5bf98786a4325bc7cdb0abf
+set EXTRACTOR_TOKEN=f85b060e12171336480486d98b694bcb0b6c1c826938c7e6916277d6676bae8c
+set LLM_LED_TOKEN=7a8226bff24eb69ada591c42e62647ef411b1f390984348fd40015173256473e
+set EXTRACTOR_URL=http://localhost:8001
+set LLM_LED_URL=http://localhost:8002
+set IDENTIFIER_PATH_MODEL=./models/modelo_tipo_documento.pkl
+set IDENTIFIER_PATH_VECTORIZER=./models/vectorizador_tfidf.pkl
+uvicorn app.main:app --port 8000 --reload
