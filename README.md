@@ -71,8 +71,57 @@ make post http://localhost:5000/upload    with Multipart form:   key=file and th
 document_extraction_llm
 ├── api
 │   ├── app.py
-│   │   ├── errors.py
-│   │   ├── constants.py
+│   │   ├── extractor_service
+│   │   │   ├── app
+│   │   │   │   ├── main.py
+│   │   │   │   ├── logging_config.py
+│   │   │   │   ├── routers
+│   │   │   │   │   └── routers.py
+│   │   │   │   ├── errors
+│   │   │   │   │   └── errors.py
+│   │   │   │   ├── constants
+│   │   │   │   │   └── constants.py
+│   │   │   │   ├── middlewares
+│   │   │   │   │   └── security.py
+│   │   │   │   └── services
+│   │   │   │          ├── strategies
+│   │   │   │          │   ├── pdf_reader_strategy.py
+│   │   │   │          │   ├── reader_strategy.py
+│   │   │   │          │   └── word_reader_strategy.py
+│   │   │   │          ├── utils
+│   │   │   │              └──normalization_and_parse.py
+│   │   ├── llm_service
+│   │   │   ├── app
+│   │   │   │   ├── main.py
+│   │   │   │   ├── logging_config.py
+│   │   │   │   ├── routers
+│   │   │   │   │   └── routers.py
+│   │   │   │   ├── errors
+│   │   │   │   │   └── errors.py
+│   │   │   │   ├── constants
+│   │   │   │   │   └── constants.py
+│   │   │   │   ├── middlewares
+│   │   │   │   │   └── security.py
+│   │   │   │   └── services
+│   │   │   │          ├── llms_extraction.py
+│   │   │   │          └── model_managment.py
+│   │   ├── orchestrator
+│   │   │   ├── app
+│   │   │   │   ├── main.py
+│   │   │   │   ├── logging_config.py
+│   │   │   │   ├── routers
+│   │   │   │   │   └── routers.py
+│   │   │   │   ├── errors
+│   │   │   │   │   └── errors.py
+│   │   │   │   ├── constants
+│   │   │   │   │   └── constants.py
+│   │   │   │   ├── middlewares
+│   │   │   │   │   └── security.py
+│   │   │   │   └── services
+│   │   │   │          ├── strategies
+│   │   │   │          │   ├── type_strategy.py
+│   │   │   │          ├── identifier.py
+│   │   │   │          └── orchestrator.py
 │   │   ├── fine-tuned-model
 │   │   ├── main.py
 │   │   ├── run.py

@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 from app.logging_config import logging
 import requests
+from typing import Tuple, Optional
 
 class TypeStrategy(ABC):
     def __init__(self):
@@ -14,8 +15,7 @@ class TypeStrategy(ABC):
         pass
 
 
-    def consume_llm(self,api_key:str,input: str,url: str) -> dict:
-           # Paso 2: Llamar al servicio de LLM
+    def consume_llm(self, api_key: str, input: str, url: str) -> Tuple[dict, Optional[int]]:
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
@@ -26,14 +26,14 @@ class TypeStrategy(ABC):
             headers=headers,
             json={"text": input}
         )
+
+        response_json = response_llm.json()
+
         if response_llm.status_code != 200:
-            self.logger.error(f"LLM error: {response_llm.text}")
-            return {
-                "error": "Error during LLM inference",
-                "detail": response_llm.text,
-                "code": response_llm.status_code
-            }
-        return response_llm.json()
+            self.logger.error(f"LLM error: {response_json['error']}")
+            return response_json, response_json["error"]["code"]
+
+        return response_json["data"], None
 
 
 class TesisStrategy(TypeStrategy):
@@ -43,11 +43,16 @@ class TesisStrategy(TypeStrategy):
         self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
         self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
 
-    def get_metadata(self,text : str) -> dict:
+    def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
         from app.constants.constant import PROMPT_TESIS
         self.logger.info(f"calling llm service to extract metadata")
-        input  = PROMPT_TESIS + text
-        return self.consume_llm(api_key=self.llm_service_api_key,input=input,url=self.llm_service_url)
+        llm_input = PROMPT_TESIS + text
+        response, error = self.consume_llm(
+            api_key=self.llm_service_api_key,
+            input=llm_input,
+            url=self.llm_service_url
+        )
+        return response, error
     
 
 class ArticuloStrategy(TypeStrategy):
@@ -57,11 +62,16 @@ class ArticuloStrategy(TypeStrategy):
         self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
         self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
     
-    def get_metadata(self,text : str) -> dict:
+    def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
         from app.constants.constant import PROMPT_ARTICULO
         self.logger.info(f"calling llm service to extract metadata")
-        input  = PROMPT_ARTICULO + text
-        return self.consume_llm(api_key=self.llm_service_api_key,input=input,url=self.llm_service_url)
+        llm_input = PROMPT_ARTICULO + text
+        response, error = self.consume_llm(
+            api_key=self.llm_service_api_key,
+            input=llm_input,
+            url=self.llm_service_url
+        )
+        return response, error
     
 class LibroStrategy(TypeStrategy):
     def __init__(self):
@@ -70,8 +80,13 @@ class LibroStrategy(TypeStrategy):
         self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
         self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
 
-    def get_metadata(self,text : str) -> dict:
+    def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
         from app.constants.constant import PROMPT_LIBRO
         self.logger.info(f"calling llm service to extract metadata")
-        input  = PROMPT_LIBRO + text
-        return self.consume_llm(api_key=self.llm_service_api_key,input=input,url=self.llm_service_url)
+        llm_input = PROMPT_LIBRO + text
+        response, error = self.consume_llm(
+            api_key=self.llm_service_api_key,
+            input=llm_input,
+            url=self.llm_service_url
+        )
+        return response, error

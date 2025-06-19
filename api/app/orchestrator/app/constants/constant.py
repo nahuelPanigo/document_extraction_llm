@@ -11,10 +11,6 @@ MODEL_PARAMETERS = {
     "MAX_TOKENS_OUTPUT" : 512 
 }
 
-
-FILETYPES = [".pdf", ".docx"]
-
-
 HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
 You have to extract the metadata:
 language, title, subtitle, creator, subject, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""

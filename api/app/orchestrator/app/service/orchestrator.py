@@ -6,6 +6,7 @@ import requests
 from app.service.indentifier import TypeIdentifier
 from app.service.strategies.type_strategy import LibroStrategy,TesisStrategy,ArticuloStrategy
 import io
+from typing import Tuple, Optional, Union
 
 class Orchestrator:
     def __init__(self):
@@ -36,7 +37,7 @@ class Orchestrator:
 
 
     @staticmethod
-    def _get_file_payload(file: UploadFile) -> tuple[str, io.BytesIO, str]:
+    def _get_file_payload(file: UploadFile)  -> Tuple[dict, Optional[int]]:
         file_bytes = file.file.read()
         file_stream = io.BytesIO(file_bytes)
         # Después de leer, rebobina el stream al principio para futuras lecturas
@@ -46,11 +47,12 @@ class Orchestrator:
     def orchestrate(self, file: UploadFile, normalization: bool = True, type: str = None):
         self.logger.info(f"Orchestrating file: {file.filename} with normalization={normalization}")
         try:
-            # Leer el archivo una única vez y reutilizar los bytes
+            # Leer el archivo una única vez
             file_bytes = file.file.read()
             filename = file.filename
             content_type = file.content_type
 
+            # Paso 1: detectar tipo si no se envió
             if type is None:
                 self.logger.info("calling extractor service only text")
                 stream1 = io.BytesIO(file_bytes)
@@ -63,18 +65,21 @@ class Orchestrator:
                     params={"normalization": normalization}
                 )
 
+                
+                extractor_json = response_extractor.json()
                 if response_extractor.status_code != 200:
-                    self.logger.error(f"Extractor error: {response_extractor.text}")
-                    return self._error_response_extractor(
-                        error="Error during text extraction text only",
-                        response_extractor=response_extractor
-                    ), 500
+                    self.logger.error(f"Extractor error: {extractor_json['error']}")
+                    return {
+                    "error": extractor_json["error"]["message"]  # <- ya es un string
+                    }, extractor_json["error"]["code"]
 
+                plain_text = extractor_json["data"].get("text")
                 self.logger.info("calling predictor dc type")
-                dc_type = self.type_identifier.predecir_tipo_documento(response_extractor.json().get("text"))
+                dc_type = self.type_identifier.predecir_tipo_documento(plain_text)
             else:
                 dc_type = type
 
+            # Paso 2: extracción con tags
             self.logger.info("calling extractor service with tags")
             stream2 = io.BytesIO(file_bytes)
             payload2 = (filename, stream2, content_type)
@@ -86,28 +91,28 @@ class Orchestrator:
                 params={"normalization": normalization}
             )
 
+            extractor_with_tags_json = response_extractor_with_tags.json()
             if response_extractor_with_tags.status_code != 200:
-                self.logger.error(f"Extractor error: {response_extractor_with_tags.text}")
-                return self._error_response_extractor(
-                    error="Error during text extraction with tags",
-                    response_extractor=response_extractor_with_tags
-                ), 500
+                self.logger.error(f"Extractor error: {extractor_with_tags_json['error']}")
+                return {
+                    "error": extractor_with_tags_json["error"]["message"]  # <- ya es un string
+                }, extractor_with_tags_json["error"]["code"]
 
-            extracted_text_with_metadata = response_extractor_with_tags.json().get("text")
-            self.logger.info("Text extracted successfully")
+            extracted_text_with_metadata = extractor_with_tags_json["data"].get("text")
 
-            # Estrategia por tipo de documento
+            # Paso 3: aplicar estrategia por tipo
             strategies = {
                 "Libro": LibroStrategy,
                 "Articulo": ArticuloStrategy,
                 "Tesis": TesisStrategy
             }
 
-            strategy_class = strategies[dc_type]
+            strategy_class = strategies.get(dc_type)
             strategy = strategy_class()
             self.logger.info(f"Calling {strategy_class.__name__}")
-            return strategy.get_metadata(extracted_text_with_metadata), None
-
+            metadata, error = strategy.get_metadata(extracted_text_with_metadata)
+            return metadata, error
+        
         except Exception as e:
             self.logger.exception("Unexpected error in orchestration")
             return {
