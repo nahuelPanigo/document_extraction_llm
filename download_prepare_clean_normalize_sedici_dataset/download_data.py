@@ -22,12 +22,14 @@ def make_request(url, file_path,key):
 
 def download_files(ids):
     for key in ids:
-        id = key.replace("-","/")
-        url = PDF_URL+id+"/Documento_completo.pdf?sequence=1&isAllowed=y"
-        file_path = PDF_FOLDER / f"{key}.pdf"
-        if not file_path.exists():
-            make_request(url, file_path,key)
-        else:
-            print(f"{Bcolors.OKGREEN} ya existe el pdf {key} {Bcolors.ENDC}")
-
+        try:
+            id = key.replace("-","/")
+            url = PDF_URL+id+"/Documento_completo.pdf?sequence=1&isAllowed=y"
+            file_path = PDF_FOLDER / f"{key}.pdf"
+            if not file_path.exists():
+                make_request(url, file_path,key)
+            else:
+                print(f"{Bcolors.OKGREEN} ya existe el pdf {key} {Bcolors.ENDC}")
+        except:
+            print(f"{Bcolors.FAIL} error en el pdf {key} {Bcolors.ENDC}")
 

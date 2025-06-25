@@ -8,7 +8,9 @@
 *.csv
 *.txt
 *.xml
+*.pkl
 .env
+*model.safetensors
 __pycache__/
 bin/
 lib/
