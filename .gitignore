@@ -17,6 +17,7 @@ lib/
 *venv/
 pyvenv.cfg
 !*output.json
+!*requirements.txt
 /fine_tunning/results
 /results
 *fine-tuned-model*

@@ -1,0 +1,7 @@
+#Flask==3.0.3
+fastapi[standard]
+transformers==4.41.2
+uvicorn
+torch
+torchvision
+torchaudio
