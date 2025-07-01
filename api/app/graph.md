@@ -6,12 +6,15 @@ UserInput["🧾 API Input"]
 File["📄 file (pdf/docx) [required]"]
 Normalization["🧪 normalization: bool = true"]
 Type["🏷️ type: Enum = None (default)"]
+Deepanalyze["🧪 deepanalyze: bool = true"]
 UserInput --> File
 UserInput --> Normalization
 UserInput --> Type
+UserInput --> Deepanalyze
 File --> B
 Normalization --> B
 Type --> B
+Deepanalyze --> B
 
 %% --- Orquestador decide flujo ---
 B{"Is type == None?"}

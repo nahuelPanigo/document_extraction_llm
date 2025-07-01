@@ -9,7 +9,8 @@
 *.txt
 *.xml
 *.pkl
-.env
+*.env
+*.log
 *model.safetensors
 __pycache__/
 bin/

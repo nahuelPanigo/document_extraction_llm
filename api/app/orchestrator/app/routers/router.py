@@ -65,7 +65,8 @@ async def root():
 async def upload_file(
     file: UploadFile = File(...),
     normalization: Optional[bool] = Form(True),
-    type: Optional[Type] = Form(Type.none)
+    type: Optional[Type] = Form(Type.none),
+    deepanalyze: Optional[bool] = Form(False),
 ):
     if not file:
         return error_response(

@@ -174,7 +174,6 @@ document_extraction_llm
 ```
 
 ## TODO
-- split data inside download_prepare_clean_normalize_sedici_dataset
 - run new fine_tunning
 - run new validation
 - make configuration in finetunning for qwen and gemma models

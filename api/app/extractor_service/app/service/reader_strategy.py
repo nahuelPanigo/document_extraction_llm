@@ -52,6 +52,7 @@ class Reader:
         try:
             logging.info(f"Extracting text using {strategy_method.__name__} from {temp_file_path}")
             text = strategy_method(temp_file_path)
+            logging.info(f"Extracted text: {text}")
             if normalization:
                 text = normalice_text(text)
             return {

@@ -4,9 +4,12 @@ import requests
 def upload_file(file_path: str,token: str, normalization: bool=True, type: str="None", deepanalize: bool=False) -> str:
     url = "http://localhost:8000/upload"
 
+    extension = file_path.suffix.lstrip(".")
+    header_Extension = {".pdf": "application/pdf", ".docx": "application/msword"}
+    file_type = header_Extension.get(extension) 
     with open(file_path, "rb") as f:
         files = {
-            "file": (file_path, f, "application/pdf")
+            "file": (file_path.name, f, file_type)
         }
         data = {
             "normalization": normalization,
@@ -23,3 +26,4 @@ def upload_file(file_path: str,token: str, normalization: bool=True, type: str="
         return response.json()
     except ValueError:
         return {}
+    

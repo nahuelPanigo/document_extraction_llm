@@ -57,7 +57,6 @@ JSON_GENERAL = {
 
 PROMPT_GENERAL = f"""{HEADER_PROMPT}{MIDDLE_PROMPT}{JSON_GENERAL}{END_PROMPT}"""
 
-
 SCHEMA_TESIS = """ {
         "language": "",
         "keywords": "",

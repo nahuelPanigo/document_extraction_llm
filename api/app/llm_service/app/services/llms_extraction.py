@@ -1,33 +1,33 @@
 import json
 from app.errors.error import MODEL_ERRORS as MD_E
 from dotenv import load_dotenv
-from app.services.model_managment import get_model,get_truncation
+from app.services.model_managment import get_model
 import re
 import os
 from app.logging_config import logging
-import torch
-from app.logging_config import logging
 from pathlib import Path
+from app.services.llm_library_strategy import HuggingFaceStrategy,OllamaStrategy
+
 
 class ModelExtraction:
     def __init__(self):
         load_dotenv()
-        base_dir = Path(__file__).resolve().parent.parent
-        if  self._str_to_bool(os.getenv("IS_LOCAL_MODEL")):
-            model_path = base_dir / os.getenv("MODEL_PATH")
-        else:
-            model_path = os.getenv("MODEL_PATH")
-        model = get_model(os.getenv("MODEL_SELECTED"),quantized=self._str_to_bool(os.getenv("QUANTIZATION")),custom_path=model_path)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = model.model
-        self.model.to(self.device)
-        self.tokenizer = model.tokenizer
-        self.max_length_input = int(os.getenv("MAX_TOKENS_INPUT", 2048))
-        self.max_length_output = int(os.getenv("MAX_TOKENS_OUTPUT", 512))
-        self.trunaction = get_truncation(self.tokenizer,os.getenv("TRUNACTION",True))
-        self.special_tokens_treatment = self._str_to_bool(os.getenv("SPECIAL_TOKENS_TREATMENT",True))
-        self.errors_treatment = os.getenv("ERRORS_TREATMENT","replace")
         self.logger = logging.getLogger(__name__)
+        if self._str_to_bool(os.getenv("IS_OLLAMA_MODEL")):
+            host_url = os.getenv("OLLAMA_HOST_URL")
+            self.strategy = OllamaStrategy(os.getenv("MODEL_SELECTED"),host_url)
+        else:
+            base_dir = Path(__file__).resolve().parent.parent
+            if  self._str_to_bool(os.getenv("IS_LOCAL_MODEL")):
+                model_path = base_dir / os.getenv("MODEL_PATH")
+            else:
+                model_path = os.getenv("MODEL_PATH")
+            model = get_model(os.getenv("MODEL_SELECTED"),quantized=self._str_to_bool(os.getenv("QUANTIZATION")),custom_path=model_path)
+            max_length_input = int(os.getenv("MAX_TOKENS_INPUT", 2048))
+            max_length_output = int(os.getenv("MAX_TOKENS_OUTPUT", 512))
+            special_tokens_treatment = self._str_to_bool(os.getenv("SPECIAL_TOKENS_TREATMENT",True))
+            errors_treatment = os.getenv("ERRORS_TREATMENT","replace")
+            self.strategy = HuggingFaceStrategy(model,max_length_input,max_length_output,os.getenv("TRUNACTION",True),special_tokens_treatment,errors_treatment)
 
     @staticmethod
     def _normalice_latin_char(text):
@@ -40,31 +40,8 @@ class ModelExtraction:
             text = text.replace("\�", "¿")
             return text
 
-    @staticmethod
-    def _str_to_bool(value):
-        return str(value).lower() in ("true", "1", "yes", "on")
 
-    def generate_with_fallback(self,inputs, max_input, max_output):
-        if "max_new_tokens" in self.model.generate.__code__.co_varnames:
-            self.logger.info(f"using max_new_tokens")
-            return self.model.generate(**inputs, max_new_tokens=max_output)
-        else:
-            self.logger.info(f"using max_length")
-            return self.model.generate(**inputs, max_length=max_input + max_output)
-
-
-    def model_extraction(self,final_prompt):
-        try: 
-            self.logger.info(f"loading model with device: {self.device} max input: {self.max_length_input} max output: {self.max_length_output} and truncation: {self.trunaction}")
-            inputs = self.tokenizer(final_prompt, return_tensors="pt", max_length=self.max_length_input, truncation=self.trunaction) 
-            inputs = {k: v.to(self.device) for k, v in inputs.items()}  
-            self.logger.info(f"generating with model")
-            outputs  = self.generate_with_fallback(inputs, self.max_length_input, self.max_length_output)
-            self.logger.info(f"decoding output of length: {len(outputs[0])}")
-            prediction = self.tokenizer.decode(outputs[0].cpu(), skip_special_tokens=self.special_tokens_treatment, errors=self.errors_treatment)
-        except Exception as e:
-            logging.error(f"error extracting model: {e}")
-            return MD_E["ERROR_OPENING_MODEL"],MD_E["CODE_ERROR_OPENING_MODEL"]
+    def clean_json(self,prediction):
         try:
             prediction_json = json.loads(prediction)
         except json.JSONDecodeError:
@@ -79,5 +56,20 @@ class ModelExtraction:
             except json.JSONDecodeError as e:
                 logging.error(f"error parseing llm output: {e}, output: {prediction}")
                 return MD_E["ERROR_PARSING_OUTPUT"],MD_E["CODE_ERROR_PARSING_OUTPUT"]
-        return(prediction_json),None  # None for: no error has occurred
+        return(prediction_json),None    
+
+
+
+    @staticmethod
+    def _str_to_bool(value):
+        return str(value).lower() in ("true", "1", "yes", "on")
+
+
+    def model_extraction(self,final_prompt):
+        try: 
+            prediction = self.strategy.generate(final_prompt)
+        except Exception as e:
+            logging.error(f"error extracting model: {e}")
+            return MD_E["ERROR_OPENING_MODEL"],MD_E["CODE_ERROR_OPENING_MODEL"]
+        return self.clean_json(prediction)
 

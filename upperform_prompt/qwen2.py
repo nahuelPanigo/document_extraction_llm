@@ -7,25 +7,25 @@ from utils.consume_apis.consume_extractor import make_requests_xml_text
 from utils.consume_apis.consume_orchestrator import upload_file
 from dotenv import load_dotenv
 import os
+import json
 
 PROMPT ="""
-Your task is to review a set of metadata fields automatically extracted from an academic document. You will be given:
+Eres un validador estricto de metadatos académicos presentes en los libros.
 
-1. The full text of the document.
-2. A JSON object containing the extracted metadata.
+Recibirás:
+1. Un texto completo correspondiente a un documento académico.
+2. y distintos metadatos extraídos que deberas validar.
 
-Your job is to:
-
-- Verify if the metadata values in the JSON are accurate by comparing them with the content of the document.
-- Correct any incorrect values.
-- Fill in missing values only if they can be reliably determined from the text.
-- Do **not** guess or invent any values. If a value cannot be confirmed from the text, leave it as `null`.
-- Preserve the original structure and field names of the JSON.
-- Return **only** the corrected JSON, with no additional explanation or output.
-
+Tu tarea es:
+- Ver cada uno de los campos y verificar que el valor sea el correcto.
+- Debes corregir cualquier valor incorrecto.
+- Completar valores faltantes **solo si pueden confirmarse claramente en el texto**.
+- Si un valor no se puede verificar con certeza, debe dejarse en vacio.
+- La salida tiene que ser un json bien formateado con cada uno de los campos que se pasaron en la entrada.
 ---
-Extracted metadata:
-```json
+
+[METADATOS A VALIDAR]
+
 """
 
 
@@ -35,20 +35,27 @@ keys_libro = keys_general +["publisher", "isbn", "compiler"]
 keys_articulo = keys_general + ["journalTitle", "journalVolumeAndIssue", "issn", "event"]
 
 
-
+def extract_text(request):
+    dict = json.loads(request)
+    text = dict["data"]["text"]
+    return " ".join(text.split()[:2000])
 
 if __name__ == "__main__":
     load_dotenv()
-    token_llm = os.getenv("LLM_LED_TOKEN")
+    token_orchestrator = os.getenv("ORCHESTRATOR_TOKEN")
     token_extractor = os.getenv("EXTRACTOR_TOKEN")
     #llamada a la api
 
+
     filename = PDF_FOLDER / "10915-151583.pdf"
     type = "Tesis"
-    text = make_requests_xml_text(filename,token_extractor,True)
-    metadata = upload_file(filename,token_llm,True,type,deepanalize=False)
+    request = make_requests_xml_text(filename,token_extractor,True)
+    text  =  extract_text(request)
+    start = time.time()
+    metadata = upload_file(filename,token_orchestrator,True,type,deepanalize=False)["data"]
+    print(f"Time taken in extractor service: {time.time() - start}")
+
     print(metadata)
-    
     #obtencion de metadata y agregado de keys faltantes
 
     for key in keys_tesis:
@@ -56,12 +63,12 @@ if __name__ == "__main__":
             metadata[key] = ""
 
     # llamada qwen para validar metadatos
+    fields_str = "\n".join([f"{key}: {metadata[key]}" for key in keys_tesis])
 
+    prompt = f"""{PROMPT}{fields_str}[FIN METADATOS A VALIDAR]```
+    [TEXTO]: {text} [FIN TEXTO]"""
 
-    prompt = f"""{PROMPT}{metadata}```
-    TEXT: {text}"""
-
-
+    print(prompt)
 
     try:
         start = time.time()

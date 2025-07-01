@@ -30,17 +30,21 @@ class PdfReader(ReaderStrategy):
                     if round(float(obj["height"])) not in fontsizes and obj["height"] < 40:
                         fontsizes.append(round((float(obj["height"]))))
             fontsizes.sort()
-
-            h1_size = fontsizes[-1]            
-            n = len(fontsizes)
-            h2_size = fontsizes[int(n * 0.75)] if n > 1 else fontsizes[0]  # 75% percentil
-            paragraph_sizes = [size for size in fontsizes if size < h2_size]
-            return {
-                'h1': h1_size,'h2': h2_size,'p': min(paragraph_sizes) if paragraph_sizes else 0
-            }
-
+            try:
+                h1_size = fontsizes[-1]            
+                n = len(fontsizes)
+                h2_size = fontsizes[int(n * 0.75)] if n > 1 else fontsizes[0]  # 75% percentil
+                paragraph_sizes = [size for size in fontsizes if size < h2_size]
+                return {
+                    'h1': h1_size,'h2': h2_size,'p': min(paragraph_sizes) if paragraph_sizes else 0
+                }
+            except:
+                return {
+                    'h1': 12,'h2': 9,'p': 7
+                }
 
     def extract_text_with_xml_tags(self, pdf_path: str) -> str:
+        print("Extracting text with XML tags from PDF...")
         sizes_dict =  self.get_fontsizes(pdf_path)
         with pdfplumber.open(pdf_path) as pdf:
             try:
@@ -50,6 +54,7 @@ class PdfReader(ReaderStrategy):
             except:
                 current_tag = "p"    
                 current_fontsize = 10
+            print("current_tag",current_tag)
             text_with_tags = f"<{current_tag}>"
             current_text = []
             for page in pdf.pages:
@@ -72,6 +77,7 @@ class PdfReader(ReaderStrategy):
 
 
     def extract_text(self, pdf_path: str) -> str:
+        print("Extracting text from PDF...")
         with pdfplumber.open(pdf_path) as pdf:
             lines = []
             for page in pdf.pages:
