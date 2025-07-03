@@ -2,6 +2,8 @@ import torch
 from app.logging_config import logging
 from ollama import Client
 from app.services.model_managment import get_truncation
+from app.services.utils import parse_json,extract_text_from_ollama
+from typing import Tuple, Optional
 
 class LLMStrategy:
     def __init__(self):
@@ -9,6 +11,10 @@ class LLMStrategy:
 
     def generate(self, prompt: str) -> str:
         raise NotImplementedError
+    
+    def clean_json(self, prediction) -> Tuple[dict, Optional[int]]:
+        raise NotImplementedError
+    
 
 class HuggingFaceStrategy(LLMStrategy):
     def __init__(self,model,max_input,max_output,trunaction,special_tokens_treatment,errors_treatment):
@@ -40,13 +46,17 @@ class HuggingFaceStrategy(LLMStrategy):
         self.logger.info(f"decoding output of length: {len(outputs[0])}")
         prediction = self.tokenizer.decode(outputs[0].cpu(), skip_special_tokens=self.special_tokens_treatment, errors=self.errors_treatment)
         return prediction
+    
+    def clean_json(self, prediction) -> Tuple[dict, Optional[int]]:
+        return parse_json(prediction)
 
 class OllamaStrategy(LLMStrategy):
-   class OllamaStrategy(LLMStrategy):
     def __init__(self, model, host_url=None):
         super().__init__()
         self.model = model
-        self.client = Client(host=host_url or "http://localhost:11434")
+        clean_host = host_url.strip() if host_url else "http://localhost:11434"
+        self.logger.info(f"Ollama host: {clean_host}")
+        self.client = Client(host=clean_host)
 
     def generate(self, prompt: str) -> str:
         response = self.client.generate(
@@ -55,3 +65,6 @@ class OllamaStrategy(LLMStrategy):
             stream=False
         )
         return response['response']
+    
+    def clean_json(self, prediction)-> Tuple[dict, Optional[int]]:
+        return extract_text_from_ollama(prediction)

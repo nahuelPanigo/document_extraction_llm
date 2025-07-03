@@ -44,19 +44,43 @@ if exist requirements.txt (
 ) else (
     echo [ERROR] requirements.txt no encontrado en llm_service
 )
-echo set IS_LOCAL_MODEL=%IS_LOCAL_MODEL%> run_llm_temp.bat
-echo set SERVICE_TOKEN=%LLM_LED_TOKEN%> run_llm_temp.bat
-echo set MODEL_SELECTED=%MODEL_SELECTED_SERVICE1%>> run_llm_temp.bat
-echo set MODEL_PATH=%MODEL_PATH_SERVICE1%>> run_llm_temp.bat
-echo set MAX_TOKENS_INPUT=%MAX_TOKENS_INPUT_SERVICE1%>> run_llm_temp.bat
-echo set MAX_TOKENS_OUTPUT=%MAX_TOKENS_OUTPUT_SERVICE1%>> run_llm_temp.bat
-echo set TRUNACTION=%TRUNACTION_SERVICE1%>> run_llm_temp.bat
-echo set SPECIAL_TOKENS_TREATMENT=%SPECIAL_TOKENS_TREATMENT_SERVICE1%>> run_llm_temp.bat
-echo set ERRORS_TREATMENT=%ERRORS_TREATMENT_SERVICE1%>> run_llm_temp.bat
-echo set QUANTIZATION=%QUANTIZATION_SERVICE1%>> run_llm_temp.bat
-echo uvicorn app.main:app --port 8002 --reload>> run_llm_temp.bat
-start run_llm_temp.bat
+echo set IS_LOCAL_MODEL=%IS_LOCAL_MODEL1%> run_led_temp.bat
+echo set IS_OLLAMA_MODEL=%IS_OLLAMA_MODEL1%>> run_led_temp.bat
+echo set SERVICE_TOKEN=%LLM_LED_TOKEN%>> run_led_temp.bat
+echo set MODEL_SELECTED=%MODEL_SELECTED_SERVICE1%>> run_led_temp.bat
+echo set MODEL_PATH=%MODEL_PATH_SERVICE1%>> run_led_temp.bat
+echo set MAX_TOKENS_INPUT=%MAX_TOKENS_INPUT_SERVICE1%>> run_led_temp.bat
+echo set MAX_TOKENS_OUTPUT=%MAX_TOKENS_OUTPUT_SERVICE1%>> run_led_temp.bat
+echo set TRUNACTION=%TRUNACTION_SERVICE1%>> run_led_temp.bat
+echo set SPECIAL_TOKENS_TREATMENT=%SPECIAL_TOKENS_TREATMENT_SERVICE1%>> run_led_temp.bat
+echo set ERRORS_TREATMENT=%ERRORS_TREATMENT_SERVICE1%>> run_led_temp.bat
+echo set QUANTIZATION=%QUANTIZATION_SERVICE1%>> run_led_temp.bat
+echo uvicorn app.main:app --port 8002 --reload>> run_led_temp.bat
+start run_led_temp.bat
 cd ..
+
+
+REM -------- LLM Service qwen --------
+echo.
+echo Iniciando llm_service_qwen...
+cd llm_service
+echo Carpeta actual: %cd%
+
+if exist requirements.txt (
+    echo Instalando dependencias...
+    pip install -r requirements.txt
+) else (
+    echo [ERROR] requirements.txt no encontrado en llm_service
+)
+echo set IS_LOCAL_MODEL=%IS_LOCAL_MODEL2%> run_qwen_temp.bat
+echo set IS_OLLAMA_MODEL=%IS_OLLAMA_MODEL2%>> run_qwen_temp.bat
+echo set SERVICE_TOKEN=%LLM_DEEPANALYZE_TOKEN%>> run_qwen_temp.bat
+echo set MODEL_SELECTED=%MODEL_SELECTED_SERVICE2%>> run_qwen_temp.bat
+echo set OLLAMA_HOST_URL=%OLLAMA_HOST_URL%>> run_qwen_temp.bat
+echo uvicorn app.main:app --port 8003 --reload>> run_qwen_temp.bat
+start run_qwen_temp.bat
+cd ..
+
 
 REM -------- Orchestrator --------
 echo.
@@ -74,8 +98,10 @@ if exist requirements.txt (
 echo set SERVICE_TOKEN=%ORCHESTRATOR_TOKEN%> run_orchestrator_temp.bat
 echo set EXTRACTOR_TOKEN=%EXTRACTOR_TOKEN%>> run_orchestrator_temp.bat
 echo set LLM_LED_TOKEN=%LLM_LED_TOKEN%>> run_orchestrator_temp.bat
+echo set LLM_DEEPANALYZE_TOKEN=%LLM_DEEPANALYZE_TOKEN%>> run_orchestrator_temp.bat
 echo set EXTRACTOR_URL=%EXTRACTOR_URL%>> run_orchestrator_temp.bat
 echo set LLM_LED_URL=%LLM_LED_URL%>> run_orchestrator_temp.bat
+echo set LLM_DEEPANALYZE_URL=%LLM_DEEPANALYZE_URL%>> run_orchestrator_temp.bat
 echo set IDENTIFIER_PATH_MODEL=%IDENTIFIER_PATH_MODEL%>> run_orchestrator_temp.bat
 echo set IDENTIFIER_PATH_VECTORIZER=%IDENTIFIER_PATH_VECTORIZER%>> run_orchestrator_temp.bat
 echo uvicorn app.main:app --port 8000 --reload>> run_orchestrator_temp.bat
@@ -92,6 +118,7 @@ echo Ejecutando pruebas de integración...
 curl -s http://127.0.0.1:8000/health || echo [ERROR] Orchestrator no responde
 curl -s http://127.0.0.1:8001/health || echo [ERROR] Extractor no responde
 curl -s http://127.0.0.1:8002/health || echo [ERROR] LLM Service no responde
+curl -s http://127.0.0.1:8003/health || echo [ERROR] LLM Service no responde
 
 echo.
 echo Ejecutando test de integración entre servicios...

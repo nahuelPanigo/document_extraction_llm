@@ -1,7 +1,7 @@
 import requests
 
 
-def upload_file(file_path: str,token: str, normalization: bool=True, type: str="None", deepanalize: bool=False) -> str:
+def upload_file(file_path: str,token: str, normalization: bool=True, type: str="None", deepanalyze: bool=False) -> str:
     url = "http://localhost:8000/upload"
 
     extension = file_path.suffix.lstrip(".")
@@ -14,7 +14,7 @@ def upload_file(file_path: str,token: str, normalization: bool=True, type: str="
         data = {
             "normalization": normalization,
             "type": type,
-            "deepanalize": deepanalize
+            "deepanalize": deepanalyze
         }
         headers = {
             "Authorization": f"Bearer {token}"

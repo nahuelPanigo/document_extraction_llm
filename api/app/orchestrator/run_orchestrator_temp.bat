@@ -1,36 +1,10 @@
-@echo off
-setlocal enabledelayedexpansion
-
-:: Ir a la raíz del proyecto
-cd /d "%~dp0\.."
-
-:: Cargar variables desde el archivo .env
-if not exist .env (
-    echo [ERROR] Archivo .env no encontrado en la raíz del proyecto.
-    exit /b 1
-)
-
-for /f "usebackq tokens=1,* delims==" %%A in (".env") do (
-    set "line=%%A"
-    if not "!line!"=="" (
-        set "value=%%B"
-        set "!line!=!value!"
-    )
-)
-
-:: Volver al directorio del servicio orchestrator
-cd /d "%~dp0"
-
-:: Asignar variables de entorno requeridas
-set SERVICE_TOKEN=%ORCHESTRATOR_TOKEN%
-set EXTRACTOR_TOKEN=%EXTRACTOR_TOKEN%
-set LLM_LED_TOKEN=%LLM_LED_TOKEN%
-set EXTRACTOR_URL=%EXTRACTOR_URL%
-set LLM_LED_URL=%LLM_LED_URL%
-set IDENTIFIER_PATH_MODEL=%IDENTIFIER_PATH_MODEL%
-set IDENTIFIER_PATH_VECTORIZER=%IDENTIFIER_PATH_VECTORIZER%
-
-:: Ejecutar el servicio
+set SERVICE_TOKEN=397e50621c2cbc17bc9cf132e95d644ce1bebed3a5bf98786a4325bc7cdb0abf
+set EXTRACTOR_TOKEN=f85b060e12171336480486d98b694bcb0b6c1c826938c7e6916277d6676bae8c
+set LLM_LED_TOKEN=7a8226bff24eb69ada591c42e62647ef411b1f390984348fd40015173256473e
+set LLM_DEEPANALYZE_TOKEN=ls56as5613as81386qefq84q31sa6q1d5fq48q31s5qawdq86q1da13q84
+set EXTRACTOR_URL=http://localhost:8001
+set LLM_LED_URL=http://localhost:8002
+set LLM_DEEPANALYZE_URL=http://localhost:8003
+set IDENTIFIER_PATH_MODEL=./models/modelo_tipo_documento.pkl
+set IDENTIFIER_PATH_VECTORIZER=./models/vectorizador_tfidf.pkl
 uvicorn app.main:app --port 8000 --reload
-
-endlocal

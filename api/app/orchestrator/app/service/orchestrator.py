@@ -7,12 +7,16 @@ from app.service.indentifier import TypeIdentifier
 from app.service.strategies.type_strategy import LibroStrategy,TesisStrategy,ArticuloStrategy
 import io
 from typing import Tuple, Optional, Union
+from app.constants.constant import PROMPT_DEEPANALYZE
+import json
 
 class Orchestrator:
     def __init__(self):
         load_dotenv()
         self.extractor_service_url = os.getenv("EXTRACTOR_URL")
         self.extractor_service_api_key = os.getenv("EXTRACTOR_TOKEN")
+        self.llm_deepanalyze_url = os.getenv("LLM_DEEPANALYZE_URL")
+        self.llm_deepanalyze_api_key = os.getenv("LLM_DEEPANALYZE_TOKEN")
         self.logger = logging.getLogger(__name__)
         self.type_identifier = TypeIdentifier(path_clf =os.getenv("IDENTIFIER_PATH_MODEL"), path_vectorizer=os.getenv("IDENTIFIER_PATH_VECTORIZER"))
 
@@ -35,6 +39,35 @@ class Orchestrator:
                 }
 
 
+    @staticmethod
+    def _shorten_text(text):
+        return " ".join(text.split()[:500])
+
+
+    def call_deepanalyze(self, text: str, metadata: dict) -> Tuple[dict, Optional[int]]:
+        headers = {
+            "Authorization": f"Bearer {self.llm_deepanalyze_api_key}",
+            "Content-Type": "application/json"
+        }
+        self.logger.info(f"calling llm service url: {self.llm_deepanalyze_url}/consume-llm")
+
+        fields_str = "\n".join([f"{key}: {metadata[key]}" for key in metadata])
+        input = f"""{PROMPT_DEEPANALYZE}{fields_str}[FIN METADATOS A VALIDAR]```
+        [TEXTO]: {text} [FIN TEXTO]"""
+
+        response_llm = requests.post(
+            self.llm_deepanalyze_url + "/consume-llm",
+            headers=headers,
+            json={"text": input}
+        )
+
+        response_json = response_llm.json()
+
+        if response_llm.status_code != 200:
+            self.logger.error(f"LLM error: {response_json['error']}")
+            return response_json, response_json["error"]["code"]
+
+        return response_json["data"], None        
 
     @staticmethod
     def _get_file_payload(file: UploadFile)  -> Tuple[dict, Optional[int]]:
@@ -44,7 +77,7 @@ class Orchestrator:
         file_stream.seek(0)
         return file.filename, file_stream, file.content_type
 
-    def orchestrate(self, file: UploadFile, normalization: bool = True, type: str = None):
+    def orchestrate(self, file: UploadFile, normalization: bool = True, type: str = None, deepanalyze: bool = False) -> Tuple[dict, Optional[int]]:
         self.logger.info(f"Orchestrating file: {file.filename} with normalization={normalization}")
         try:
             # Leer el archivo una única vez
@@ -100,17 +133,20 @@ class Orchestrator:
 
             extracted_text_with_metadata = extractor_with_tags_json["data"].get("text")
 
+            dc_type = dc_type.lower()
             # Paso 3: aplicar estrategia por tipo
             strategies = {
-                "Libro": LibroStrategy,
-                "Articulo": ArticuloStrategy,
-                "Tesis": TesisStrategy
+                "libro": LibroStrategy,
+                "articulo": ArticuloStrategy,
+                "tesis": TesisStrategy
             }
 
             strategy_class = strategies.get(dc_type)
             strategy = strategy_class()
             self.logger.info(f"Calling {strategy_class.__name__}")
             metadata, error = strategy.get_metadata(extracted_text_with_metadata)
+            if error is None and deepanalyze:
+                metadata, error = self.call_deepanalyze(self._shorten_text(extracted_text_with_metadata), metadata)
             return metadata, error
         
         except Exception as e:

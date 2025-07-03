@@ -11,6 +11,33 @@ MODEL_PARAMETERS = {
     "MAX_TOKENS_OUTPUT" : 512 
 }
 
+
+KEYS_GENERAL = ["creator", "title", "subtitle", "subject", "rights", "rightsurl", "date", "originPlaceInfo.", "isRelatedWith"]
+KEYS_TESIS = KEYS_GENERAL +["codirector", "director", "degree.grantor", "degree.name"]
+KEYS_LIBRO = KEYS_GENERAL +["publisher", "isbn", "compiler"]
+KEYS_ARTICULO = KEYS_GENERAL + ["journalTitle", "journalVolumeAndIssue", "issn", "event"]
+
+
+PROMPT_DEEPANALYZE = """
+Eres un validador estricto de metadatos académicos presentes en los libros.
+
+Recibirás:
+1. Un texto completo correspondiente a un documento académico.
+2. y distintos metadatos extraídos que deberas validar.
+
+Tu tarea es:
+- Ver cada uno de los campos y verificar que el valor sea el correcto.
+- Debes corregir cualquier valor incorrecto.
+- Completar valores faltantes **solo si pueden confirmarse claramente en el texto**.
+- Si un valor no se puede verificar con certeza, debe dejarse la key con el value string vacio.
+- La salida debe  ser un json bien formateado con cada uno de los campos que se pasaron en la entrada. de la forma clave : valorCorrecto.
+---
+
+[METADATOS A VALIDAR]
+
+"""
+
+
 HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
 You have to extract the metadata:
 language, title, subtitle, creator, subject, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""

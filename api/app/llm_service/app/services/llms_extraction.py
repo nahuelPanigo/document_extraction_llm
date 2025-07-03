@@ -7,6 +7,7 @@ import os
 from app.logging_config import logging
 from pathlib import Path
 from app.services.llm_library_strategy import HuggingFaceStrategy,OllamaStrategy
+from typing import Tuple, Optional
 
 
 class ModelExtraction:
@@ -29,47 +30,17 @@ class ModelExtraction:
             errors_treatment = os.getenv("ERRORS_TREATMENT","replace")
             self.strategy = HuggingFaceStrategy(model,max_length_input,max_length_output,os.getenv("TRUNACTION",True),special_tokens_treatment,errors_treatment)
 
-    @staticmethod
-    def _normalice_latin_char(text):
-            text = text.replace("\\r\\n", " ")
-            text = re.sub(r'\\[Rp/c]', '', text)  # Si hay más casos, agrégalos aquí
-        # 2️⃣ Si quedan secuencias válidas (\uXXXX o \n, \r, etc.), aplicar unicode_escape
-            if re.search(r'\\u[0-9A-Fa-f]{4}|\\[nr]', text):  
-                text = bytes(text, "utf-8").decode("unicode_escape")
-            text = re.sub(r'"\[(.*?)\]"', r'[\1]', text) 
-            text = text.replace("\�", "¿")
-            return text
-
-
-    def clean_json(self,prediction):
-        try:
-            prediction_json = json.loads(prediction)
-        except json.JSONDecodeError:
-            prediction = prediction.replace("'", '"')  
-            prediction = prediction.replace("\"[", "[")
-            prediction = prediction.replace("]\"", "]")
-            prediction = prediction.replace("\�", "¿")
-            prediction = self._normalice_latin_char(prediction)
-            cleaned_prediction = prediction.encode('latin1', 'replace').decode('utf-8', 'replace')
-            try:
-                prediction_json = json.loads(cleaned_prediction,strict=False)
-            except json.JSONDecodeError as e:
-                logging.error(f"error parseing llm output: {e}, output: {prediction}")
-                return MD_E["ERROR_PARSING_OUTPUT"],MD_E["CODE_ERROR_PARSING_OUTPUT"]
-        return(prediction_json),None    
-
-
 
     @staticmethod
     def _str_to_bool(value):
         return str(value).lower() in ("true", "1", "yes", "on")
 
 
-    def model_extraction(self,final_prompt):
+    def model_extraction(self,final_prompt) -> Tuple[dict, Optional[int]]:
         try: 
             prediction = self.strategy.generate(final_prompt)
         except Exception as e:
             logging.error(f"error extracting model: {e}")
             return MD_E["ERROR_OPENING_MODEL"],MD_E["CODE_ERROR_OPENING_MODEL"]
-        return self.clean_json(prediction)
+        return  self.strategy.clean_json(prediction)
 
