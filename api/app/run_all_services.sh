@@ -65,7 +65,8 @@ start_uvicorn_service extractor_service 8001 \
 # --- Iniciar LLM Service LED ---
 # Pasar las variables específicas del LLM Service, incluyendo LLM_LED_TOKEN como SERVICE_TOKEN
 start_uvicorn_service llm_service 8002 \
-    IS_LOCAL_MODEL="$IS_LOCAL_MODEL" \
+    IS_LOCAL_MODEL="$IS_LOCAL_MODEL1" \
+    IS_OLLAMA_MODEL="$IS_OLLAMA_MODEL1" \
     SERVICE_TOKEN="$LLM_LED_TOKEN" \
     MODEL_SELECTED="$MODEL_SELECTED_SERVICE1" \
     MODEL_PATH="$MODEL_PATH_SERVICE1" \
@@ -76,14 +77,26 @@ start_uvicorn_service llm_service 8002 \
     ERRORS_TREATMENT="$ERRORS_TREATMENT_SERVICE1" \
     QUANTIZATION="$QUANTIZATION_SERVICE1"
 
+# --- Iniciar LLM Service QWEN ---
+# Pasar las variables específicas del LLM Service, incluyendo LLM_LED_TOKEN como SERVICE_TOKEN
+start_uvicorn_service llm_service 8003 \
+    IS_OLLAMA_MODEL="$IS_OLLAMA_MODEL2" \
+    IS_LOCAL_MODEL="$IS_LOCAL_MODEL2" \
+    SERVICE_TOKEN="$LLM_DEEPANALYZE_TOKEN" \
+    MODEL_SELECTED="$MODEL_SELECTED_SERVICE2" \
+    OLLAMA_HOST_URl="$OLLAMA_HOST_URL"\
+
+
 # --- Iniciar Orchestrator ---
 # Pasar todas las variables que el Orchestrator necesita, incluyendo su propio SERVICE_TOKEN
 start_uvicorn_service orchestrator 8000 \
     SERVICE_TOKEN="$ORCHESTRATOR_TOKEN" \
     EXTRACTOR_TOKEN="$EXTRACTOR_TOKEN" \
     LLM_LED_TOKEN="$LLM_LED_TOKEN" \
+    LLM_DEEPANALYZE_TOKEN="$LLM_DEEPANALYZE_TOKEN" \
     EXTRACTOR_URL="$EXTRACTOR_URL" \
     LLM_LED_URL="$LLM_LED_URL" \
+    LLM_DEEPANALYZE_URL="$LLM_DEEPANALYZE_URL" \
     IDENTIFIER_PATH_MODEL="$IDENTIFIER_PATH_MODEL" \
     IDENTIFIER_PATH_VECTORIZER="$IDENTIFIER_PATH_VECTORIZER"
 
@@ -101,6 +114,8 @@ sleep 1
 curl -s http://127.0.0.1:8001/health || echo "[ERROR] Extractor no responde"
 sleep 1
 curl -s http://127.0.0.1:8002/health || echo "[ERROR] LLM Service no responde"
+sleep 1
+curl -s http://127.0.0.1:8003/health || echo "[ERROR] LLM Service qwen no responde"
 
 echo "DEBUG (Bash - curl): Sending Authorization: Bearer '$ORCHESTRATOR_TOKEN'"
 echo ""

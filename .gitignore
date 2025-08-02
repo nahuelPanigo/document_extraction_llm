@@ -11,6 +11,9 @@
 *.pkl
 *.env
 *.log
+*.bat
+*.sh
+!*run_all_services*
 *model.safetensors
 __pycache__/
 bin/

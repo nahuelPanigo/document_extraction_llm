@@ -1,0 +1,264 @@
+.file-upload-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.title {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #7f8c8d;
+  margin-bottom: 3rem;
+  line-height: 1.5;
+}
+
+.upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dropzone-container {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.dropzone {
+  flex: 1;
+  min-width: 300px;
+  max-width: 400px;
+  height: 250px;
+  border: 3px dashed #bdc3c7;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  position: relative;
+}
+
+.dropzone:hover {
+  border-color: #3498db;
+  background: #ecf8ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+}
+
+.dropzone.active {
+  border-color: #2ecc71;
+  background: #e8f5e8;
+  transform: scale(1.02);
+}
+
+.dropzone.predicted {
+  border-color: #e74c3c;
+}
+
+.dropzone.predicted:hover,
+.dropzone.predicted.active {
+  border-color: #c0392b;
+  background: #fdf2f2;
+}
+
+.dropzone.real {
+  border-color: #27ae60;
+}
+
+.dropzone.real:hover,
+.dropzone.real.active {
+  border-color: #229954;
+  background: #f2f8f2;
+}
+
+.dropzone.has-file {
+  border-style: solid;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropzone-content {
+  text-align: center;
+  padding: 1rem;
+}
+
+.icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.placeholder p {
+  margin: 0.5rem 0;
+  color: #7f8c8d;
+}
+
+.placeholder p:first-child {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.file-size {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.remove-file-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.remove-file-btn:hover {
+  background: #c0392b;
+}
+
+.vs-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  flex-shrink: 0;
+}
+
+.action-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem 0;
+}
+
+.compare-btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 250px;
+}
+
+.compare-btn.enabled {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.compare-btn.enabled:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.compare-btn.disabled {
+  background: #bdc3c7;
+  color: #7f8c8d;
+  cursor: not-allowed;
+}
+
+.file-summary {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #27ae60;
+  max-width: 400px;
+  width: 100%;
+}
+
+.file-summary p {
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.file-summary ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: none;
+}
+
+.file-summary li {
+  margin: 0.5rem 0;
+  color: #2c3e50;
+  position: relative;
+}
+
+.file-summary li::before {
+  content: '•';
+  color: #27ae60;
+  font-weight: bold;
+  position: absolute;
+  left: -1rem;
+}
+
+@media (max-width: 768px) {
+  .file-upload-container {
+    padding: 1rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  .dropzone-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .vs-separator {
+    transform: rotate(90deg);
+  }
+  
+  .dropzone {
+    min-width: 250px;
+    max-width: 100%;
+  }
+  
+  .compare-btn {
+    min-width: 200px;
+  }
+}

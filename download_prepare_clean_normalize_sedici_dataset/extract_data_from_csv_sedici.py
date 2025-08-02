@@ -57,6 +57,16 @@ def transform_institutions(value):
 def transform_degree(value):
     return safe_split(value, "::") if pd.notna(value) else None
 
+def combine_title_subtitle(title, subtitle):
+    if pd.notna(title) and pd.notna(subtitle):
+        return f"{title}: {subtitle}"
+    elif pd.notna(title):
+        return title
+    elif pd.notna(subtitle):
+        return subtitle
+    else:
+        return None
+
 def merge_data(csv_filename, filtered_csv_filename):
     df = pd.read_csv(csv_filename)
 
@@ -112,6 +122,13 @@ def merge_data(csv_filename, filtered_csv_filename):
         subset_df[col] = subset_df[col].apply(transform_institutions)
 
     subset_df["dc.subject"] = subset_df["dc.subject"].apply(lambda x: x.split("||") if isinstance(x, str) else None)
+
+    # Combine title and subtitle
+    subset_df['dc.title'] = subset_df.apply(lambda row: combine_title_subtitle(row['dc.title'], row.get('sedici.title.subtitle')), axis=1)
+    
+    # Remove subtitle column since it's now combined with title
+    if 'sedici.title.subtitle' in subset_df.columns:
+        subset_df = subset_df.drop('sedici.title.subtitle', axis=1)
 
     print("guardando csv")
     subset_df.to_csv(filtered_csv_filename, index=False)

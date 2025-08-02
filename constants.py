@@ -46,7 +46,6 @@ COLUMNS_TYPES = {
     'dc.language' : {'type':str,'cant' : "unique","DCMIID":"dc.language","rename": "language"},
     'sedici.subject.materias' : {'type':str,'cant' : "unique","DCMIID":"dc.subject","rename": "subject"},
     'dc.title' : {'type':str,'cant' : "unique","DCMIID":"dc.title","rename": "title"},
-    'sedici.title.subtitle' : {'type':str,'cant' : "unique","DCMIID":"dc.title","rename": "subtitle"},
     'sedici.creator.person' : {'type':str,'cant' : "unique","DCMIID":"dc.creator","rename": "creator"},
     'dc.subject' : {'type':str,'cant' : "unique","DCMIID":"dc.subject","rename": "keywords"},
     'sedici.rights.license' : {'type':str,'cant' : "unique","DCMIID":"dc.rights","rename": "rights"},
@@ -287,7 +286,6 @@ PROMPT_ARTICULO = f"""{HEADER_PROMPT}, journalTitle, journalVolumeAndIssue, issn
 HEADER_PROMPT_SEMANTICO = """Extract the following metadata from the text and return them in a JSON format:
 
 - title
-- subtitle
 - abstract
 - keywords
 - subject
@@ -296,8 +294,7 @@ Return only the fields you can infer with high confidence from the text. If you 
 """
 
 JSON_SEMANTICO = {
-    "title": "Estudio sobre los patrones de migración en comunidades indígenas del NEA",
-    "subtitle": "Una mirada intercultural desde la antropología urbana",
+    "title": "Estudio sobre los patrones de migración en comunidades indígenas del NEA: Una mirada intercultural desde la antropología urbana",
     "abstract": "Este trabajo analiza los procesos de desplazamiento urbano de familias Qom...",
     "keywords": ["migración", "pueblos originarios", "interculturalidad", "antropología urbana"],
     "subject": "Antropología social"
@@ -429,7 +426,6 @@ SCHEMA_LIBRO =  """
         "keywords": "",
         "creator": "",
         "title": "",
-        "subtitle": "",
         "subject": "",
         "rights": "",
         "rightsurl" : "",
@@ -449,7 +445,6 @@ SCHEMA_ARTICULO = """ {
         "keywords": "",
         "creator": "",
         "title": "",
-        "subtitle": "",
         "subject": "",
         "rights": "",
         "rightsurl" : "",
@@ -471,7 +466,6 @@ SCHEMA_TESIS = """ {
         "keywords": "",
         "creator": "",
         "title": "",
-        "subtitle": "",
         "subject": "",
         "rights": "",
         "rightsurl" : "",
@@ -493,7 +487,6 @@ SCHEMA_GENERAL = """ {
         "keywords": "",
         "creator": "",
         "title": "",
-        "subtitle": "",
         "subject": "",
         "rights": "",
         "rightsurl" : "",

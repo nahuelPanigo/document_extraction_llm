@@ -1,5 +1,6 @@
 import re
 import unicodedata
+import json
 
 
 def corregir_numeros_repetidos(texto):
@@ -74,8 +75,47 @@ def clean_atributes(json):
             json.pop(atr)
     return json
 
+def remove_honorifics(text):
+    if not isinstance(text, str):
+        return text
+    
+    # Lista de títulos honoríficos a remover
+    honorifics = [
+        r'\bdr\.\s*', r'\bdra\.\s*', r'\bdrª\.\s*',
+        r'\blic\.\s*', r'\blica\.\s*', r'\blicª\.\s*',
+        r'\bing\.\s*', r'\binga\.\s*', r'\bingª\.\s*',
+        r'\bmg\.\s*', r'\bmgr\.\s*', r'\bmgs\.\s*',
+        r'\bphd\.\s*', r'\bph\.d\.\s*',
+        r'\bprof\.\s*', r'\bprofa\.\s*', r'\bprofª\.\s*',
+        r'\bsr\.\s*', r'\bsra\.\s*', r'\bsrª\.\s*',
+        r'\bmr\.\s*', r'\bmrs\.\s*', r'\bms\.\s*'
+    ]
+    
+    text_cleaned = text
+    for honorific in honorifics:
+        text_cleaned = re.sub(honorific, '', text_cleaned, flags=re.IGNORECASE)
+    
+    # Limpiar espacios extra
+    text_cleaned = re.sub(r'\s+', ' ', text_cleaned).strip()
+    return text_cleaned
+
+
+def amend_title_with_subtitle(json_obj):
+    if 'title' in json_obj and 'subtitle' in json_obj:
+        title = json_obj['title']
+        subtitle = json_obj['subtitle']
+        
+        if subtitle and subtitle.strip():
+            json_obj['title'] = f"{title}: {subtitle}"
+        
+        # Remover el campo subtitle ya que se incorporó al title
+        json_obj.pop('subtitle', None)
+    
+    return json_obj
+
+
 def normalice_keys(json):
-    keys = {"dc.language" : "language", "dc.subject": "keywords","dc.title" : "title" ,"dc.title.subtitle" : "subtitle" , "sedici.creator.person" : "creator" , "dc.subject.ford" : "subject",
+    keys = {"dc.language" : "language", "dc.subject": "keywords","dc.title" : "title" , "sedici.creator.person" : "creator" , "dc.subject.ford" : "subject",
             "sedici.rights.license" : "rights", "sedici.rights.uri" : "rightsurl","dc.identifier.uri": "dc.uri","sedici.identifier.uri":"sedici.uri","dc.date.issued" : "date",
             "mods.originInfo.place" : "originPlaceInfo","sedici.relation.isRelatedWith":"isrelatedwith",
             "sedici.contributor.codirector":"codirector" ,"sedici.contributor.director" :"director" ,"thesis.degree.grantor" :"degree.grantor" ,"thesis.degree.name" :"degree.name",

@@ -1,4 +1,4 @@
-from utils.normalization.normalice_data import normalice_text
+from utils.normalization.normalice_data import normalice_text, get_corrects_keywords, remove_honorifics, amend_title_with_subtitle
 from utils.text_extraction.read_and_write_files import read_data_json,write_to_json
 
 
@@ -13,20 +13,50 @@ def split_dataset(dict_dataset):
     data["validation"] = metadata_col[test_end:total_len]
     return data
 
-
-def normalize_texts(dict_dataset):
+def final_normalization_post_llm(dict_dataset):
+    """
+    Applies final normalization after LLM processing:
+    - Removes honorifics from creator, director, codirector
+    - Amends title with subtitle 
+    - Normalizes keywords (removes :: suffixes)
+    - Normalizes text to fix repeated letters
+    """
     final_dict = {}
     for id_, metadata in dict_dataset.items():
-        final_dict[id_] = metadata
-        if "abstract" in metadata:
-            if isinstance(metadata["abstract"],str):
-                final_dict[id_]["abstract"] = normalice_text(metadata["abstract"])
+        item = metadata.copy()
+        
+        # Remove honorifics from creator, director, codirector
+        for field in ['creator', 'director', 'codirector']:
+            if field in item:
+                if isinstance(item[field], list):
+                    item[field] = [remove_honorifics(name) for name in item[field]]
+                else:
+                    item[field] = remove_honorifics(item[field])
+        
+        # Amend title with subtitle
+        item = amend_title_with_subtitle(item)
+        
+        # Normalize keywords
+        if 'keywords' in item:
+            item['keywords'] = get_corrects_keywords(item['keywords'])
+        
+        # Normalize title text (fix repeated letters)
+        if 'title' in item:
+            item['title'] = normalice_text(item['title'])
+        
+        if "abstract" in item:
+            if isinstance(item["abstract"],str):
+                item["abstract"] = normalice_text(item["abstract"])
             else:
-                final_dict[id_]["abstract"] = [normalice_text(x) for x in metadata["abstract"]]
-        final_dict[id_]["original_text"] = normalice_text(metadata["original_text"])
+                item["abstract"] = [normalice_text(x) for x in item["abstract"]]
+        item["original_text"] = normalice_text(item["original_text"])
+
+        final_dict[id_] = item
+    
     return final_dict
+
 
 def normalize_and_split_dataset(json_filename):
     data = read_data_json(json_filename,"utf-8")
-    data = normalize_texts(data)
+    data = final_normalization_post_llm(data)
     write_to_json(json_filename,split_dataset(data),"utf-8")
