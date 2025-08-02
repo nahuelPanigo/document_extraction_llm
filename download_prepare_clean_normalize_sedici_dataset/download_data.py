@@ -20,8 +20,15 @@ def make_request(url, file_path,key):
         print(f"{Bcolors.FAIL} error en el pdf {key} {resp.status_code} {Bcolors.ENDC}")
 
 
+def get_ids_not_downloaded(ids):
+    to_download = [id for id in ids if not (PDF_FOLDER / f"{id}.pdf").exists()]
+    print(f"{Bcolors.OKGREEN}  pdfs to download {len(to_download)} {Bcolors.ENDC}")
+    print(f"{Bcolors.OKGREEN}  ids of dataset {len(ids)} {Bcolors.ENDC}")
+    return to_download
+
 def download_files(ids):
-    for key in ids:
+    col_ids = get_ids_not_downloaded(ids)
+    for key in col_ids:
         try:
             id = key.replace("-","/")
             url = PDF_URL+id+"/Documento_completo.pdf?sequence=1&isAllowed=y"

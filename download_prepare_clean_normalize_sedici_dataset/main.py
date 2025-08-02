@@ -19,11 +19,14 @@ if __name__ == "__main__":
     if not (filtered_csv_filename).exists():
         print(f"{Bcolors.OKGREEN}merging csv{Bcolors.ENDC}")
         merge_data(csv_filename,filtered_csv_filename)
+
     #download pdfs
     if not (PDF_FOLDER).exists():
         print(f"{Bcolors.OKGREEN}creating pdf folder{Bcolors.ENDC}")
         os.makedirs(PDF_FOLDER)
-        ids = get_ids_from_csv(filtered_csv_filename)
+    ids_pdf_files = [x.replace(".pdf","") for x in os.listdir(PDF_FOLDER) if x.endswith(".pdf")]
+    ids = [x for x in get_ids_from_csv(filtered_csv_filename) if x in ids_pdf_files]
+    if ids:
         print(f"{Bcolors.OKGREEN}downloading pdfs{Bcolors.ENDC}")
         download_files(ids)
     #extract text from pdfs

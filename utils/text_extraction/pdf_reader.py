@@ -36,12 +36,13 @@ class PdfReader:
         sizes_dict =  self.get_fontsizes(pdf_path)
         print(sizes_dict)
         with pdfplumber.open(pdf_path) as pdf:
-            first_word = pdf.pages[0].extract_words()[0]
             try:
+                first_word = pdf.pages[0].extract_words()[0]
                 current_fontsize = round(float(first_word['height'])) 
                 current_tag = self.get_correct_tag(current_fontsize,sizes_dict)
             except:
                 current_tag = "p"    
+                current_fontsize = 10
             text_with_tags = f"<{current_tag}>"
             current_text = []
             words = 0

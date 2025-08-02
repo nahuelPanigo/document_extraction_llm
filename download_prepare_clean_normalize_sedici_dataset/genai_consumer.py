@@ -19,7 +19,7 @@ client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # Define requests limits --global var--
 requests_limits = {
-    "req_per_day": 1500,
+    "req_per_day": 1000,
     "req_per_min": 15,
     "tok_per_min": 32000,
 }
@@ -34,7 +34,7 @@ def consume_llm(metadata,text):
         - Text: {text}"""
     
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash-lite",
         contents=input,
     )
     return response.text
@@ -77,8 +77,8 @@ def reset_limits():
         time.sleep(60)
         with lock:
             requests_limits["req_per_min"] = 15
-            requests_limits["tok_per_min"] = 32000
-            print(f"{Bcolors.OKBLUE}Request Limits: req_per_min=15, tok_per_min=32000{Bcolors.ENDC}")
+            requests_limits["tok_per_min"] = 250000
+            print(f"{Bcolors.OKBLUE}Request Limits: req_per_min=15, tok_per_min=250000{Bcolors.ENDC}")
 
 
 def get_metadata_to_process(metadatas_filename,final_json_filename):
@@ -96,7 +96,9 @@ def process_metadatas(metadatas_filename,final_json_filename):
     print(f"{Bcolors.OKGREEN}extracting metadatas{Bcolors.ENDC}")
     metadatas = get_metadata_to_process(metadatas_filename,final_json_filename)
     print(f"{Bcolors.OKGREEN}processing metadatas{Bcolors.ENDC}")
-    for index,metadata in  metadatas.items():
+    already_processed =read_data_json(final_json_filename,"utf-8")
+    metadatas_to_process = {k: v for k, v in metadatas.items() if k not in already_processed.keys()}
+    for index,metadata in  metadatas_to_process.items():
         try:
             extracted_text = metadata["original_text"]
             id = index

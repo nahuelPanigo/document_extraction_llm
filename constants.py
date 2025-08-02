@@ -36,19 +36,19 @@ VALID_ACCENTS = "áéíóúüñÁÉÍÓÚÜÑ"
 
 APROX_TOK_PER_SOL = 2500
 
-VALID_TYPES = ["Libro", "Tesis", "Articulo"] #,"Objeto de conferencia"]
+VALID_TYPES = ["Libro", "Tesis", "Articulo","Objeto de conferencia"]
 
 COLUMNS_TYPES = {
     #general
     'id' : {"type": str,"rename": "id",'cant' : "unique","DCMIID":"id","rename": "id"},
     'dc.type' : {'type':str,'cant' : "unique","DCMIID":"dc.type","rename": "dc.type"},
-    'dc.description.abstract' : {'type':str,'cant' : "many","DCMIID":"dc.description","rename": "abstract"},
+    #'dc.description.abstract' : {'type':str,'cant' : "many","DCMIID":"dc.description","rename": "abstract"},
     'dc.language' : {'type':str,'cant' : "unique","DCMIID":"dc.language","rename": "language"},
-    'sedici.subject.materias' : {'type':str,'cant' : "unique","DCMIID":"dc.subject","rename": "keywords"},
+    'sedici.subject.materias' : {'type':str,'cant' : "unique","DCMIID":"dc.subject","rename": "subject"},
     'dc.title' : {'type':str,'cant' : "unique","DCMIID":"dc.title","rename": "title"},
     'sedici.title.subtitle' : {'type':str,'cant' : "unique","DCMIID":"dc.title","rename": "subtitle"},
     'sedici.creator.person' : {'type':str,'cant' : "unique","DCMIID":"dc.creator","rename": "creator"},
-    'dc.subject' : {'type':str,'cant' : "unique","DCMIID":"dc.subject","rename": "subject"},
+    'dc.subject' : {'type':str,'cant' : "unique","DCMIID":"dc.subject","rename": "keywords"},
     'sedici.rights.license' : {'type':str,'cant' : "unique","DCMIID":"dc.rights","rename": "rights"},
     'sedici.rights.uri' : {'type':str,'cant' : "unique","DCMIID":"dc.rights","rename": "rightsurl"},
     'sedici.identifier.uri' : {'type':str,'cant' : "unique","DCMIID":"dc.identifier","rename": "sedici.uri"},

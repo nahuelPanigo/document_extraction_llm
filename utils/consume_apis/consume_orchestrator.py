@@ -14,7 +14,7 @@ def upload_file(file_path: str,token: str, normalization: bool=True, type: str="
         data = {
             "normalization": normalization,
             "type": type,
-            "deepanalize": deepanalyze
+            "deepanalyze": deepanalyze
         }
         headers = {
             "Authorization": f"Bearer {token}"
