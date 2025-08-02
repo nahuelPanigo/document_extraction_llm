@@ -40,8 +40,9 @@ if __name__ == "__main__":
         print(f"{Bcolors.OKGREEN}extracting text and making dataset{Bcolors.ENDC}")
         extract_and_make_dataset(json_metadata_filename,json_metadata_and_text_filename,filtered_csv_filename)
     # clean metadata
+    # if not (json_metadata_and_text_checked_filename).exists():
     clean_metadata(json_metadata_and_text_filename,json_metadata_and_text_checked_filename)
     # split dataset and normalize text
     print(f"{Bcolors.OKGREEN}splitting dataset and normalizing text{Bcolors.ENDC}")
-    normalize_and_split_dataset(json_metadata_and_text_checked_filename)
-    
+    normalize_and_split_dataset(json_metadata_and_text_checked_filename,json_metadata_filename)
+   

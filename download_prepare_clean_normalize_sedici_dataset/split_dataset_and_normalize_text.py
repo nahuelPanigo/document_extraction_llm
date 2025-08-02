@@ -13,7 +13,7 @@ def split_dataset(dict_dataset):
     data["validation"] = metadata_col[test_end:total_len]
     return data
 
-def final_normalization_post_llm(dict_dataset):
+def final_normalization_post_llm(dict_dataset,original_metadata):
     """
     Applies final normalization after LLM processing:
     - Removes honorifics from creator, director, codirector
@@ -51,12 +51,15 @@ def final_normalization_post_llm(dict_dataset):
                 item["abstract"] = [normalice_text(x) for x in item["abstract"]]
         item["original_text"] = normalice_text(item["original_text"])
 
+        item["type"] = original_metadata[id_]["dc.type"]
+
         final_dict[id_] = item
     
     return final_dict
 
 
-def normalize_and_split_dataset(json_filename):
+def normalize_and_split_dataset(json_filename,original_json_filename):
     data = read_data_json(json_filename,"utf-8")
-    data = final_normalization_post_llm(data)
+    original_metadata = read_data_json(original_json_filename,"utf-8")
+    data = final_normalization_post_llm(data,original_metadata)
     write_to_json(json_filename,split_dataset(data),"utf-8")

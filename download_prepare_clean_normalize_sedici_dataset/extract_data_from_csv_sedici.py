@@ -135,6 +135,18 @@ def merge_data(csv_filename, filtered_csv_filename):
     print("terminado")
 
 
-def get_ids_from_csv(csv_file):
+def get_ids_from_csv(csv_file, extra_objetos=200):
     df = pd.read_csv(csv_file)
-    return df["id"].dropna().tolist()[:LENGTH_DATASET]
+    base_ids = df["id"].dropna().tolist()[:LENGTH_DATASET]
+
+
+    extra_df = df[
+        (df["dc.type"] == "Objeto de conferencia") &
+        (~df["id"].isin(base_ids))
+    ].dropna(subset=["id"]).drop_duplicates(subset=["id"]).head(extra_objetos)
+
+    final_ids = base_ids + extra_df["id"].tolist()
+    final_df = df[df["id"].isin(final_ids)]
+
+    return final_df["id"].tolist()
+
