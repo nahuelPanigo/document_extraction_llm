@@ -102,7 +102,7 @@ def process_metadatas(metadatas_filename,final_json_filename):
         try:
             extracted_text = metadata["original_text"]
             id = index
-            dict_metadata = {k: v for k, v in metadata.items() if  (k != "original_text")}
+            dict_metadata = {k: v for k, v in metadata.items() if k not in ["original_text", "dc.type"]}
             response = make_request(dict_metadata, extracted_text)
             if(response):
                 save_json(id,response,final_json_filename,extracted_text)
