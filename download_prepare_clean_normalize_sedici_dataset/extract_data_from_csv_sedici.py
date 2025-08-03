@@ -138,7 +138,7 @@ def merge_data(csv_filename, filtered_csv_filename):
 def get_ids_from_csv(csv_file, extra_objetos=200):
     df = pd.read_csv(csv_file)
     base_ids = df["id"].dropna().tolist()[:LENGTH_DATASET]
-
+    print(len(base_ids))
 
     extra_df = df[
         (df["dc.type"] == "Objeto de conferencia") &
@@ -148,5 +148,6 @@ def get_ids_from_csv(csv_file, extra_objetos=200):
     final_ids = base_ids + extra_df["id"].tolist()
     final_df = df[df["id"].isin(final_ids)]
 
+    print(len(final_df["id"].tolist()))
     return final_df["id"].tolist()
 

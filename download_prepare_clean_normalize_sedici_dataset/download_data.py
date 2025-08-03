@@ -21,6 +21,7 @@ def make_request(url, file_path,key):
 
 
 def get_ids_not_downloaded(ids):
+    print("paso por aca",len(ids))
     to_download = [id for id in ids if not (PDF_FOLDER / f"{id}.pdf").exists()]
     print(f"{Bcolors.OKGREEN}  pdfs to download {len(to_download)} {Bcolors.ENDC}")
     print(f"{Bcolors.OKGREEN}  ids of dataset {len(ids)} {Bcolors.ENDC}")

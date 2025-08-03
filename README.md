@@ -174,6 +174,8 @@ document_extraction_llm
 ```
 
 ## TODO
+- vovler a sacar y fijarse porque no sale obj conferencia
+- chequear las uri en el excel que hicimos
 - run new fine_tunning
 - run new validation
 - make configuration in finetunning for qwen and gemma models
