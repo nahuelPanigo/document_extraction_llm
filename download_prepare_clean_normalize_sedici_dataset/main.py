@@ -37,7 +37,7 @@ if __name__ == "__main__":
             print(f"{Bcolors.OKGREEN}creating txt folder{Bcolors.ENDC}")
             os.makedirs(TXT_FOLDER)
         print(f"{Bcolors.OKGREEN}extracting text and making dataset{Bcolors.ENDC}")
-        extract_and_make_dataset(json_metadata_filename,json_metadata_and_text_filename,filtered_csv_filename)
+        extract_and_make_dataset(json_metadata_filename,json_metadata_and_text_filename,filtered_csv_filename,ids)
     # clean metadata
     if not (json_metadata_and_text_checked_filename).exists():
         clean_metadata(json_metadata_and_text_filename,json_metadata_and_text_checked_filename)

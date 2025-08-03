@@ -19,15 +19,21 @@ def process_pdf_data(pdf_path, pdf_id):
     except Exception as e:
         print(f"{Bcolors.FAIL}error processing pdf{pdf_id} with error {e}{Bcolors.ENDC}")
 
-def extract_text():
+def extract_text(selected_ids=None):
     text = [x.replace(".txt",".pdf") for x in os.listdir(TXT_FOLDER)]
-    pdf_paths = [(os.path.join(PDF_FOLDER,x),x.replace(".pdf","")) for x in os.listdir(PDF_FOLDER) if x not in text]   
+    
+    if selected_ids:
+        pdf_paths = [(str(PDF_FOLDER / f"{id_val}.pdf"), id_val) for id_val in selected_ids if f"{id_val}.pdf" not in text and (PDF_FOLDER / f"{id_val}.pdf").exists()]
+    else:
+        pdf_paths = [(os.path.join(PDF_FOLDER,x),x.replace(".pdf","")) for x in os.listdir(PDF_FOLDER) if x not in text]   
+    
     with Pool(2) as pool:
         pool.map(process_pdf_data_wrapper, pdf_paths)
     return
 
-def make_json_metadata(metadata_filename,csv_filename):
+def make_json_metadata(metadata_filename,csv_filename,selected_ids):
     df = pd.read_csv(csv_filename)
+    df = df[df['id'].isin(selected_ids)]
     rename_dict = {key: value["rename"] for key, value in COLUMNS_TYPES.items() if value.get("rename")}
     df = df.rename(columns=rename_dict)
     column_order = [value["rename"] for value in COLUMNS_TYPES.values() if value.get("rename")]
@@ -54,9 +60,10 @@ def add_text_input_to_dataset(metadata_filename, metadata_text_filename):
             print(f"{Bcolors.FAIL} Error processing txt file for id {k} with error {e}{Bcolors.ENDC}")
     write_to_json(metadata_text_filename, filtered_metadata, "utf-8")
 
-def extract_and_make_dataset(metadata_filename,metadata_text_filename,csv_filename):
-    extract_text()
-    make_json_metadata(metadata_filename,csv_filename)
+def extract_and_make_dataset(metadata_filename,metadata_text_filename,csv_filename,selected_ids):
+    ids_with_pdf = [id_val for id_val in selected_ids if (PDF_FOLDER / f"{id_val}.pdf").exists()]
+    extract_text(ids_with_pdf)
+    make_json_metadata(metadata_filename,csv_filename,ids_with_pdf)
     add_text_input_to_dataset(metadata_filename,metadata_text_filename)
 
 
