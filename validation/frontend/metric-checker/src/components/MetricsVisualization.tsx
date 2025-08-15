@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './MetricsVisualization.css';
+import MetadataBarChart from './MetadataBarChart';
+import ComprehensiveChart from './ComprehensiveChart';
 
 interface MetricResult {
   metric_type: string;
@@ -31,12 +33,38 @@ interface MetricResult {
   }>;
 }
 
+interface TypeSpecificResult {
+  type: string;
+  total_documents: number;
+  detailed_results: MetricResult[];
+  summary: any;
+}
+
 interface MetricsVisualizationProps {
   results: MetricResult[];
+  typeSpecificResults?: Record<string, TypeSpecificResult>;
   onReset: () => void;
 }
 
-const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, onReset }) => {
+const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, typeSpecificResults, onReset }) => {
+  const [selectedType, setSelectedType] = useState<string>('General');
+  
+  // Get available types
+  const availableTypes = typeSpecificResults ? Object.keys(typeSpecificResults) : ['General'];
+  
+  // Get current results based on selected type
+  const getCurrentResults = (): MetricResult[] => {
+    if (selectedType === 'Comprehensive') {
+      return results; // Return general results for comprehensive view
+    }
+    if (selectedType === 'General' || !typeSpecificResults) {
+      return results;
+    }
+    return typeSpecificResults[selectedType]?.detailed_results || [];
+  };
+  
+  const currentResults = getCurrentResults();
+  const currentTypeInfo = typeSpecificResults?.[selectedType];
   const formatPercentage = (value: number): string => {
     return (value * 100).toFixed(1) + '%';
   };
@@ -239,9 +267,42 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, on
     );
   };
 
+  const renderTypeSelector = () => {
+    if (availableTypes.length <= 1) return null;
+    
+    return (
+      <div className="type-selector">
+        <h3>Select Document Type:</h3>
+        <div className="type-buttons">
+          {availableTypes.map(type => (
+            <button
+              key={type}
+              className={`type-btn ${selectedType === type ? 'active' : ''}`}
+              onClick={() => setSelectedType(type)}
+            >
+              {type}
+              {typeSpecificResults?.[type] && (
+                <span className="type-count">({typeSpecificResults[type].total_documents})</span>
+              )}
+            </button>
+          ))}
+          {typeSpecificResults && Object.keys(typeSpecificResults).length > 0 && (
+            <button
+              key="comprehensive"
+              className={`type-btn comprehensive-btn ${selectedType === 'Comprehensive' ? 'active' : ''}`}
+              onClick={() => setSelectedType('Comprehensive')}
+            >
+              📊 All Types Overview
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderSummaryStats = () => {
-    const exactEqualityResults = results.filter(r => r.metric_type === 'exact_equality');
-    const listPercentageResults = results.filter(r => r.metric_type === 'list_percentage_match');
+    const exactEqualityResults = currentResults.filter(r => r.metric_type === 'exact_equality');
+    const listPercentageResults = currentResults.filter(r => r.metric_type === 'list_percentage_match');
 
     const avgExactAccuracy = exactEqualityResults.length > 0 
       ? exactEqualityResults.reduce((sum, r) => sum + (r.accuracy || 0), 0) / exactEqualityResults.length
@@ -253,11 +314,16 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, on
 
     return (
       <div className="summary-stats">
-        <h2>Summary Statistics</h2>
+        <h2>Summary Statistics - {selectedType}</h2>
+        {currentTypeInfo && (
+          <div className="type-info">
+            <span className="total-docs">Total Documents: {currentTypeInfo.total_documents}</span>
+          </div>
+        )}
         <div className="summary-grid">
           <div className="summary-item">
             <span className="summary-label">Total Metrics:</span>
-            <span className="summary-value">{results.length}</span>
+            <span className="summary-value">{currentResults.length}</span>
           </div>
           <div className="summary-item">
             <span className="summary-label">Avg. Exact Accuracy:</span>
@@ -272,7 +338,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, on
     );
   };
 
-  if (!results || results.length === 0) {
+  if (!currentResults || currentResults.length === 0) {
     return (
       <div className="metrics-container">
         <div className="no-results">
@@ -291,10 +357,27 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, on
         <button onClick={onReset} className="reset-btn">Upload New Files</button>
       </div>
 
-      {renderSummaryStats()}
+      {renderTypeSelector()}
+      
+      {selectedType === 'Comprehensive' && typeSpecificResults && Object.keys(typeSpecificResults).length > 0 ? (
+        <ComprehensiveChart 
+          generalResults={results}
+          typeSpecificResults={typeSpecificResults}
+        />
+      ) : (
+        <>
+          {renderSummaryStats()}
+          <MetadataBarChart 
+            results={currentResults}
+            title="Metadata Accuracy Overview"
+            type={selectedType}
+          />
+        </>
+      )}
 
-      <div className="metrics-grid">
-        {results.map(result => {
+      {selectedType !== 'Comprehensive' && (
+        <div className="metrics-grid">
+        {currentResults.map(result => {
           if (result.metric_type === 'exact_equality') {
             return renderExactEqualityMetric(result);
           } else if (result.metric_type === 'list_percentage_match') {
@@ -302,7 +385,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, on
           }
           return null;
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

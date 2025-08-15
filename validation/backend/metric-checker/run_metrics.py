@@ -63,10 +63,108 @@ def run_metric_comparison(original_content: bytes, predicted_content: bytes):
     # 4. Create summary statistics
     summary = create_summary_statistics(all_results)
     
-    return {
+    # 5. Generate type-specific results
+    type_specific_results = generate_type_specific_results(predicted_data, original_data)
+    
+    # Add General key with overall results
+    general_results = {
+        "type": "General",
+        "total_documents": len(set(predicted_data.keys()) & set(original_data.keys())),
         "detailed_results": all_results,
         "summary": summary
     }
+    
+    # Combine general and type-specific results
+    final_results = {"General": general_results}
+    final_results.update(type_specific_results)
+    
+    return {
+        "detailed_results": all_results,
+        "summary": summary,
+        "type_specific_results": final_results
+    }
+
+
+def generate_type_specific_results(predicted_data: dict, original_data: dict) -> dict:
+    """
+    Generate metrics grouped by metadata type.
+    
+    Args:
+        predicted_data: Predicted output JSON data
+        original_data: Original/ground truth JSON data
+    
+    Returns:
+        Dictionary with metrics grouped by type
+    """
+    # Get all unique types from both datasets
+    all_types = set()
+    common_ids = set(predicted_data.keys()) & set(original_data.keys())
+    
+    # Extract all unique types
+    for item_id in common_ids:
+        if 'type' in predicted_data[item_id]:
+            all_types.add(predicted_data[item_id]['type'])
+        if 'type' in original_data[item_id]:
+            all_types.add(original_data[item_id]['type'])
+    
+    type_specific_results = {}
+    
+    for doc_type in all_types:
+        # Filter data by type
+        filtered_predicted = {}
+        filtered_original = {}
+        
+        for item_id in common_ids:
+            pred_item = predicted_data[item_id]
+            orig_item = original_data[item_id]
+            
+            # Include item if either predicted or original has this type
+            if (pred_item.get('type') == doc_type or orig_item.get('type') == doc_type):
+                filtered_predicted[item_id] = pred_item
+                filtered_original[item_id] = orig_item
+        
+        if filtered_predicted and filtered_original:
+            # Create checker for this type
+            type_checker = MetricChecker(filtered_predicted, filtered_original)
+            
+            # Run metrics for this type
+            type_results = []
+            
+            # Overall exact equality
+            overall_equality = type_checker.exact_equality_metric()
+            type_results.append(overall_equality)
+            
+            # Field-specific metrics
+            important_fields = ['title', 'abstract', 'creator', 'keywords', 'subject', 'language', 'date', 'type']
+            
+            for field in important_fields:
+                try:
+                    field_equality = type_checker.exact_equality_metric(field_name=field)
+                    type_results.append(field_equality)
+                except Exception:
+                    continue
+            
+            # List percentage matching for list fields
+            list_fields = ['subject', 'keywords']
+            
+            for field in list_fields:
+                try:
+                    list_percentage = type_checker.list_percentage_match_metric(field_name=field)
+                    type_results.append(list_percentage)
+                except Exception:
+                    continue
+            
+            # Create summary for this type
+            type_summary = create_summary_statistics(type_results)
+            
+            type_specific_results[doc_type] = {
+                "type": doc_type,
+                "total_documents": len(filtered_predicted),
+                "detailed_results": type_results,
+                "summary": type_summary
+            }
+    
+    return type_specific_results
 
 
 def create_summary_statistics(results: list) -> dict:

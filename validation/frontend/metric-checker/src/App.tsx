@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import FileUpload from './components/FileUpload';
 import MetricsVisualization from './components/MetricsVisualization';
-import { compareJsonFiles, mockCompareJsonFiles, validateJsonFile, MetricResult } from './services/api';
+import { compareJsonFiles, mockCompareJsonFiles, validateJsonFile, MetricResult, TypeSpecificResult } from './services/api';
 
 // Application states
 type AppState = 'upload' | 'loading' | 'results' | 'error';
@@ -15,6 +15,7 @@ interface AppError {
 function App() {
   const [currentState, setCurrentState] = useState<AppState>('upload');
   const [results, setResults] = useState<MetricResult[]>([]);
+  const [typeSpecificResults, setTypeSpecificResults] = useState<Record<string, TypeSpecificResult>>({});
   const [error, setError] = useState<AppError | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<{
     predicted: File | null;
@@ -105,6 +106,7 @@ function App() {
 
       if (response.success && response.results) {
         setResults(response.results);
+        setTypeSpecificResults(response.typeSpecificResults || {});
         setCurrentState('results');
       } else {
         throw new Error(response.error || 'Comparison failed');
@@ -123,6 +125,7 @@ function App() {
   const handleReset = () => {
     setCurrentState('upload');
     setResults([]);
+    setTypeSpecificResults({});
     setError(null);
     setUploadedFiles({ predicted: null, real: null });
   };
@@ -173,6 +176,7 @@ function App() {
       {currentState === 'results' && (
         <MetricsVisualization 
           results={results}
+          typeSpecificResults={typeSpecificResults}
           onReset={handleReset}
         />
       )}

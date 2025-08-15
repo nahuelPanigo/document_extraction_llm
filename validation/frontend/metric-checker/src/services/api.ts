@@ -31,9 +31,17 @@ export interface MetricResult {
   }>;
 }
 
+export interface TypeSpecificResult {
+  type: string;
+  total_documents: number;
+  detailed_results: MetricResult[];
+  summary: any;
+}
+
 export interface ComparisonResponse {
   success: boolean;
   results: MetricResult[];
+  typeSpecificResults?: Record<string, TypeSpecificResult>;
   error?: string;
 }
 
@@ -45,6 +53,7 @@ export interface BackendResponse {
     list_percentage_metrics: any[];
     overall_performance: any;
   };
+  type_specific_results?: Record<string, TypeSpecificResult>;
 }
 
 // Configuration
@@ -157,12 +166,15 @@ export const compareJsonFiles = async (
       
       // Extract results from backend response
       const results = backendData.detailed_results || [];
+      const typeSpecificResults = backendData.type_specific_results || {};
       
       console.log('Transformed results:', results);
+      console.log('Type-specific results:', typeSpecificResults);
       
       return {
         success: true,
         results: results,
+        typeSpecificResults: typeSpecificResults,
       };
       
     } catch (fetchError) {
@@ -180,10 +192,12 @@ export const compareJsonFiles = async (
       }
       
       const results = backendData.detailed_results || [];
+      const typeSpecificResults = backendData.type_specific_results || {};
       
       return {
         success: true,
         results: results,
+        typeSpecificResults: typeSpecificResults,
       };
     }
     

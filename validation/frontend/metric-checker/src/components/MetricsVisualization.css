@@ -38,6 +38,93 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+/* Type Selector Styles */
+.type-selector {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.type-selector h3 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.type-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.type-btn {
+  background: white;
+  border: 2px solid #dee2e6;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #495057;
+}
+
+.type-btn:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+  transform: translateY(-1px);
+}
+
+.type-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.type-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.type-btn:not(.active) .type-count {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+.comprehensive-btn {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  border-color: #e74c3c !important;
+  color: white !important;
+}
+
+.comprehensive-btn:hover {
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%) !important;
+  transform: translateY(-1px);
+}
+
+/* Summary Stats Updates */
+.type-info {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #e8f4f8;
+  border-radius: 6px;
+  border-left: 4px solid #17a2b8;
+}
+
+.total-docs {
+  font-weight: 600;
+  color: #0c5460;
+}
+
 .no-results {
   text-align: center;
   padding: 4rem 2rem;
