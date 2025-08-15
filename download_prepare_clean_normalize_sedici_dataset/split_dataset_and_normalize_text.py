@@ -1,16 +1,49 @@
 from utils.normalization.normalice_data import normalice_text, get_corrects_keywords, remove_honorifics, amend_title_with_subtitle
 from utils.text_extraction.read_and_write_files import read_data_json,write_to_json
+from constants import PERCENTAGE_DATASET_FOR_STEPS
+from collections import defaultdict
+import random
 
 
 def split_dataset(dict_dataset):
-    metadata_col = [{**val, "id": id_} for id_, val in dict_dataset.items()]
-    data = {}
-    total_len = len(metadata_col)
-    train_end = int(total_len * 0.8)
-    test_end = int(total_len * 0.9)
-    data["training"]=metadata_col[:train_end]
-    data["test"] = metadata_col[train_end:test_end]
-    data["validation"] = metadata_col[test_end:total_len]
+    """
+    Stratified split to maintain the same percentage of document types 
+    across training, test, and validation sets
+    """
+    # Group samples by type
+    type_groups = defaultdict(list)
+    for id_, val in dict_dataset.items():
+        doc_type = val.get("type", "unknown")
+        type_groups[doc_type].append({**val, "id": id_})
+    
+    # Shuffle each type group to ensure randomness
+    for doc_type in type_groups:
+        random.shuffle(type_groups[doc_type])
+    
+    # Initialize split containers
+    data = {"training": [], "test": [], "validation": []}
+    
+    # Split each type according to the percentages
+    for doc_type, samples in type_groups.items():
+        total_samples = len(samples)
+        
+        # Calculate split indices
+        train_end = int(total_samples * PERCENTAGE_DATASET_FOR_STEPS["training"])
+        test_end = train_end + int(total_samples * PERCENTAGE_DATASET_FOR_STEPS["test"])
+        
+        # Distribute samples
+        data["training"].extend(samples[:train_end])
+        data["test"].extend(samples[train_end:test_end])
+        data["validation"].extend(samples[test_end:])
+        
+        print(f"{doc_type}: train={train_end}, test={test_end-train_end}, val={len(samples)-test_end}")
+    
+    # Shuffle final datasets to mix types
+    for split in data:
+        random.shuffle(data[split])
+    
+    print(f"Final split sizes - training: {len(data['training'])}, test: {len(data['test'])}, validation: {len(data['validation'])}")
+    
     return data
 
 def final_normalization_post_llm(dict_dataset,original_metadata):

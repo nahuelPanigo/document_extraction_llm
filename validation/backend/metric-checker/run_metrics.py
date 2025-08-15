@@ -38,10 +38,11 @@ def run_metric_comparison(original_content: bytes, predicted_content: bytes):
     overall_equality = checker.exact_equality_metric()
     all_results.append(overall_equality)
     
-    # 2. Field-specific exact equality comparisons for important metadata fields
-    important_fields = ['title', 'abstract', 'creator', 'keywords', 'subject', 'language', 'date']
+    # 2. Discover all metadata fields present in the data
+    all_fields = checker.discover_all_fields()
     
-    for field in important_fields:
+    # 3. Field-specific exact equality comparisons for all discovered fields
+    for field in all_fields:
         try:
             field_equality = checker.exact_equality_metric(field_name=field)
             all_results.append(field_equality)
@@ -49,21 +50,23 @@ def run_metric_comparison(original_content: bytes, predicted_content: bytes):
             # Skip fields that don't exist or cause errors
             continue
     
-    # 3. List percentage matching for fields that might be lists
-    list_fields = ['subject', 'keywords']  # These are commonly list-type fields
+    # 4. List percentage matching for fields that might be lists
+    # These are commonly list-type fields, but we'll check others too
+    commonly_list_fields = ['subject', 'keywords', 'creator', 'author', 'contributors', 'editors']
     
-    for field in list_fields:
-        try:
-            list_percentage = checker.list_percentage_match_metric(field_name=field)
-            all_results.append(list_percentage)
-        except Exception as e:
-            # Skip fields that don't exist or cause errors
-            continue
+    for field in commonly_list_fields:
+        if field in all_fields:  # Only check if field exists in data
+            try:
+                list_percentage = checker.list_percentage_match_metric(field_name=field)
+                all_results.append(list_percentage)
+            except Exception as e:
+                # Skip fields that don't exist or cause errors
+                continue
     
-    # 4. Create summary statistics
+    # 5. Create summary statistics
     summary = create_summary_statistics(all_results)
     
-    # 5. Generate type-specific results
+    # 6. Generate type-specific results
     type_specific_results = generate_type_specific_results(predicted_data, original_data)
     
     # Add General key with overall results
@@ -134,25 +137,27 @@ def generate_type_specific_results(predicted_data: dict, original_data: dict) ->
             overall_equality = type_checker.exact_equality_metric()
             type_results.append(overall_equality)
             
-            # Field-specific metrics
-            important_fields = ['title', 'abstract', 'creator', 'keywords', 'subject', 'language', 'date', 'type']
+            # Discover all fields present in this type's data
+            type_fields = type_checker.discover_all_fields()
             
-            for field in important_fields:
+            # Field-specific metrics for all discovered fields
+            for field in type_fields:
                 try:
                     field_equality = type_checker.exact_equality_metric(field_name=field)
                     type_results.append(field_equality)
                 except Exception:
                     continue
             
-            # List percentage matching for list fields
-            list_fields = ['subject', 'keywords']
+            # List percentage matching for commonly list-type fields
+            commonly_list_fields = ['subject', 'keywords', 'creator', 'author', 'contributors', 'editors']
             
-            for field in list_fields:
-                try:
-                    list_percentage = type_checker.list_percentage_match_metric(field_name=field)
-                    type_results.append(list_percentage)
-                except Exception:
-                    continue
+            for field in commonly_list_fields:
+                if field in type_fields:  # Only check if field exists in this type's data
+                    try:
+                        list_percentage = type_checker.list_percentage_match_metric(field_name=field)
+                        type_results.append(list_percentage)
+                    except Exception:
+                        continue
             
             # Create summary for this type
             type_summary = create_summary_statistics(type_results)

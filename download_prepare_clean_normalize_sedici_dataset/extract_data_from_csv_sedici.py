@@ -1,5 +1,5 @@
 import pandas as pd
-from constants import COLUMNS_TYPES, FORD_SEDICI_MATERIAS,VALID_TYPES,LENGTH_DATASET
+from constants import COLUMNS_TYPES, FORD_SEDICI_MATERIAS,VALID_TYPES,LENGTH_DATASET,SAMPLES_PER_TYPE
 
 pd.set_option('display.max_colwidth', None)
 
@@ -135,19 +135,25 @@ def merge_data(csv_filename, filtered_csv_filename):
     print("terminado")
 
 
-def get_ids_from_csv(csv_file, extra_objetos=200):
+def get_ids_from_csv(csv_file, samples_per_type=SAMPLES_PER_TYPE):
     df = pd.read_csv(csv_file)
-    base_ids = df["id"].dropna().tolist()[:LENGTH_DATASET]
-    print(len(base_ids))
-
-    extra_df = df[
-        (df["dc.type"] == "Objeto de conferencia") &
-        (~df["id"].isin(base_ids))
-    ].dropna(subset=["id"]).drop_duplicates(subset=["id"]).head(extra_objetos)
-
-    final_ids = base_ids + extra_df["id"].tolist()
-    final_df = df[df["id"].isin(final_ids)]
-
-    print(len(final_df["id"].tolist()))
-    return final_df["id"].tolist()
+    
+    # Remove duplicates and filter by valid ids
+    df = df.dropna(subset=["id"]).drop_duplicates(subset=["id"])
+    
+    balanced_ids = []
+    
+    # Select samples_per_type for each valid type
+    for doc_type in VALID_TYPES:
+        type_df = df[df["dc.type"] == doc_type]
+        available_samples = len(type_df)
+        samples_to_take = min(samples_per_type, available_samples)
+        
+        selected_ids = type_df["id"].head(samples_to_take).tolist()
+        balanced_ids.extend(selected_ids)
+        
+        print(f"{doc_type}: {samples_to_take} samples (available: {available_samples})")
+    
+    print(f"Total balanced dataset size: {len(balanced_ids)}")
+    return balanced_ids
 

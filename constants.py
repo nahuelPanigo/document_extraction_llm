@@ -27,6 +27,7 @@ CSV_SEDICI_FILTERED = "sedici_filtered_2019_2024.csv"
 
 
 LENGTH_DATASET = 2000
+SAMPLES_PER_TYPE = 500  # For balanced dataset: 500 per type × 4 types = 2000 total
 PERCENTAGE_DATASET_FOR_STEPS = {"training":0.8,"validation":0.1,"test":0.1}
 
 CANT_TOKENS = 14000
