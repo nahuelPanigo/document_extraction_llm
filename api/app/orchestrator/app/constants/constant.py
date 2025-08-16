@@ -16,7 +16,7 @@ KEYS_GENERAL = ["creator", "title", "subtitle", "subject", "rights", "rightsurl"
 KEYS_TESIS = KEYS_GENERAL +["codirector", "director", "degree.grantor", "degree.name"]
 KEYS_LIBRO = KEYS_GENERAL +["publisher", "isbn", "compiler"]
 KEYS_ARTICULO = KEYS_GENERAL + ["journalTitle", "journalVolumeAndIssue", "issn", "event"]
-
+KEYS_OBJETO_CONFERENCIA = KEYS_GENERAL + ["issn", "event"]
 
 PROMPT_DEEPANALYZE = """
 Eres un validador estricto de metadatos académicos presentes en los libros.
@@ -218,3 +218,25 @@ JSON_LIBRO =  {
 PROMPT_LIBRO = f"""{HEADER_PROMPT}, publisher, isbn, compiler
 {MIDDLE_PROMPT}{JSON_LIBRO}{END_PROMPT}"""
 
+
+
+JSON_OBJECTO_CONFERENCIA = {
+        "language": "en",
+#        "keywords": "['stars: activity', 'stars: rotation', 'stars: solar-type']",
+        "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
+        "title": "Exploring the magnetism of stars using TESS data",
+        "subtitle": "A new method for the detection of magnetic fields in stars",
+        "subject": "Ciencias físicas",
+        "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+        "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+  #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
+ #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
+        "date": "2022-01-01",
+        "originPlaceInfo.": "Asociación Argentina de Astronomía",
+        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
+        "issn": "1669-9521",
+        "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)",
+    },
+
+PROMPT_OBJECTO_CONFERENCIA = f"""{HEADER_PROMPT}, issn, event
+{MIDDLE_PROMPT}{JSON_OBJECTO_CONFERENCIA}{END_PROMPT}"""

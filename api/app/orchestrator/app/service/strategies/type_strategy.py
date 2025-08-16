@@ -8,12 +8,9 @@ from typing import Tuple, Optional
 class TypeStrategy(ABC):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-
-
-    @abstractmethod
-    def get_metadata(self,text : str) -> dict:
-        pass
-
+        load_dotenv()
+        self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
+        self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
 
     def consume_llm(self, api_key: str, input: str, url: str) -> Tuple[dict, Optional[int]]:
         headers = {
@@ -43,89 +40,52 @@ class TypeStrategy(ABC):
                 self.logger.info(f"adding key: {key}")
                 metadata[key] = ""
         return metadata
-
-class GeneralStrategy(TypeStrategy):
-    def __init__(self):
-        super().__init__()  
-        load_dotenv()
-        self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
-        self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
-
-    def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
-        from app.constants.constant import PROMPT_GENERAL,KEYS_GENERAL
+    
+    def get_metadata(self, input: str , keys: list) -> Tuple[dict, Optional[int]]:
         self.logger.info(f"calling llm service to extract metadata")
-        llm_input = PROMPT_GENERAL + text
         response, error = self.consume_llm(
             api_key=self.llm_service_api_key,
-            input=llm_input,
+            input=input,
             url=self.llm_service_url
         )
         if error is None:
             self.logger.info(f"response from llm service: {response}")
-            response = self.check_and_add_missing_keys(response, KEYS_GENERAL)
+            response = self.check_and_add_missing_keys(response, keys)
         return response, error
 
 
+class GeneralStrategy(TypeStrategy):
+    def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
+        from app.constants.constant import PROMPT_GENERAL,KEYS_GENERAL      
+        llm_input = PROMPT_GENERAL + text
+        return super().get_metadata(llm_input, KEYS_GENERAL)
+
+
+class ObjectConferenceStrategy(TypeStrategy):
+
+    def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
+        from app.constants.constant import PROMPT_OBJECTO_CONFERENCIA,KEYS_OBJETO_CONFERENCIA
+        llm_input = PROMPT_OBJECTO_CONFERENCIA + text
+        return super().get_metadata(llm_input, KEYS_OBJETO_CONFERENCIA)
+
 class TesisStrategy(TypeStrategy):
-    def __init__(self):
-        super().__init__()  
-        load_dotenv()
-        self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
-        self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
 
     def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
         from app.constants.constant import PROMPT_TESIS,KEYS_TESIS
-        self.logger.info(f"calling llm service to extract metadata")
         llm_input = PROMPT_TESIS + text
-        response, error = self.consume_llm(
-            api_key=self.llm_service_api_key,
-            input=llm_input,
-            url=self.llm_service_url
-        )
-        if error is None:
-            self.logger.info(f"response from llm service: {response}")
-            response = self.check_and_add_missing_keys(response, KEYS_TESIS)
-        return response, error
+        return super().get_metadata(llm_input, KEYS_TESIS)
     
 
 class ArticuloStrategy(TypeStrategy):
-    def __init__(self):
-        super().__init__()  
-        load_dotenv()
-        self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
-        self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
-    
+
     def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
         from app.constants.constant import PROMPT_ARTICULO,KEYS_ARTICULO
-        self.logger.info(f"calling llm service to extract metadata")
         llm_input = PROMPT_ARTICULO + text
-        response, error = self.consume_llm(
-            api_key=self.llm_service_api_key,
-            input=llm_input,
-            url=self.llm_service_url
-        )
-        if error is None:
-            self.logger.info(f"response from llm service: {response}")
-            response = self.check_and_add_missing_keys(response, KEYS_ARTICULO)
-        return response, error
+        return super().get_metadata(llm_input, KEYS_ARTICULO)
     
 class LibroStrategy(TypeStrategy):
-    def __init__(self):
-        super().__init__()  
-        load_dotenv()
-        self.llm_service_url = os.getenv("LLM_LED_URL") + "/consume-llm"
-        self.llm_service_api_key = os.getenv("LLM_LED_TOKEN")
 
     def get_metadata(self, text: str) -> Tuple[dict, Optional[int]]:
         from app.constants.constant import PROMPT_LIBRO,KEYS_LIBRO
-        self.logger.info(f"calling llm service to extract metadata")
         llm_input = PROMPT_LIBRO + text
-        response, error = self.consume_llm(
-            api_key=self.llm_service_api_key,
-            input=llm_input,
-            url=self.llm_service_url
-        )
-        if error is None:
-            self.logger.info(f"response from llm service: {response}")
-            response = self.check_and_add_missing_keys(response, KEYS_LIBRO)
-        return response, error
+        return super().get_metadata(llm_input, KEYS_LIBRO)

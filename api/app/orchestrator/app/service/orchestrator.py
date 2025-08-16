@@ -4,7 +4,7 @@ from fastapi import UploadFile
 from app.logging_config import logging
 import requests
 from app.service.indentifier import TypeIdentifier
-from app.service.strategies.type_strategy import LibroStrategy,TesisStrategy,ArticuloStrategy
+from app.service.strategies.type_strategy import LibroStrategy,TesisStrategy,ArticuloStrategy,ObjectConferenceStrategy,GeneralStrategy
 import io
 from typing import Tuple, Optional, Union
 from app.constants.constant import PROMPT_DEEPANALYZE
@@ -73,19 +73,18 @@ class Orchestrator:
     def _get_file_payload(file: UploadFile)  -> Tuple[dict, Optional[int]]:
         file_bytes = file.file.read()
         file_stream = io.BytesIO(file_bytes)
-        # Después de leer, rebobina el stream al principio para futuras lecturas
+        # seek to the beginning of the stream to allow reading from it again
         file_stream.seek(0)
         return file.filename, file_stream, file.content_type
 
     def orchestrate(self, file: UploadFile, normalization: bool = True, type: str = None, deepanalyze: bool = False) -> Tuple[dict, Optional[int]]:
         self.logger.info(f"Orchestrating file: {file.filename} with normalization={normalization}")
         try:
-            # Leer el archivo una única vez
             file_bytes = file.file.read()
             filename = file.filename
             content_type = file.content_type
 
-            # Paso 1: detectar tipo si no se envió
+            # step 1: detect type if not sent
             if type is None:
                 self.logger.info("calling extractor service only text")
                 stream1 = io.BytesIO(file_bytes)
@@ -112,7 +111,7 @@ class Orchestrator:
             else:
                 dc_type = type
 
-            # Paso 2: extracción con tags
+            # step 2: extract with tags
             self.logger.info("calling extractor service with tags")
             stream2 = io.BytesIO(file_bytes)
             payload2 = (filename, stream2, content_type)
@@ -134,17 +133,20 @@ class Orchestrator:
             extracted_text_with_metadata = extractor_with_tags_json["data"].get("text")
 
             dc_type = dc_type.lower()
-            # Paso 3: aplicar estrategia por tipo
+            # step 3: apply strategy by type
             strategies = {
                 "libro": LibroStrategy,
                 "articulo": ArticuloStrategy,
-                "tesis": TesisStrategy
+                "tesis": TesisStrategy,
+                "objeto de conferencia": ObjectConferenceStrategy,
+                "general": GeneralStrategy,
             }
 
-            strategy_class = strategies.get(dc_type)
+            strategy_class = strategies.get(dc_type, GeneralStrategy)
             strategy = strategy_class()
             self.logger.info(f"Calling {strategy_class.__name__}")
             metadata, error = strategy.get_metadata(extracted_text_with_metadata)
+            metadata["type"] = dc_type
             if error is None and deepanalyze:
                 metadata, error = self.call_deepanalyze(self._shorten_text(extracted_text_with_metadata), metadata)
             return metadata, error

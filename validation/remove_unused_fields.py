@@ -3,7 +3,8 @@ from ..utils.text_extraction.read_and_write_files import read_data_json,write_to
 
 
 
-unused_fields = ["dc.uri", "dc.type", "sedici.uri","keywords"]
+unused_fields = ["dc.uri", "type", "sedici.uri","keywords","original_text"]
+
 
 def remove_unused_fields(filename):
     final_data = {}

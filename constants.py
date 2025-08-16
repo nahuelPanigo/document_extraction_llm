@@ -98,7 +98,7 @@ BASE_MODEL_T5="google-t5/t5-base"
 MAX_TOKENS_INPUT= 2048
 MAX_TOKENS_OUTPUT= 512
 LOG_DIR = ROOT_DIR /  "log"
-FINAL_MODEL_PATH =ROOT_DIR / "fine-tuned-model"
+FINAL_MODEL_PATH =ROOT_DIR / "fine-tuned-model-With-Objeto-Conferencia"
 CHECKPOINT_MODEL_PATH = ROOT_DIR / "results"
 
 
@@ -215,210 +215,231 @@ Incluye ejemplos en el prompt si pueden ayudar al modelo a mejorar la precisión
 """
 
 
-HEADER_PROMPT = """Extract the metadata from the text and provide it in JSON format.
-You have to extract the following metadata fields only if you are confident in their accuracy:
-language, cretor, rights, rightsurl, originPlaceInfo, isrelatedwith"""
+# HEADER_PROMPT = """Extract the metadata from the text and provide it in JSON format.
+# You have to extract the following metadata fields only if you are confident in their accuracy:
+# language, cretor, rights, rightsurl, originPlaceInfo, isrelatedwith"""
 
+
+# JSON_GENERAL = {
+#     "language": "es",
+#     "creator": "['Lazzari, Florencia', 'Otero, Alejandro']",
+#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+#     "originPlaceInfo": "Universidad Nacional de La Plata",
+#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118183",
+# }
+
+# PROMPT_GENERAL = f"""{HEADER_PROMPT}
+# {MIDDLE_PROMPT}{JSON_GENERAL}{END_PROMPT}"""
+
+
+# JSON_TESIS = {
+#     "language": "es",
+#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+#     "originPlaceInfo": "Facultad de Ciencias Agrarias y Forestales",
+#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118764",
+#     "director": "Dra. Carolina Pérez",
+#     "codirector": "Ing. Agr. Bárbara Heguy",
+#     "degree.grantor": "Universidad Nacional de La Plata",
+#     "degree.name": "Ingeniero Forestal",
+# }
+
+# PROMPT_TESIS = f"""{HEADER_PROMPT}, director, codirector, degree.grantor, degree.name
+# {MIDDLE_PROMPT}{JSON_TESIS}{END_PROMPT}"""
+
+# JSON_LIBRO = {
+#     "language": "es",
+#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+#     "originPlaceInfo": "Facultad de Ciencias Naturales y Museo",
+#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118183",
+#     "dc.publisher": "Editorial de la Universidad Nacional de La Plata (EDULP)",
+#     "isbn": "978-950-34-1987-8",
+#     "compiler": "Pedro Carriquiriborde"
+# }
+
+# PROMPT_LIBRO = f"""{HEADER_PROMPT}, dc.publisher, isbn, compiler
+# {MIDDLE_PROMPT}{JSON_LIBRO}{END_PROMPT}"""
+
+
+# JSON_ARTICULO = {
+#     "language": "es",
+#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+#     "originPlaceInfo": "Asociación Argentina de Astronomía",
+#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118464",
+#     "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
+#     "journalVolumeAndIssue": "Vol. 63",
+#     "issn": "1669-9521",
+#     "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)"
+# }
+
+# PROMPT_ARTICULO = f"""{HEADER_PROMPT}, journalTitle, journalVolumeAndIssue, issn, event
+# {MIDDLE_PROMPT}{JSON_ARTICULO}{END_PROMPT}"""
+
+
+# HEADER_PROMPT_SEMANTICO = """Extract the following metadata from the text and return them in a JSON format:
+
+# - title
+# - abstract
+# - keywords
+# - subject
+
+# Return only the fields you can infer with high confidence from the text. If you are not sure about a field, leave it out of the JSON.
+# """
+
+# JSON_SEMANTICO = {
+#     "title": "Estudio sobre los patrones de migración en comunidades indígenas del NEA: Una mirada intercultural desde la antropología urbana",
+#     "abstract": "Este trabajo analiza los procesos de desplazamiento urbano de familias Qom...",
+#     "keywords": ["migración", "pueblos originarios", "interculturalidad", "antropología urbana"],
+#     "subject": "Antropología social"
+# }
+
+# PROMPT_SEMANTICO = f"""{HEADER_PROMPT_SEMANTICO}
+# {MIDDLE_PROMPT}{JSON_SEMANTICO}{END_PROMPT}"""
+
+
+
+# HEADER_PROMPT_DATE = """Extract the publication date from the following text **only if you are completely sure**.
+
+# The date must refer to the official publication or creation of the document.
+
+# If the date is ambiguous, conflicting, or not clearly present, return `"null"`.
+
+# if it presetnt month and day format as: "YYYY-MM-DD", if only present month and year format as: "YYYY-MM", if only present year format as: "YYYY"
+# """
+
+# JSON_DATE = {
+#     "date": "2018-05-10"
+# }
+
+# PROMPT_DATE = f"""{HEADER_PROMPT_DATE}
+# {MIDDLE_PROMPT}{JSON_DATE}{END_PROMPT}"""
+
+HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
+You have to extract the metadata:
+language, title, subtitle, creator, subject, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""
+
+#dc.uri, sedici.uri,
 
 
 MIDDLE_PROMPT = """Here is a JSON Example format:"""
 
 END_PROMPT = """Now, extract the information from the following text and provide it in the specified JSON format:"""
 
+
 JSON_GENERAL = {
-    "language": "es",
-    "creator": "['Lazzari, Florencia', 'Otero, Alejandro']",
-    "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-    "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-    "originPlaceInfo": "Universidad Nacional de La Plata",
-    "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118183",
+  "language": "es",
+#  "keywords": "['Energía eólica', 'modelos analíticos de estelas', 'eficiencia del parque', 'validación de modelos']",
+  "title": "SIMULACIÓN MEDIANTE MODELOS ANALÍTICOS DE ESTELA EN PARQUES EÓLICOS Y VALIDACIÓN CON MEDICIONES DEL PARQUE EÓLICO RAWSON",
+  "subtitle": "Estadisticas y Desempeño de los Modelos Analíticos de Estelas",
+  "creator": "['Lazzari, Florencia', 'Otero, Alejandro']",
+  "subject": "Otras ingenierías y tecnologías",
+  "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+  "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+#  "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/108413",
+#  "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
+  "date": "2018-01-01",
+  "originPlaceInfo": "ASADES",
+  "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/128795",
 }
 
-PROMPT_GENERAL = f"""{HEADER_PROMPT}
-{MIDDLE_PROMPT}{JSON_GENERAL}{END_PROMPT}"""
+PROMPT_GENERAL = f"""{HEADER_PROMPT}{MIDDLE_PROMPT}{JSON_GENERAL}{END_PROMPT}"""
+
 
 
 JSON_TESIS = {
-    "language": "es",
-    "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-    "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-    "originPlaceInfo": "Facultad de Ciencias Agrarias y Forestales",
-    "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118764",
-    "director": "Dra. Carolina Pérez",
-    "codirector": "Ing. Agr. Bárbara Heguy",
-    "degree.grantor": "Universidad Nacional de La Plata",
-    "degree.name": "Ingeniero Forestal",
-}
+        "language": "es",
+#        "keywords": "['Sistemas silvopastoriles', 'Eucalyptus', 'Pastizal natural', 'Sistema Nelder modificado', 'Pampa deprimida']",
+        "title": "¿Es compatible la producción forestal con la producción forrajera en plantaciones de Eucalyptus híbrido?",
+        "subtitle": "Una experiencia para la provincia de Buenos Aires",
+        "creator": "Siccardi, Bárbara",
+        "subject": "Agricultura,silvicultura y pesca",
+        "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+        "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+#        "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/159750",
+        "date": "2023-01-01",
+        "originPlaceInfo": "Facultad de Ciencias Agrarias y Forestales",
+        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118764",
+        "codirector": "Ing. Agr. Bárbara Heguy",
+        "director": "Dra. Carolina Pérez",
+        "degree.grantor": "Universidad Nacional de La Plata",
+        "degree.name": "Ingeniero Forestal",
+   },
 
-PROMPT_TESIS = f"""{HEADER_PROMPT}, director, codirector, degree.grantor, degree.name
+
+PROMPT_TESIS = f"""{HEADER_PROMPT} ,codirector, director,degree.grantor, degree.name
 {MIDDLE_PROMPT}{JSON_TESIS}{END_PROMPT}"""
-
-JSON_LIBRO = {
-    "language": "es",
-    "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-    "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-    "originPlaceInfo": "Facultad de Ciencias Naturales y Museo",
-    "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118183",
-    "dc.publisher": "Editorial de la Universidad Nacional de La Plata (EDULP)",
-    "isbn": "978-950-34-1987-8",
-    "compiler": "Pedro Carriquiriborde"
-}
-
-PROMPT_LIBRO = f"""{HEADER_PROMPT}, dc.publisher, isbn, compiler
-{MIDDLE_PROMPT}{JSON_LIBRO}{END_PROMPT}"""
 
 
 JSON_ARTICULO = {
-    "language": "es",
-    "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-    "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-    "originPlaceInfo": "Asociación Argentina de Astronomía",
-    "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118464",
-    "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
-    "journalVolumeAndIssue": "Vol. 63",
-    "issn": "1669-9521",
-    "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)"
-}
+        "language": "en",
+#        "keywords": "['stars: activity', 'stars: rotation', 'stars: solar-type']",
+        "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
+        "title": "Exploring the magnetism of stars using TESS data",
+        "subtitle": "A new method for the detection of magnetic fields in stars",
+        "subject": "Ciencias físicas",
+        "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+        "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+  #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
+ #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
+        "date": "2022-01-01",
+        "originPlaceInfo.": "Asociación Argentina de Astronomía",
+        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
+        "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
+        "journalVolumeAndIssue": "Vol. 63",
+        "issn": "1669-9521",
+        "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)",
+    },
 
 PROMPT_ARTICULO = f"""{HEADER_PROMPT}, journalTitle, journalVolumeAndIssue, issn, event
 {MIDDLE_PROMPT}{JSON_ARTICULO}{END_PROMPT}"""
 
 
-HEADER_PROMPT_SEMANTICO = """Extract the following metadata from the text and return them in a JSON format:
+JSON_OBJECTO_CONFERENCIA = {
+        "language": "en",
+#        "keywords": "['stars: activity', 'stars: rotation', 'stars: solar-type']",
+        "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
+        "title": "Exploring the magnetism of stars using TESS data",
+        "subtitle": "A new method for the detection of magnetic fields in stars",
+        "subject": "Ciencias físicas",
+        "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+        "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+  #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
+ #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
+        "date": "2022-01-01",
+        "originPlaceInfo.": "Asociación Argentina de Astronomía",
+        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
+        "issn": "1669-9521",
+        "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)",
+    },
 
-- title
-- abstract
-- keywords
-- subject
-
-Return only the fields you can infer with high confidence from the text. If you are not sure about a field, leave it out of the JSON.
-"""
-
-JSON_SEMANTICO = {
-    "title": "Estudio sobre los patrones de migración en comunidades indígenas del NEA: Una mirada intercultural desde la antropología urbana",
-    "abstract": "Este trabajo analiza los procesos de desplazamiento urbano de familias Qom...",
-    "keywords": ["migración", "pueblos originarios", "interculturalidad", "antropología urbana"],
-    "subject": "Antropología social"
-}
-
-PROMPT_SEMANTICO = f"""{HEADER_PROMPT_SEMANTICO}
-{MIDDLE_PROMPT}{JSON_SEMANTICO}{END_PROMPT}"""
-
-
-
-HEADER_PROMPT_DATE = """Extract the publication date from the following text **only if you are completely sure**.
-
-The date must refer to the official publication or creation of the document.
-
-If the date is ambiguous, conflicting, or not clearly present, return `"null"`.
-
-if it presetnt month and day format as: "YYYY-MM-DD", if only present month and year format as: "YYYY-MM", if only present year format as: "YYYY"
-"""
-
-JSON_DATE = {
-    "date": "2018-05-10"
-}
-
-PROMPT_DATE = f"""{HEADER_PROMPT_DATE}
-{MIDDLE_PROMPT}{JSON_DATE}{END_PROMPT}"""
-
-# HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
-# You have to extract the metadata:
-# language, title, subtitle, creator, subject, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""
-
-# #dc.uri, sedici.uri,
+PROMPT_OBJECTO_CONFERENCIA = f"""{HEADER_PROMPT}, issn, event
+{MIDDLE_PROMPT}{JSON_OBJECTO_CONFERENCIA}{END_PROMPT}"""
 
 
-# JSON_GENERAL = {
-#   "language": "es",
-# #  "keywords": "['Energía eólica', 'modelos analíticos de estelas', 'eficiencia del parque', 'validación de modelos']",
-#   "title": "SIMULACIÓN MEDIANTE MODELOS ANALÍTICOS DE ESTELA EN PARQUES EÓLICOS Y VALIDACIÓN CON MEDICIONES DEL PARQUE EÓLICO RAWSON",
-#   "subtitle": "Estadisticas y Desempeño de los Modelos Analíticos de Estelas",
-#   "creator": "['Lazzari, Florencia', 'Otero, Alejandro']",
-#   "subject": "Otras ingenierías y tecnologías",
-#   "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#   "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-# #  "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/108413",
-# #  "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
-#   "date": "2018-01-01",
-#   "originPlaceInfo": "ASADES",
-#   "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/128795",
-# }
+JSON_LIBRO =  {
+        "language": "es",
+#        "keywords": "['Genotoxicología', 'Xenobióticos']",
+        "creator": "['Ruiz de Arcaute, Celeste', 'Laborde, Milagros Rosa Raquel', 'Soloneski, Sonia María Elsa', 'Larramendy, Marcelo Luis']",
+        "title": "Genotoxicidad y carcinogénesis",
+        "subtitle": "Estudios de la genética toxicológica",
+        "subject": "Ciencias biológicas",
+        "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+        "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+ #       "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/131176",
+#        "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
+        "date": "2021-01-01",
+        "originPlaceInfo": "['Facultad de Ciencias Naturales y Museo', 'Facultad de Ciencias Exactas']",
+        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118183",
+        "publisher": "Editorial de la Universidad Nacional de La Plata (EDULP)",
+        "isbn": "978-950-34-1987-8",
+        "compiler": "Pedro Carriquiriborde",
+    },
 
-# PROMPT_GENERAL = f"""{HEADER_PROMPT}{MIDDLE_PROMPT}{JSON_GENERAL}{END_PROMPT}"""
-
-
-
-# JSON_TESIS = {
-#         "language": "es",
-# #        "keywords": "['Sistemas silvopastoriles', 'Eucalyptus', 'Pastizal natural', 'Sistema Nelder modificado', 'Pampa deprimida']",
-#         "title": "¿Es compatible la producción forestal con la producción forrajera en plantaciones de Eucalyptus híbrido?",
-#         "subtitle": "Una experiencia para la provincia de Buenos Aires",
-#         "creator": "Siccardi, Bárbara",
-#         "subject": "Agricultura,silvicultura y pesca",
-#         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#         "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-# #        "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/159750",
-#         "date": "2023-01-01",
-#         "originPlaceInfo": "Facultad de Ciencias Agrarias y Forestales",
-#         "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118764",
-#         "codirector": "Ing. Agr. Bárbara Heguy",
-#         "director": "Dra. Carolina Pérez",
-#         "degree.grantor": "Universidad Nacional de La Plata",
-#         "degree.name": "Ingeniero Forestal",
-#    },
-
-
-# PROMPT_TESIS = f"""{HEADER_PROMPT} ,codirector, director,degree.grantor, degree.name
-# {MIDDLE_PROMPT}{JSON_TESIS}{END_PROMPT}"""
-
-
-# JSON_ARTICULO = {
-#         "language": "en",
-# #        "keywords": "['stars: activity', 'stars: rotation', 'stars: solar-type']",
-#         "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
-#         "title": "Exploring the magnetism of stars using TESS data",
-#         "subtitle": "A new method for the detection of magnetic fields in stars",
-#         "subject": "Ciencias físicas",
-#         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#         "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-#   #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
-#  #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
-#         "date": "2022-01-01",
-#         "originPlaceInfo.": "Asociación Argentina de Astronomía",
-#         "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
-#         "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
-#         "journalVolumeAndIssue": "Vol. 63",
-#         "issn": "1669-9521",
-#         "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)",
-#     },
-
-# PROMPT_ARTICULO = f"""{HEADER_PROMPT}, journalTitle, journalVolumeAndIssue, issn, event
-# {MIDDLE_PROMPT}{JSON_ARTICULO}{END_PROMPT}"""
-
-
-
-# JSON_LIBRO =  {
-#         "language": "es",
-# #        "keywords": "['Genotoxicología', 'Xenobióticos']",
-#         "creator": "['Ruiz de Arcaute, Celeste', 'Laborde, Milagros Rosa Raquel', 'Soloneski, Sonia María Elsa', 'Larramendy, Marcelo Luis']",
-#         "title": "Genotoxicidad y carcinogénesis",
-#         "subtitle": "Estudios de la genética toxicológica",
-#         "subject": "Ciencias biológicas",
-#         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#         "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-#  #       "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/131176",
-# #        "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
-#         "date": "2021-01-01",
-#         "originPlaceInfo": "['Facultad de Ciencias Naturales y Museo', 'Facultad de Ciencias Exactas']",
-#         "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118183",
-#         "publisher": "Editorial de la Universidad Nacional de La Plata (EDULP)",
-#         "isbn": "978-950-34-1987-8",
-#         "compiler": "Pedro Carriquiriborde",
-#     },
-
-# PROMPT_LIBRO = f"""{HEADER_PROMPT}, publisher, isbn, compiler
-# {MIDDLE_PROMPT}{JSON_LIBRO}{END_PROMPT}"""
+PROMPT_LIBRO = f"""{HEADER_PROMPT}, publisher, isbn, compiler
+{MIDDLE_PROMPT}{JSON_LIBRO}{END_PROMPT}"""
 
 
 SCHEMA_LIBRO =  """
@@ -457,6 +478,24 @@ SCHEMA_ARTICULO = """ {
         "issn": "",
         "event": ""
 }"""
+
+SCHEMA_OBJECTO_CONFERENCIA = """ {
+        "language": "",
+        "keywords": "",
+        "creator": "",
+        "title": "",
+        "subject": "",
+        "rights": "",
+        "rightsurl" : "",
+        "date": "",
+        "originPlaceInfo.": "",
+        "isRelatedWith": "",
+        "issn": "",
+        "event": ""
+}"""
+
+
+
 
         # "dc.uri": "",
         # "sedici.uri": "",

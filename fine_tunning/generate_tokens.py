@@ -1,6 +1,6 @@
 from constants import MAX_TOKENS_INPUT,MAX_TOKENS_OUTPUT#, PROMPT
-from constants import PROMPT_ARTICULO,PROMPT_GENERAL,PROMPT_LIBRO,PROMPT_TESIS
-from constants import SCHEMA_ARTICULO,SCHEMA_GENERAL,SCHEMA_LIBRO,SCHEMA_TESIS
+from constants import PROMPT_ARTICULO,PROMPT_GENERAL,PROMPT_LIBRO,PROMPT_TESIS,PROMPT_OBJECTO_CONFERENCIA
+from constants import SCHEMA_ARTICULO,SCHEMA_GENERAL,SCHEMA_LIBRO,SCHEMA_TESIS,SCHEMA_OBJECTO_CONFERENCIA
 import json
 from datasets import Dataset,DatasetDict
 import torch
@@ -25,6 +25,8 @@ def get_prompt_by_type(type):
         return PROMPT_ARTICULO
     if type == "Tesis":
         return PROMPT_TESIS
+    if type == "Objeto de conferencia":
+        return PROMPT_OBJECTO_CONFERENCIA
     return PROMPT_LIBRO
 
 def get_schema_by_type(type):
@@ -32,6 +34,8 @@ def get_schema_by_type(type):
         return SCHEMA_ARTICULO
     if type == "Tesis":
         return SCHEMA_TESIS
+    if type == "Objeto de conferencia":
+        return SCHEMA_OBJECTO_CONFERENCIA
     return SCHEMA_LIBRO
 
 
@@ -52,10 +56,10 @@ def add_schema_and_structure(dict_dataset):
         step_data = []
         for item in dict_dataset[step]:  
             original_text = item["original_text"]
-            schema_type =get_schema_by_type(item["dc.type"]) 
+            schema_type =get_schema_by_type(item["type"]) 
             output_text = json.dumps(get_general_dict(item))
             step_data.append({"input": input_text_schema(original_text,SCHEMA_GENERAL), "output": output_text})
-            final_dict = {k: v for k, v in item.items() if  k != "dc.type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract"}
+            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract"}
             output_text = json.dumps(final_dict)
             step_data.append({"input": input_text_schema(original_text,schema_type), "output": output_text})
         formatted_data[step] = step_data
@@ -73,10 +77,10 @@ def add_prompt_and_structure(dict_dataset):
         step_data = []
         for item in dict_dataset[step]:
             original_text = item["original_text"]
-            prompt_type =get_prompt_by_type(item["dc.type"]) 
+            prompt_type =get_prompt_by_type(item["type"]) 
             output_text = json.dumps(get_general_dict(item))
             step_data.append({"input": input_text(original_text,PROMPT_GENERAL), "output": output_text})
-            final_dict = {k: v for k, v in item.items() if  k != "dc.type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract"}
+            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract"}
             output_text = json.dumps(final_dict)
             step_data.append({"input": input_text(original_text,prompt_type), "output": output_text})
         formatted_data[step] = step_data
