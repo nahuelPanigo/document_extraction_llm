@@ -319,9 +319,9 @@ Incluye ejemplos en el prompt si pueden ayudar al modelo a mejorar la precisión
 
 HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
 You have to extract the metadata:
-language, title, subtitle, creator, subject, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""
+language, title,  creator, subject, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""
 
-#dc.uri, sedici.uri,
+#dc.uri, sedici.uri,subtitle,
 
 
 MIDDLE_PROMPT = """Here is a JSON Example format:"""
@@ -333,7 +333,7 @@ JSON_GENERAL = {
   "language": "es",
 #  "keywords": "['Energía eólica', 'modelos analíticos de estelas', 'eficiencia del parque', 'validación de modelos']",
   "title": "SIMULACIÓN MEDIANTE MODELOS ANALÍTICOS DE ESTELA EN PARQUES EÓLICOS Y VALIDACIÓN CON MEDICIONES DEL PARQUE EÓLICO RAWSON",
-  "subtitle": "Estadisticas y Desempeño de los Modelos Analíticos de Estelas",
+#  "subtitle": "Estadisticas y Desempeño de los Modelos Analíticos de Estelas",
   "creator": "['Lazzari, Florencia', 'Otero, Alejandro']",
   "subject": "Otras ingenierías y tecnologías",
   "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
@@ -353,7 +353,7 @@ JSON_TESIS = {
         "language": "es",
 #        "keywords": "['Sistemas silvopastoriles', 'Eucalyptus', 'Pastizal natural', 'Sistema Nelder modificado', 'Pampa deprimida']",
         "title": "¿Es compatible la producción forestal con la producción forrajera en plantaciones de Eucalyptus híbrido?",
-        "subtitle": "Una experiencia para la provincia de Buenos Aires",
+#        "subtitle": "Una experiencia para la provincia de Buenos Aires",
         "creator": "Siccardi, Bárbara",
         "subject": "Agricultura,silvicultura y pesca",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
@@ -378,7 +378,7 @@ JSON_ARTICULO = {
 #        "keywords": "['stars: activity', 'stars: rotation', 'stars: solar-type']",
         "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
         "title": "Exploring the magnetism of stars using TESS data",
-        "subtitle": "A new method for the detection of magnetic fields in stars",
+#        "subtitle": "A new method for the detection of magnetic fields in stars",
         "subject": "Ciencias físicas",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
         "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
@@ -402,7 +402,7 @@ JSON_OBJECTO_CONFERENCIA = {
 #        "keywords": "['stars: activity', 'stars: rotation', 'stars: solar-type']",
         "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
         "title": "Exploring the magnetism of stars using TESS data",
-        "subtitle": "A new method for the detection of magnetic fields in stars",
+#       "subtitle": "A new method for the detection of magnetic fields in stars",
         "subject": "Ciencias físicas",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
         "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
@@ -424,11 +424,11 @@ JSON_LIBRO =  {
 #        "keywords": "['Genotoxicología', 'Xenobióticos']",
         "creator": "['Ruiz de Arcaute, Celeste', 'Laborde, Milagros Rosa Raquel', 'Soloneski, Sonia María Elsa', 'Larramendy, Marcelo Luis']",
         "title": "Genotoxicidad y carcinogénesis",
-        "subtitle": "Estudios de la genética toxicológica",
+#        "subtitle": "Estudios de la genética toxicológica",
         "subject": "Ciencias biológicas",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
         "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
- #       "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/131176",
+#       "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/131176",
 #        "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2021-01-01",
         "originPlaceInfo": "['Facultad de Ciencias Naturales y Museo', 'Facultad de Ciencias Exactas']",
