@@ -13,6 +13,8 @@
 *.log
 *.bat
 *.sh
+!run_modules.bat
+!run_modules.sh
 !*run_all_services*
 *model.safetensors
 __pycache__/

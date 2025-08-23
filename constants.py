@@ -18,7 +18,7 @@ PDF_URL = DOWNLOAD_URL + "/bitstream/handle/"
 GROBID_URL = "http://localhost:8070/api/processFulltextDocument"
 
 
-DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "metadata_sedici_and_text_checked.json"
+DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata.json"
 DATASET_WITH_METADATA = "metadata_sedici.json"
 DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text.json"
 DATASET_TYPE = "dataset_type.json"
