@@ -2,6 +2,7 @@ from download_prepare_clean_normalize_sedici_dataset.genai_consumer import clean
 from download_prepare_clean_normalize_sedici_dataset.extract_text_make_dataset import extract_and_make_dataset
 from download_prepare_clean_normalize_sedici_dataset.download_data import download_files
 from download_prepare_clean_normalize_sedici_dataset.extract_data_from_csv_sedici import merge_data,get_ids_from_csv
+from download_prepare_clean_normalize_sedici_dataset.exact_match_validator import apply_exact_match_validation
 from constants import CSV_FOLDER,PDF_FOLDER,JSON_FOLDER,TXT_FOLDER,CSV_SEDICI,CSV_SEDICI_FILTERED,DATASET_WITH_METADATA_AND_TEXT_DOC,DATASET_WITH_METADATA,DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED
 import os
 from utils.colors.colors_terminal import Bcolors
@@ -41,6 +42,9 @@ if __name__ == "__main__":
     # clean metadata
     if not (json_metadata_and_text_checked_filename).exists():
         clean_metadata(json_metadata_and_text_filename,json_metadata_and_text_checked_filename)
+    # apply exact match validation
+    print(f"{Bcolors.OKGREEN}applying exact match validation{Bcolors.ENDC}")
+    apply_exact_match_validation(json_metadata_and_text_checked_filename, json_metadata_and_text_filename)
     # split dataset and normalize text
     print(f"{Bcolors.OKGREEN}splitting dataset and normalizing text{Bcolors.ENDC}")
     normalize_and_split_dataset(json_metadata_and_text_checked_filename,json_metadata_filename)

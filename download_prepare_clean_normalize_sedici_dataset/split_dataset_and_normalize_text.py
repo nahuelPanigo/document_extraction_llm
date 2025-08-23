@@ -3,6 +3,7 @@ from utils.text_extraction.read_and_write_files import read_data_json,write_to_j
 from constants import PERCENTAGE_DATASET_FOR_STEPS
 from collections import defaultdict
 import random
+import math
 
 
 def split_dataset(dict_dataset):
@@ -85,14 +86,60 @@ def final_normalization_post_llm(dict_dataset,original_metadata):
         item["original_text"] = normalice_text(item["original_text"])
 
         item["type"] = original_metadata[id_]["dc.type"]
-
+        item["subject"] = original_metadata[id_]["subject"]
+        
         final_dict[id_] = item
     
     return final_dict
 
 
+def is_null_or_empty(value):
+    """Check if a value is null, NaN, or empty string."""
+    if value is None:
+        return True
+    if isinstance(value, str) and value.strip() == "":
+        return True
+    if isinstance(value, float) and math.isnan(value):
+        return True
+    return False
+
+
+def clean_metadata_nulls(metadata):
+    """
+    Remove null, NaN, and empty string values from metadata.
+    
+    Args:
+        metadata: Dictionary with metadata to clean
+    
+    Returns:
+        Cleaned metadata dictionary and count of removed fields
+    """
+    total_fields_removed = 0
+    
+    # Clean each document
+    for doc_id, doc_metadata in metadata.items():
+        fields_to_remove = []
+        
+        # Find fields with null/empty values
+        for field, value in doc_metadata.items():
+            if is_null_or_empty(value):
+                fields_to_remove.append(field)
+        
+        # Remove the null/empty fields
+        for field in fields_to_remove:
+            del doc_metadata[field]
+            total_fields_removed += 1
+    
+    print(f"Metadata cleaning: {total_fields_removed} null/empty fields removed")
+    return metadata, total_fields_removed
+
+
 def normalize_and_split_dataset(json_filename,original_json_filename):
     data = read_data_json(json_filename,"utf-8")
     original_metadata = read_data_json(original_json_filename,"utf-8")
+    
+    # Clean null/empty values before normalization
+    data, removed_fields = clean_metadata_nulls(data)
+    
     data = final_normalization_post_llm(data,original_metadata)
     write_to_json(json_filename,split_dataset(data),"utf-8")
