@@ -1,0 +1,9 @@
+requests
+pandas
+google-genai
+python-dotenv
+pdfplumber
+PyMuPDF
+pytesseract
+pdf2image
+chardet

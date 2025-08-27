@@ -67,20 +67,20 @@ set "SUBMODULE="
 set "SUBREQ="
 
 if /I "%MODE%"=="fine_tunning" (
-  set "SUBMODULE=document_metadata_extraction.fine_tunning"
-  set "SUBREQ=document_metadata_extraction\fine_tunning\requirements.txt"
+  set "SUBMODULE=fine_tunning"
+  set "SUBREQ=fine_tunning\requirements.txt"
 ) else if /I "%MODE%"=="make_dataset" (
-  set "SUBMODULE=document_metadata_extraction.download_prepare_clean_normalize_sedici_dataset"
-  set "SUBREQ=document_metadata_extraction\download_prepare_clean_normalize_sedici_dataset\requirements.txt"
+  set "SUBMODULE=download_prepare_clean_normalize_sedici_dataset"
+  set "SUBREQ=download_prepare_clean_normalize_sedici_dataset\requirements.txt"
 ) else if /I "%MODE%"=="validation" (
-  echo future_todo
-  exit /b 0
+  set "SUBMODULE=validation"
+  set "SUBREQ=validation\requirements.txt"
 ) else if /I "%MODE%"=="fine_tune_type" (
-  echo future_todo
-  exit /b 0
+  set "SUBMODULE=fine_tune_type"
+  set "SUBREQ=fine_tune_type\requirements.txt"
 ) else if /I "%MODE%"=="fine_tune_subject" (
-  echo future_todo
-  exit /b 0
+  set "SUBMODULE=fine_tune_subject"
+  set "SUBREQ=fine_tune_subject\requirements.txt"
 ) else (
   echo [ERROR] Unknown mode: %MODE%
   goto :help
@@ -89,8 +89,8 @@ if /I "%MODE%"=="fine_tunning" (
 :: -----------------------------
 :: Sanity checks
 :: -----------------------------
-if not exist "document_metadata_extraction\" (
-  echo [ERROR] Run this script from the repo ROOT (where "document_metadata_extraction\" exists).
+if not exist "fine_tunning\" (
+  echo [ERROR] Run this script from the repo ROOT (where "fine_tunning\" exists).
   exit /b 1
 )
 
@@ -166,8 +166,9 @@ if defined PIN_TORCH (
 :: -----------------------------
 :: Run
 :: -----------------------------
-echo Running: python -m %SUBMODULE%.main
-python -m %SUBMODULE%.main
+echo Running: python %SUBMODULE%\main.py
+set "PYTHONPATH=%CD%;%PYTHONPATH%"
+python "%SUBMODULE%\main.py"
 exit /b %errorlevel%
 
 :help
@@ -176,11 +177,11 @@ echo Usage:
 echo   run.bat ^<mode^> [--python PY_EXE] [--reinstall]
 echo.
 echo Modes:
-echo   fine_tunning        -> runs document_metadata_extraction\fine_tunning\main.py
-echo   make_dataset        -> runs document_metadata_extraction\download_prepare_clean_normalize_sedici_dataset\main.py
-echo   validation          -> future_todo
-echo   fine_tune_type      -> future_todo
-echo   fine_tune_subject   -> future_todo
+echo   fine_tunning        -> runs fine_tunning\main.py
+echo   make_dataset        -> runs download_prepare_clean_normalize_sedici_dataset\main.py
+echo   validation          -> runs validation\main.py
+echo   fine_tune_type      -> runs fine_tune_type\main.py
+echo   fine_tune_subject   -> runs fine_tune_subject\main.py
 echo.
 echo Options:
 echo   --python PY_EXE     Choose python executable (e.g. python, "C:\Python312\python.exe", py)

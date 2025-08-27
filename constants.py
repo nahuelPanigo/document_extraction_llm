@@ -11,6 +11,13 @@ CSV_FOLDER = DATA_FOLDER / "csv/"
 RESULT_FOLDER_VALIDATION = ROOT_DIR / "validation/result/"
 
 
+GENAI_REQUEST_LIMIT = {
+    "req_per_day": 1000,
+    "req_per_min": 15,
+    "tok_per_min": 32000,
+}
+GENAI_MODEL = "gemini-2.5-flash-lite"
+
 URL_SERVICES_EXTRACTION = "http://localhost:8000/upload"
 DATASET_SEDICI_URL_BASE = "https://sedici.unlp.edu.ar/oai/openaire?verb=ListRecords&resumptionToken=oai_dc////"
 DOWNLOAD_URL = "https://sedici.unlp.edu.ar"

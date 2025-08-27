@@ -2,7 +2,7 @@
 from google import genai
 import os
 from dotenv import load_dotenv
-from constants import PROMPT_CLEANER_METADATA,APROX_TOK_PER_SOL
+from constants import PROMPT_CLEANER_METADATA,APROX_TOK_PER_SOL,GENAI_REQUEST_LIMIT,GENAI_MODEL
 import threading
 import time
 import pandas as pd
@@ -18,11 +18,8 @@ client = genai.Client(api_key=GOOGLE_API_KEY)
 
 
 # Define requests limits --global var--
-requests_limits = {
-    "req_per_day": 1000,
-    "req_per_min": 15,
-    "tok_per_min": 32000,
-}
+requests_limits = GENAI_REQUEST_LIMIT.copy()
+
 #control vars
 runnning = True
 lock = threading.Lock()
@@ -34,7 +31,7 @@ def consume_llm(metadata,text):
         - Text: {text}"""
     
     response = client.models.generate_content(
-        model="gemini-2.5-flash-lite",
+        model=GENAI_MODEL,
         contents=input,
     )
     return response.text

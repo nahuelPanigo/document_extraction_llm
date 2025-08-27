@@ -13,6 +13,7 @@
 *.log
 *.bat
 *.sh
+.venv*
 !run_modules.bat
 !run_modules.sh
 !*run_all_services*

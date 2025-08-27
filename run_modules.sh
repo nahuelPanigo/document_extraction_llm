@@ -8,11 +8,11 @@ Usage:
   ./run.sh <mode> [--python PYTHON_EXE] [--reinstall]
 
 Modes:
-  fine_tunning           -> uses document_metadata_extraction/fine_tunning
-  make_dataset           -> uses document_metadata_extraction/download_prepare_clean_normalize_sedici_dataset
-  validation             -> future_todo
-  fine_tune_type         -> future_todo
-  fine_tune_subject      -> future_todo
+  fine_tunning           -> uses fine_tunning/
+  make_dataset           -> uses download_prepare_clean_normalize_sedici_dataset/
+  validation             -> uses validation/
+  fine_tune_type         -> uses fine_tune_type/
+  fine_tune_subject      -> uses fine_tune_subject/
 
 Options:
   --python PYTHON_EXE    Choose python executable (default: python3, fallback: python)
@@ -57,16 +57,24 @@ SUBMODULE=""
 SUBREQ=""
 case "${MODE}" in
   fine_tunning)
-    SUBMODULE="document_metadata_extraction.fine_tunning"
-    SUBREQ="document_metadata_extraction/fine_tunning/requirements.txt"
+    SUBMODULE="fine_tunning"
+    SUBREQ="fine_tunning/requirements.txt"
     ;;
   make_dataset)
-    SUBMODULE="document_metadata_extraction.download_prepare_clean_normalize_sedici_dataset"
-    SUBREQ="document_metadata_extraction/download_prepare_clean_normalize_sedici_dataset/requirements.txt"
+    SUBMODULE="download_prepare_clean_normalize_sedici_dataset"
+    SUBREQ="download_prepare_clean_normalize_sedici_dataset/requirements.txt"
     ;;
-  validation|fine_tune_type|fine_tune_subject)
-    echo "future_todo"
-    exit 0
+  validation)
+    SUBMODULE="validation"
+    SUBREQ="validation/requirements.txt"
+    ;;
+  fine_tune_type)
+    SUBMODULE="fine_tune_type"
+    SUBREQ="fine_tune_type/requirements.txt"
+    ;;
+  fine_tune_subject)
+    SUBMODULE="fine_tune_subject"
+    SUBREQ="fine_tune_subject/requirements.txt"
     ;;
   *)
     echo "Unknown mode: ${MODE}"; usage; exit 1
@@ -74,19 +82,15 @@ case "${MODE}" in
 esac
 
 # ---- sanity checks ----
-if [[ ! -d "document_metadata_extraction" ]]; then
-  echo "Run this script from the REPO ROOT (where 'document_metadata_extraction/' lives)." >&2
+if [[ ! -d "fine_tunning" ]]; then
+  echo "Run this script from the REPO ROOT (where 'fine_tunning/' lives)." >&2
   exit 1
 fi
 
 # Ensure package structure (warn only)
-for pkg in "document_metadata_extraction" \
-           "document_metadata_extraction/${SUBMODULE##document_metadata_extraction.}"; do
-  pkg_path="${pkg//./\/}"
-  if [[ ! -f "${pkg_path}/__init__.py" ]]; then
-    echo "Warning: missing ${pkg_path}/__init__.py (Python package best practice)." >&2
-  fi
-done
+if [[ ! -f "${SUBMODULE}/__init__.py" ]]; then
+  echo "Warning: missing ${SUBMODULE}/__init__.py (Python package best practice)." >&2
+fi
 
 # ---- venv name per mode ----
 VENV_DIR=".venv-${MODE}"
@@ -133,5 +137,6 @@ if [[ -n "${PIN_TRANSFORMERS:-}" || -n "${PIN_PEFT:-}" || -n "${PIN_TORCH:-}" ]]
 fi
 
 # ---- run the module ----
-echo "Running: python -m ${SUBMODULE}.main"
-exec python -m "${SUBMODULE}.main"
+echo "Running: python ${SUBMODULE}/main.py"
+export PYTHONPATH="${PWD}:${PYTHONPATH:-}"
+exec python "${SUBMODULE}/main.py"

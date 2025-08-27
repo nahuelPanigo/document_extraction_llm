@@ -13,9 +13,7 @@ The system implements a **single-label classification** approach that:
 
 ## Files
 
-- `simple_classification.py`: **NEW** - Simplified training using existing CSV + JSON data
-- `classification.py`: Original complex multi-label approach (legacy)
-- `evaluation.py`: Performance evaluation and comparison with transformers
+
 - `demo.py`: Interactive demo and prediction examples
 - `main.py`: Data preparation and subject analysis
 - `README.md`: This documentation
@@ -46,42 +44,20 @@ The system uses **existing data only** - no additional downloads required:
    - Column: `sedici.subject.materias` (target to predict)
    - Document IDs for mapping
 
-2. **Document Content**: `data/sedici/jsons/metadata_sedici_and_text_checked.json`  
-   - Field: `original_text` (extracted document content)
+2. **Document Content**: `texts folder`  
    - Same IDs as CSV for mapping
 
 ## Usage
 
-### Quick Start (Recommended)
-```bash
-python simple_classification.py
-```
-This simplified approach:
-- Maps CSV subjects with JSON texts automatically
-- Uses only document content (no metadata needed)
-- Trains single-label classifier (one subject per document)
-- Requires no data preparation step
-
-### Legacy Approach
+### Main Approach
 ```bash
 # 1. Data preparation (if using complex approach)
 python main.py
 
-# 2. Multi-label training (legacy)
-python classification.py
 ```
 
-### 3. Evaluation
-```bash
-python evaluation.py
-```
-This will:
-- Evaluate models on test set
-- Calculate Jaccard scores and accuracy metrics
-- Compare with transformer approach
-- Save detailed evaluation results
 
-### 4. Demo and Interactive Use
+### Demo and Interactive Use
 ```bash
 python demo.py
 ```
@@ -99,7 +75,7 @@ This provides:
 - **Evaluation**: Accuracy, precision, recall, F1-score
 
 ### Feature Engineering
-- **Text Sources**: Document content only (`original_text`)
+- **Text Sources**: Document content only in text
 - **Preprocessing**: HTML cleaning, normalization, lowercasing
 - **TF-IDF Parameters**: 
   - Max features: 15,000 (more since only using content)
@@ -120,13 +96,13 @@ This provides:
 1. LOAD CSV: sedici_filtered_2019_2024.csv
    - Extract mapping: document_id → subject
 
-2. LOAD JSON: metadata_sedici_and_text_checked.json  
+2. LOAD TEXT: from text folder
    - Extract mapping: document_id → original_text
 
 3. CREATE DATASET:
    FOR each document_id in CSV:
      IF document_id exists in JSON:
-       text = JSON[document_id]["original_text"]
+       text = text_from_doc
        subject = CSV[document_id]["sedici.subject.materias"]
        ADD (text, subject) to training_data
 
