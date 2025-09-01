@@ -15,6 +15,7 @@ unused_fields = ["dc.uri", "type", "sedici.uri","keywords","original_text"]
 def remove_unused_fields(data):
     final_data = {}
     for inner_dict in data:
+        print(inner_dict)
         cleaned_dict = {k: v for k, v in inner_dict.items() if k not in unused_fields}
         final_data[inner_dict["id"]] = cleaned_dict
     return final_data
@@ -30,7 +31,7 @@ times_with_deepanalyze = []
 times = []
 
 metadatas =read_data_json(JSON_FOLDER / DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED,"utf-8")
-validation_original_metadata =  remove_unused_fields(metadatas["validation"][:50])
+validation_original_metadata =  remove_unused_fields(metadatas["validation"][:22])
 for id, metadata in validation_original_metadata.items():
     filename = PDF_FOLDER / f"{id}.pdf"
     print("procesando el id :",id)
@@ -38,6 +39,7 @@ for id, metadata in validation_original_metadata.items():
     try:
         response = upload_file(filename,os.getenv("ORCHESTRATOR_TOKEN"),True,"None",deepanalyze=False)
         if response["error"] is None:
+            print(response)
             final_dict[id] = response["data"]
             write_to_json(RESULT_FOLDER_VALIDATION / "results-object-conference.json",final_dict,"utf-8")
     except Exception as e:
