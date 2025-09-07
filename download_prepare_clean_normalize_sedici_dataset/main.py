@@ -3,7 +3,7 @@ from download_prepare_clean_normalize_sedici_dataset.extract_text_make_dataset i
 from download_prepare_clean_normalize_sedici_dataset.download_data import download_files
 from download_prepare_clean_normalize_sedici_dataset.extract_data_from_csv_sedici import merge_data,get_ids_from_csv
 from download_prepare_clean_normalize_sedici_dataset.exact_match_validator import apply_exact_match_validation
-from constants import CSV_FOLDER,PDF_FOLDER,JSON_FOLDER,TXT_FOLDER,CSV_SEDICI,CSV_SEDICI_FILTERED,DATASET_WITH_METADATA_AND_TEXT_DOC,DATASET_WITH_METADATA,DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED
+from constants import CSV_FOLDER,PDF_FOLDER,JSON_FOLDER,TXT_FOLDER,CSV_SEDICI,CSV_SEDICI_FILTERED,DATASET_WITH_METADATA_AND_TEXT_DOC,DATASET_WITH_METADATA,DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED,DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED
 import os
 from utils.colors.colors_terminal import Bcolors
 from download_prepare_clean_normalize_sedici_dataset.split_dataset_and_normalize_text import normalize_and_split_dataset
@@ -13,6 +13,7 @@ if __name__ == "__main__":
     filtered_csv_filename = CSV_FOLDER / CSV_SEDICI_FILTERED
     json_metadata_filename = JSON_FOLDER / DATASET_WITH_METADATA
     json_metadata_and_text_filename = JSON_FOLDER / DATASET_WITH_METADATA_AND_TEXT_DOC
+    json_metadata_and_text_cleaned_filename = JSON_FOLDER / DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED
     json_metadata_and_text_checked_filename = JSON_FOLDER / DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED
 
 
@@ -41,11 +42,11 @@ if __name__ == "__main__":
         extract_and_make_dataset(json_metadata_filename,json_metadata_and_text_filename,filtered_csv_filename,ids)
     # clean metadata
     if not (json_metadata_and_text_checked_filename).exists():
-        clean_metadata(json_metadata_and_text_filename,json_metadata_and_text_checked_filename)
+        clean_metadata(json_metadata_and_text_filename,json_metadata_and_text_cleaned_filename)
     # apply exact match validation
     print(f"{Bcolors.OKGREEN}applying exact match validation{Bcolors.ENDC}")
-    apply_exact_match_validation(json_metadata_and_text_checked_filename, json_metadata_and_text_filename)
+    apply_exact_match_validation(json_metadata_and_text_cleaned_filename, json_metadata_and_text_filename)
     # split dataset and normalize text
     print(f"{Bcolors.OKGREEN}splitting dataset and normalizing text{Bcolors.ENDC}")
-    normalize_and_split_dataset(json_metadata_and_text_checked_filename,json_metadata_filename)
+    normalize_and_split_dataset(json_metadata_and_text_cleaned_filename,json_metadata_filename,json_metadata_and_text_checked_filename)
    

@@ -25,9 +25,10 @@ PDF_URL = DOWNLOAD_URL + "/bitstream/handle/"
 GROBID_URL = "http://localhost:8070/api/processFulltextDocument"
 
 
-DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata.json"
-DATASET_WITH_METADATA = "metadata_sedici.json"
-DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text.json"
+DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata.json" #final dataset
+DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED="metadata_sedici_and_text_cleaned.json" #after cleaning with gemini
+DATASET_WITH_METADATA = "metadata_sedici.json" #initial dataset from filtered csv
+DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text.json" #initial dataset from filtered csv with text
 DATASET_TYPE = "dataset_type.json"
 CSV_SEDICI = "sedici.csv"
 CSV_SEDICI_FILTERED = "sedici_filtered_2019_2024.csv"

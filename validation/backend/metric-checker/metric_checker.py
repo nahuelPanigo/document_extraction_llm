@@ -88,61 +88,68 @@ class MetricChecker:
         # For other types (int, float, bool, dict, etc.), return as-is
         return value
     
-    def _normalize_name_parts(self, name: str) -> List[str]:
+    def _normalize_name_parts(self, name: str) -> set:
         """
-        Normalize a person's name by splitting into parts and sorting them.
-        This handles cases where names are in different orders (firstname lastname vs lastname firstname).
+        Normalize a person's name by splitting into individual words.
+        This handles cases where names are in different orders and formats.
         
         Args:
             name: Name to normalize
             
         Returns:
-            List of normalized name parts sorted alphabetically
+            Set of normalized name words (removes duplicates and order)
         """
         if not isinstance(name, str):
             if name is None:
-                return []
+                return set()
             name = str(name)
         
-        # Split name by common separators (comma, space, etc.)
-        parts = re.split(r'[,\s]+', name.strip())
+        # Split name by common separators (comma, space, semicolon, etc.)
+        # Remove any punctuation and split by whitespace
+        name_clean = re.sub(r'[,;.\-_()]+', ' ', name.strip())
+        words = name_clean.split()
         
-        # Normalize each part and filter out empty strings
-        normalized_parts = []
-        for part in parts:
-            if part.strip():
-                normalized_parts.append(self._normalize_text(part.strip()))
+        # Normalize each word and filter out empty strings
+        normalized_words = set()
+        for word in words:
+            word = word.strip()
+            if word and len(word) > 1:  # Skip single characters and empty strings
+                normalized_word = self._normalize_text(word)
+                if normalized_word:  # Only add non-empty normalized words
+                    normalized_words.add(normalized_word)
         
-        # Sort to handle different name orders (John Smith vs Smith John)
-        return sorted(normalized_parts)
+        return normalized_words
     
     def _compare_names(self, name1: Any, name2: Any) -> bool:
         """
-        Compare two names considering different orders and normalizations.
+        Compare two names by matching individual words regardless of order.
+        Handles cases like "Andrea Soledad Orsatti" vs "Orsatti, Andrea Soledad".
         
         Args:
             name1: First name to compare
             name2: Second name to compare
             
         Returns:
-            True if names match, False otherwise
+            True if names contain the same words, False otherwise
         """
         if name1 is None and name2 is None:
+            return True
+        if (name1 is None and name2 == "") or (name2 is None and name1 == ""):
             return True
         if name1 is None or name2 is None:
             return False
             
-        # Normalize both names into sorted parts
-        parts1 = self._normalize_name_parts(name1)
-        parts2 = self._normalize_name_parts(name2)
+        # Normalize both names into sets of words
+        words1 = self._normalize_name_parts(name1)
+        words2 = self._normalize_name_parts(name2)
         
-        # Compare normalized parts
-        return parts1 == parts2
+        # Names match if they contain the same words (regardless of order)
+        return words1 == words2
     
     def _compare_creator_values(self, creators1: Any, creators2: Any) -> bool:
         """
-        Compare creator fields that can be strings or lists with name normalization.
-        Handles cases where one is string and other is list, or both are lists.
+        Compare creator fields that can be strings or lists with word-by-word name matching.
+        For collections, each name in one collection is compared against all names in the other.
         
         Args:
             creators1: First creator value (string, list, or None)
@@ -155,28 +162,32 @@ class MetricChecker:
         list1 = self._safe_parse_list(creators1)
         list2 = self._safe_parse_list(creators2)
         
+        # If both empty, they match
+        if len(list1) == 0 and len(list2) == 0:
+            return True
+        
         # If different number of creators, they don't match
         if len(list1) != len(list2):
             return False
         
-        # If both empty, they match
-        if len(list1) == 0:
-            return True
+        # For each name in list1, find a matching name in list2
+        list2_copy = list2[:]  # Make a copy to track matched names
         
-        # Normalize all names in both lists using name parts comparison
-        normalized_names1 = []
-        for name in list1:
-            normalized_names1.append(self._normalize_name_parts(name))
+        for name1 in list1:
+            found_match = False
+            for i, name2 in enumerate(list2_copy):
+                if self._compare_names(name1, name2):
+                    found_match = True
+                    # Remove matched name from copy to avoid double matching
+                    list2_copy.pop(i)
+                    break
+            
+            # If no match found for this name, collections don't match
+            if not found_match:
+                return False
         
-        normalized_names2 = []
-        for name in list2:
-            normalized_names2.append(self._normalize_name_parts(name))
-        
-        # Sort both lists to handle different orders of creators
-        normalized_names1.sort()
-        normalized_names2.sort()
-        
-        return normalized_names1 == normalized_names2
+        # All names in list1 found matches in list2
+        return True
     
     def _compare_values_with_normalization(self, val1: Any, val2: Any, field_name: str = None) -> bool:
         """
@@ -190,14 +201,16 @@ class MetricChecker:
         Returns:
             True if values match, False otherwise
         """
-        # Handle None values
+        # Handle None values - treat None and empty string as equivalent
         if val1 is None and val2 is None:
+            return True
+        if (val1 is None and val2 == "") or (val2 is None and val1 == ""):
             return True
         if val1 is None or val2 is None:
             return False
         
-        # Special handling for creator, director, author fields (names that can have order issues)
-        if field_name and field_name.lower() in ['creator', 'director', 'author', 'contributors', 'editors']:
+        # Special handling for creator, director, codirector, author fields (names that can have order issues)
+        if field_name and field_name.lower() in ['creator', 'director', 'codirector', 'author', 'contributors', 'editors']:
             return self._compare_creator_values(val1, val2)
         
         # For other fields, normalize both values and compare
@@ -210,9 +223,10 @@ class MetricChecker:
         """
         Discover all unique metadata field names present in both datasets.
         This ensures we don't miss any fields that might be specific to certain document types.
+        Excludes the 'type' field since it's used for grouping, not metadata comparison.
         
         Returns:
-            Set of all unique field names found across all documents
+            Set of all unique field names found across all documents (excluding 'type')
         """
         all_fields = set()
         
@@ -225,6 +239,9 @@ class MetricChecker:
         for item_id, item_data in self.real_data.items():
             if isinstance(item_data, dict):
                 all_fields.update(item_data.keys())
+        
+        # Remove 'type' field as it's used for grouping, not metadata comparison
+        all_fields.discard('type')
         
         return all_fields
         
@@ -311,8 +328,9 @@ class MetricChecker:
                         "real": real_value
                     })
             else:
-                # Compare all fields
+                # Compare all fields (excluding 'type')
                 all_fields = set(predict_item.keys()) | set(real_item.keys())
+                all_fields.discard('type')  # Exclude 'type' from comparison
                 mismatched_fields = []
                 all_match = True
                 

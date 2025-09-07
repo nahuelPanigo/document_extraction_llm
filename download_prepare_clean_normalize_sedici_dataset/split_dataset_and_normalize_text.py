@@ -32,7 +32,7 @@ def split_dataset(dict_dataset):
         train_end = int(total_samples * PERCENTAGE_DATASET_FOR_STEPS["training"])
         test_end = train_end + int(total_samples * PERCENTAGE_DATASET_FOR_STEPS["test"])
         
-        # Distribute samples
+        # Distribute samples (ID is already included in each sample)
         data["training"].extend(samples[:train_end])
         data["test"].extend(samples[train_end:test_end])
         data["validation"].extend(samples[test_end:])
@@ -87,6 +87,7 @@ def final_normalization_post_llm(dict_dataset,original_metadata):
 
         item["type"] = original_metadata[id_]["dc.type"]
         item["subject"] = original_metadata[id_]["subject"]
+        item["id"] = id_
         
         final_dict[id_] = item
     
@@ -134,7 +135,7 @@ def clean_metadata_nulls(metadata):
     return metadata, total_fields_removed
 
 
-def normalize_and_split_dataset(json_filename,original_json_filename):
+def normalize_and_split_dataset(json_filename,original_json_filename,split_filename):
     data = read_data_json(json_filename,"utf-8")
     original_metadata = read_data_json(original_json_filename,"utf-8")
     
@@ -142,4 +143,4 @@ def normalize_and_split_dataset(json_filename,original_json_filename):
     data, removed_fields = clean_metadata_nulls(data)
     
     data = final_normalization_post_llm(data,original_metadata)
-    write_to_json(json_filename,split_dataset(data),"utf-8")
+    write_to_json(split_filename,split_dataset(data),"utf-8")
