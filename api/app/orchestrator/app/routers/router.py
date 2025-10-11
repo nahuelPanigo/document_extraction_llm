@@ -37,6 +37,7 @@ class Type(str, Enum):
     libro = "Libro"
     tesis = "Tesis"
     general = "General"
+    objeto_conferencia = "Objeto de conferencia"
     none = "None"
 
 

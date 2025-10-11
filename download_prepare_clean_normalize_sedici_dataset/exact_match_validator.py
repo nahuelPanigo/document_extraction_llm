@@ -40,7 +40,11 @@ def validate_field_in_text(key, value, text):
         return validate_rights_field(value, text)
     elif key in ["dc.uri", "sedici.uri", "rightsurl"]:
         if value:
-            return value.lower() in text.lower()
+            try:
+                return value.lower() in text.lower()
+            except:
+                print(f"error in {key} value: {value}")
+                return False
         return False
     return False
 
