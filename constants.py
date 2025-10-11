@@ -8,6 +8,20 @@ PDF_FOLDER = DATA_FOLDER / "pdfs/"
 JSON_FOLDER = DATA_FOLDER / "jsons/"
 TXT_FOLDER = DATA_FOLDER / "texts/"
 CSV_FOLDER = DATA_FOLDER / "csv/"
+CSV_FORD_SUBJECTS = "ford_subjects.csv"
+SUBJECT_MODEL_FOLDER = ROOT_DIR / "fine_tune_subject/models"
+SUBJECT_MODEL_FOLDERS = {
+    "svm": SUBJECT_MODEL_FOLDER / "svm",
+    "svm_linear": SUBJECT_MODEL_FOLDER / "svm_linear",
+    "svm_rbf": SUBJECT_MODEL_FOLDER / "svm_rbf",
+    "xgboost": SUBJECT_MODEL_FOLDER / "xgboost", 
+    "random_forest": SUBJECT_MODEL_FOLDER / "random_forest",
+    "embeddings": SUBJECT_MODEL_FOLDER / "embeddings",
+    "embeddings_knn": SUBJECT_MODEL_FOLDER / "embeddings_knn",
+    "neural": SUBJECT_MODEL_FOLDER / "neural",
+    "minilm": SUBJECT_MODEL_FOLDER / "minilm"
+}
+SUBJECT_MODEL_RESULTS_FOLDER = ROOT_DIR / "fine_tune_subject/model_results"
 RESULT_FOLDER_VALIDATION = ROOT_DIR / "validation/result/"
 
 
@@ -32,6 +46,29 @@ DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text.json" #initial da
 DATASET_TYPE = "dataset_type.json"
 CSV_SEDICI = "sedici.csv"
 CSV_SEDICI_FILTERED = "sedici_filtered_2019_2024.csv"
+CSV_FORD_SUBJECTS = "ford_subjects.csv"
+
+# Model management constants for fine_tune_subject
+MODEL_FOLDER = ROOT_DIR / "fine_tune_subject/models"
+MODEL_NAMES = {
+    'svm': 'svm_classifier.pkl',
+    'xgboost': 'xgboost_classifier.pkl', 
+    'random_forest': 'subject_classifier.pkl',
+    'embeddings': 'embedding_classifier.pkl',
+    'neural_torch': 'neural_torch_classifier.pth'
+}
+VECTORIZER_NAMES = {
+    'svm': 'svm_vectorizer.pkl',
+    'xgboost': 'xgboost_vectorizer.pkl',
+    'random_forest': 'vectorizer.pkl'
+}
+LABEL_ENCODER_NAMES = {
+    'svm': 'svm_label_encoder.pkl', 
+    'xgboost': 'xgboost_label_encoder.pkl',
+    'random_forest': 'label_encoder.pkl',
+    'embeddings': 'embedding_label_encoder.pkl',
+    'neural_torch': 'neural_torch_embeddings_and_encoder.pkl'
+}
 
 
 LENGTH_DATASET = 2000
