@@ -2,8 +2,9 @@ import requests
 
 
 
-def make_requests_xml_text(file_path: str, token: str, normalization: bool=True) -> str:
-    url = "http://localhost:8001/extract-with-tags"
+def make_requests_xml_text(file_path: str, token: str, normalization: bool=True, host_url: str = None) -> str:
+    base_url = host_url if host_url else "http://localhost:8001"
+    url = f"{base_url}/extract-with-tags"
 
     print(file_path)
     extension = file_path.suffix.lstrip(".")
@@ -27,8 +28,9 @@ def make_requests_xml_text(file_path: str, token: str, normalization: bool=True)
 
 
 
-def make_requests_only_text(file_path: str, token: str, normalization: bool=True) -> str:
-    url = "http://localhost:8001/extract"
+def make_requests_only_text(file_path: str, token: str, normalization: bool=True, host_url: str = None) -> str:
+    base_url = host_url if host_url else "http://localhost:8001"
+    url = f"{base_url}/extract"
 
 
 
