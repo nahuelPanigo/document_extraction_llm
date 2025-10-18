@@ -12,7 +12,7 @@ MODEL_PARAMETERS = {
 }
 
 
-KEYS_GENERAL = ["creator", "title", "subject", "rights", "rightsurl", "date", "originPlaceInfo.", "isRelatedWith"] #,"subtitle"
+KEYS_GENERAL = ["creator", "title", "rights", "rightsurl", "date", "originPlaceInfo.", "isRelatedWith"] #,"subtitle","subject"
 KEYS_TESIS = KEYS_GENERAL +["codirector", "director", "degree.grantor", "degree.name"]
 KEYS_LIBRO = KEYS_GENERAL +["publisher", "isbn", "compiler"]
 KEYS_ARTICULO = KEYS_GENERAL + ["journalTitle", "journalVolumeAndIssue", "issn", "event"]
@@ -40,9 +40,9 @@ Tu tarea es:
 
 HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
 You have to extract the metadata:
-language, title,  creator, subject, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""
+language, title,  creator, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""
 
-#dc.uri, sedici.uri,subtitle,
+#dc.uri, sedici.uri,subtitle, subject
 
 MIDDLE_PROMPT = """Here is a JSON Example format:"""
 
@@ -55,7 +55,6 @@ SCHEMA_GENERAL = """ {
         "creator": "",
         "title": "",
         "subtitle": "",
-        "subject": "",
         "rights": "",
         "rightsurl" : "",
         "date": "",
@@ -65,6 +64,7 @@ SCHEMA_GENERAL = """ {
 
         # "dc.uri": "",
         # "sedici.uri": "",
+        #"subject": "",
 
 JSON_GENERAL = {
   "language": "es",
@@ -72,7 +72,7 @@ JSON_GENERAL = {
   "title": "SIMULACIÓN MEDIANTE MODELOS ANALÍTICOS DE ESTELA EN PARQUES EÓLICOS Y VALIDACIÓN CON MEDICIONES DEL PARQUE EÓLICO RAWSON",
 #  "subtitle": "Estadisticas y Desempeño de los Modelos Analíticos de Estelas",
   "creator": "['Lazzari, Florencia', 'Otero, Alejandro']",
-  "subject": "Otras ingenierías y tecnologías",
+#  "subject": "Otras ingenierías y tecnologías",
   "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
   "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
 #  "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/108413",
@@ -90,7 +90,6 @@ SCHEMA_TESIS = """ {
         "creator": "",
         "title": "",
         "subtitle": "",
-        "subject": "",
         "rights": "",
         "rightsurl" : "",
         "date": "",
@@ -104,6 +103,7 @@ SCHEMA_TESIS = """ {
 
         # "dc.uri": "",
         # "sedici.uri": "",
+        # "subject": "",
 
 JSON_TESIS = {
         "language": "es",
@@ -111,7 +111,7 @@ JSON_TESIS = {
         "title": "¿Es compatible la producción forestal con la producción forrajera en plantaciones de Eucalyptus híbrido?",
 #        "subtitle": "Una experiencia para la provincia de Buenos Aires",
         "creator": "Siccardi, Bárbara",
-        "subject": "Agricultura,silvicultura y pesca",
+#        "subject": "Agricultura,silvicultura y pesca",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
         "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
 #        "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/159750",
@@ -135,7 +135,6 @@ SCHEMA_ARTICULO = """ {
         "creator": "",
         "title": "",
         "subtitle": "",
-        "subject": "",
         "rights": "",
         "rightsurl" : "",
         "date": "",
@@ -149,7 +148,8 @@ SCHEMA_ARTICULO = """ {
 
         # "dc.uri": "",
         # "sedici.uri": "",
-
+        #       "subject": "",
+ 
 
 JSON_ARTICULO = {
         "language": "en",
@@ -157,7 +157,7 @@ JSON_ARTICULO = {
         "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
         "title": "Exploring the magnetism of stars using TESS data",
 #        "subtitle": "A new method for the detection of magnetic fields in stars",
-        "subject": "Ciencias físicas",
+#        "subject": "Ciencias físicas",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
         "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
   #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
@@ -182,7 +182,6 @@ SCHEMA_LIBRO =  """
         "creator": "",
         "title": "",
         "subtitle": "",
-        "subject": "",
         "rights": "",
         "rightsurl" : "",
         "date": "",
@@ -194,6 +193,7 @@ SCHEMA_LIBRO =  """
 }"""
         # "dc.uri": "",
         # "sedici.uri": "",
+        # "subject": "",
 
 
 JSON_LIBRO =  {
@@ -202,7 +202,7 @@ JSON_LIBRO =  {
         "creator": "['Ruiz de Arcaute, Celeste', 'Laborde, Milagros Rosa Raquel', 'Soloneski, Sonia María Elsa', 'Larramendy, Marcelo Luis']",
         "title": "Genotoxicidad y carcinogénesis",
 #        "subtitle": "Estudios de la genética toxicológica",
-        "subject": "Ciencias biológicas",
+#        "subject": "Ciencias biológicas",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
         "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
  #       "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/131176",
@@ -226,7 +226,7 @@ JSON_OBJECTO_CONFERENCIA = {
         "creator": "['J.I. Soto', 'S.V. Jeffers', 'D.R.G. Schleicher', 'J.A. Rosales']",
         "title": "Exploring the magnetism of stars using TESS data",
 #        "subtitle": "A new method for the detection of magnetic fields in stars",
-        "subject": "Ciencias físicas",
+#        "subject": "Ciencias físicas",
         "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
         "rightsurl" : "http://creativecommons.org/licenses/by-nc-sa/4.0/",
   #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",

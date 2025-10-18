@@ -1,9 +1,10 @@
 import requests
 
 
-def upload_file(file_path: str,token: str, normalization: bool=True, type: str="None", deepanalyze: bool=False) -> str:
-    url = "http://localhost:8000/upload"
+def upload_file(file_path: str,token: str, normalization: bool=True, type: str="None", deepanalyze: bool=False, host_url: str = None) -> dict:
+    url = host_url if host_url else "http://localhost:8000" # type: ignore
 
+    url = f"{url}/upload"
     extension = file_path.suffix.lstrip(".")
     header_Extension = {".pdf": "application/pdf", ".docx": "application/msword"}
     file_type = header_Extension.get(extension) 
