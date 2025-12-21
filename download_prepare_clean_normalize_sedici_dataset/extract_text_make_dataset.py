@@ -13,7 +13,7 @@ def process_pdf_data(pdf_path, pdf_id):
     print(pdf_id)
     try:
         pdfreader = PdfReader()
-        text = pdfreader.extract_text_with_xml_tags(pdf_path)
+        text = pdfreader.extract_text_with_xml_tags(pdf_path,ocr=True)
         txt_filename=TXT_FOLDER / f"{pdf_id}.txt"
         write_to_text(txt_filename,text)
     except Exception as e:

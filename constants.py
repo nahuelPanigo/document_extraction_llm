@@ -28,7 +28,7 @@ RESULT_FOLDER_VALIDATION = ROOT_DIR / "validation/result/"
 GENAI_REQUEST_LIMIT = {
     "req_per_day": 1000,
     "req_per_min": 15,
-    "tok_per_min": 32000,
+    "tok_per_min": 250000,
 }
 GENAI_MODEL = "gemini-2.5-flash-lite"
 
@@ -39,10 +39,13 @@ PDF_URL = DOWNLOAD_URL + "/bitstream/handle/"
 GROBID_URL = "http://localhost:8070/api/processFulltextDocument"
 
 
-DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata.json" #final dataset
-DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED="metadata_sedici_and_text_cleaned.json" #after cleaning with gemini
+# DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata.json" #final dataset
+DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata_with_ocr.json" #final dataset with ocr
+# DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED="metadata_sedici_and_text_cleaned.json" #after cleaning with gemini
+DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED="metadata_sedici_and_text_cleaned_with_ocr.json" #after cleaning with gemini with ocr
 DATASET_WITH_METADATA = "metadata_sedici.json" #initial dataset from filtered csv
-DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text.json" #initial dataset from filtered csv with text
+#DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text.json" #initial dataset from filtered csv with text
+DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text_with_ocr.json" #initial dataset from filtered csv with text with ocr
 DATASET_TYPE = "dataset_type.json"
 CSV_SEDICI = "sedici.csv"
 CSV_SEDICI_FILTERED = "sedici_filtered_2019_2024.csv"
@@ -157,6 +160,7 @@ You are an expert in metadata validation and text analysis. Your task is to proc
     - If the value exists in the text but is written differently, update the metadata value to match the exact appearance in the text.
     - If the value does not appear in the text, remove that key from the metadata.
     - for sedici.uri dc.uri and isrelatedwith must be exactly the same if not match exactly the same just put like null
+    - Same for issn and isbn has to be exactly the same if not match exactly the same just put like null
 
 3. Ensure all metadata values in the JSON object match their exact appearance in the text.
 

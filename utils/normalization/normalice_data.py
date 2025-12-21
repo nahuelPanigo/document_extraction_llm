@@ -88,7 +88,13 @@ def remove_honorifics(text):
         r'\bphd\.\s*', r'\bph\.d\.\s*',
         r'\bprof\.\s*', r'\bprofa\.\s*', r'\bprofª\.\s*',
         r'\bsr\.\s*', r'\bsra\.\s*', r'\bsrª\.\s*',
-        r'\bmr\.\s*', r'\bmrs\.\s*', r'\bms\.\s*'
+        r'\bmr\.\s*', r'\bmrs\.\s*', r'\bms\.\s*',
+        r'\bdir\.\s*', r'\bdira\.\s*', r'\bdirª\.\s*',
+        r'\bcodir\.\s*', r'\bcodira\.\s*', r'\bcodirª\.\s*',
+        r'\(dir\.\)\s*', r'\(dra\.\)\s*', r'\(drª\.\)\s*',
+        r'\(codir\.\)\s*', r'\(codira\.\)\s*', r'\(codirª\.\)\s*',
+        r'\(lic\.\)\s*', r'\(lica\.\)\s*', r'\(licª\.\)\s*',
+        r'\(ing\.\)\s*', r'\(inga\.\)\s*', r'\(ingª\.\)\s*'
     ]
     
     text_cleaned = text

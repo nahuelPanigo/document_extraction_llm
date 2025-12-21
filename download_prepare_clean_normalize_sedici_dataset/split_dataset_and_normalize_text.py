@@ -4,7 +4,97 @@ from constants import PERCENTAGE_DATASET_FOR_STEPS
 from collections import defaultdict
 import random
 import math
+import re
 
+
+def analyze_cid_corruption(text):
+    """Analyze CID corruption level in text"""
+    if not text:
+        return 0.0, 0, 0
+    
+    # Find all CID patterns
+    cid_matches = re.findall(r'\(cid:\d+\)', text)
+    
+    # Calculate corruption percentage
+    total_chars = len(text)
+    cid_chars = sum(len(match) for match in cid_matches)
+    corruption_percentage = (cid_chars / total_chars) * 100 if total_chars > 0 else 0
+    
+    return corruption_percentage, len(cid_matches), len(set(re.findall(r'\(cid:(\d+)\)', text)))
+
+def clean_cid_content(text):
+    """Remove CID patterns from text while preserving readable content"""
+    if not text:
+        return text
+    
+    # Remove CID patterns
+    cleaned = re.sub(r'\(cid:\d+\)', '', text)
+    
+    # Clean up multiple spaces
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    
+    # Remove empty tags that might be left
+    cleaned = re.sub(r'<(\w+)>\s*</\1>', '', cleaned)
+    
+    return cleaned.strip()
+
+def filter_heavily_corrupted_documents(dict_dataset, corruption_threshold=70.0):
+    """Remove documents with heavy CID corruption from dataset (agnostic approach)"""
+    
+    print("🧹 FILTERING HEAVILY CORRUPTED DOCUMENTS")
+    print("=" * 50)
+    print(f"📋 Corruption threshold: {corruption_threshold}%")
+    
+    filtered_dataset = {}
+    stats = {
+        'original_total': len(dict_dataset),
+        'heavily_corrupted_removed': 0,
+        'lightly_corrupted_cleaned': 0,
+        'clean_documents': 0,
+        'final_total': 0
+    }
+    
+    heavily_corrupted_ids = []
+    
+    for doc_id, doc_data in dict_dataset.items():
+        # Analyze corruption level in original_text
+        original_text = doc_data.get('original_text', '')
+        corruption_pct, cid_count, unique_cids = analyze_cid_corruption(original_text)
+        
+        # Check if heavily corrupted (above threshold)
+        if corruption_pct >= corruption_threshold:
+            print(f"  🗑️ Removing heavily corrupted: {doc_id} ({corruption_pct:.1f}% CID)")
+            heavily_corrupted_ids.append(doc_id)
+            stats['heavily_corrupted_removed'] += 1
+            continue
+        
+        # Light corruption (5-70%) - clean it
+        elif corruption_pct > 5.0:
+            cleaned_text = clean_cid_content(original_text)
+            doc_data['original_text'] = cleaned_text
+            stats['lightly_corrupted_cleaned'] += 1
+            print(f"  🧽 Cleaned {doc_id}: {corruption_pct:.1f}% CID → {len(cleaned_text)} chars")
+        
+        # Clean document
+        else:
+            stats['clean_documents'] += 1
+        
+        filtered_dataset[doc_id] = doc_data
+        stats['final_total'] += 1
+    
+    # Print statistics
+    print(f"\n📊 FILTERING RESULTS:")
+    print(f"Original documents: {stats['original_total']}")
+    print(f"Heavily corrupted removed: {stats['heavily_corrupted_removed']}")
+    print(f"Lightly corrupted cleaned: {stats['lightly_corrupted_cleaned']}")
+    print(f"Already clean documents: {stats['clean_documents']}")
+    print(f"Final dataset size: {stats['final_total']}")
+    print(f"Documents removed: {((stats['heavily_corrupted_removed'] / stats['original_total']) * 100):.1f}%")
+    
+    if heavily_corrupted_ids:
+        print(f"\n🗑️ Removed documents: {heavily_corrupted_ids}")
+    
+    return filtered_dataset, stats
 
 def split_dataset(dict_dataset):
     """
@@ -141,6 +231,9 @@ def normalize_and_split_dataset(json_filename,original_json_filename,split_filen
     
     # Clean null/empty values before normalization
     data, removed_fields = clean_metadata_nulls(data)
+    
+    # Filter heavily corrupted documents (>70% CID) and clean lightly corrupted ones
+    data, corruption_stats = filter_heavily_corrupted_documents(data, corruption_threshold=70.0)
     
     data = final_normalization_post_llm(data,original_metadata)
     write_to_json(split_filename,split_dataset(data),"utf-8")

@@ -9,10 +9,12 @@ from run_metrics import run_metric_comparison
 app = FastAPI()
 
 
+API_URL = "192.168.100.5"
+
 origins = [
     "http://localhost:3000",
     "http://localhost:3001",
-    "http://192.168.1.39:3001",
+    f"http://{API_URL}:3001",
 ]
 
 app.add_middleware(

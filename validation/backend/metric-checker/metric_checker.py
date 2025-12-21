@@ -201,6 +201,12 @@ class MetricChecker:
         Returns:
             True if values match, False otherwise
         """
+        # Normalize "null" string to None for comparison
+        if val1 == "null":
+            val1 = None
+        if val2 == "null":
+            val2 = None
+            
         # Handle None values - treat None and empty string as equivalent
         if val1 is None and val2 is None:
             return True

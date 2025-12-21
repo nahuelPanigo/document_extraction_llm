@@ -9,6 +9,7 @@ import io
 from typing import Tuple, Optional, Union
 from app.constants.constant import PROMPT_DEEPANALYZE
 import json
+import re
 
 class Orchestrator:
     def __init__(self):
@@ -47,6 +48,53 @@ class Orchestrator:
     @staticmethod
     def _shorten_text(text):
         return " ".join(text.split()[:500])
+
+    @staticmethod
+    def _remove_honorifics(text):
+        if not isinstance(text, str):
+            return text
+        
+        # Lista de títulos honoríficos a remover
+        honorifics = [
+            r'\bdr\.\s*', r'\bdra\.\s*', r'\bdrª\.\s*',
+            r'\blic\.\s*', r'\blica\.\s*', r'\blicª\.\s*',
+            r'\bing\.\s*', r'\binga\.\s*', r'\bingª\.\s*',
+            r'\bmg\.\s*', r'\bmgr\.\s*', r'\bmgs\.\s*',
+            r'\bphd\.\s*', r'\bph\.d\.\s*',
+            r'\bprof\.\s*', r'\bprofa\.\s*', r'\bprofª\.\s*',
+            r'\bsr\.\s*', r'\bsra\.\s*', r'\bsrª\.\s*',
+            r'\bmr\.\s*', r'\bmrs\.\s*', r'\bms\.\s*',
+            r'\bdir\.\s*', r'\bdira\.\s*', r'\bdirª\.\s*',
+            r'\bcodir\.\s*', r'\bcodira\.\s*', r'\bcodirª\.\s*',
+            r'\(dir\.\)\s*', r'\(dra\.\)\s*', r'\(drª\.\)\s*',
+            r'\(codir\.\)\s*', r'\(codira\.\)\s*', r'\(codirª\.\)\s*',
+            r'\(lic\.\)\s*', r'\(lica\.\)\s*', r'\(licª\.\)\s*',
+            r'\(ing\.\)\s*', r'\(inga\.\)\s*', r'\(ingª\.\)\s*'
+        ]
+        
+        text_cleaned = text
+        for honorific in honorifics:
+            text_cleaned = re.sub(honorific, '', text_cleaned, flags=re.IGNORECASE)
+        
+        # Limpiar espacios extra
+        text_cleaned = re.sub(r'\s+', ' ', text_cleaned).strip()
+        return text_cleaned
+
+    def _clean_metadata_honorifics(self, metadata: dict) -> dict:
+        """Clean honorific titles from metadata fields that contain names"""
+        # Fields that typically contain names and should be cleaned
+        name_fields = ['creator', 'director', 'codirector', 'compiler', 'editor']
+        
+        for field in name_fields:
+            if field in metadata:
+                if isinstance(metadata[field], list):
+                    # Clean each item in the list
+                    metadata[field] = [self._remove_honorifics(item) for item in metadata[field]]
+                elif isinstance(metadata[field], str):
+                    # Clean the string directly
+                    metadata[field] = self._remove_honorifics(metadata[field])
+        
+        return metadata
 
     def _extract_text(self, file_bytes: bytes, filename: str, content_type: str, normalization: bool) -> Tuple[Optional[str], Optional[dict]]:
         self.logger.info("calling extractor service only text")
@@ -167,6 +215,11 @@ class Orchestrator:
             metadata["subject"] = subject
             if error is None and deepanalyze:
                 metadata, error = self.call_deepanalyze(self._shorten_text(extracted_text_with_metadata), metadata)
+            
+            # Clean honorific titles from name fields before returning
+            if error is None:
+                metadata = self._clean_metadata_honorifics(metadata)
+            
             return metadata, error
         
         except Exception as e:
