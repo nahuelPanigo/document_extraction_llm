@@ -246,9 +246,9 @@ class MetricChecker:
             if isinstance(item_data, dict):
                 all_fields.update(item_data.keys())
         
-        # Remove 'type' field as it's used for grouping, not metadata comparison
-        all_fields.discard('type')
-        
+        # Remove 'id' field as it's used for matching, not metadata comparison
+        all_fields.discard('id')
+
         return all_fields
         
     def _load_json(self, file_path: Path) -> Dict[str, Any]:
@@ -334,9 +334,9 @@ class MetricChecker:
                         "real": real_value
                     })
             else:
-                # Compare all fields (excluding 'type')
+                # Compare all fields (excluding 'id')
                 all_fields = set(predict_item.keys()) | set(real_item.keys())
-                all_fields.discard('type')  # Exclude 'type' from comparison
+                all_fields.discard('id')  # Exclude 'id' from comparison (used for matching only)
                 mismatched_fields = []
                 all_match = True
                 

@@ -354,8 +354,8 @@ document_extraction_llm
 ```
 
 ## TODO
-- vovler a sacar y fijarse porque no sale obj conferencia
-- chequear las uri en el excel que hicimos
+- check jupyter notebook if extract ok the issn, after that check if dataset is ok.. we can run again, or maybe just add issn and isbn that are in the documents with ocr extraction.
 - run new fine_tunning
 - run new validation
-- make configuration in finetunning for qwen and gemma models
+- make the comparission for each model. compare loss in training and loss in validation. Also make a comparission with frontend for each type and also by metadata.
+- add times comparision. (text extraction, running n pages, simple cant of pages, comparission of with tags and with no tags, comparission with abstract with no abtract, comparission with obj confe with no obj conf, comp with keywords with no keywords, comparission with susbject and with subject extracted by ml model, type ml model. finally we could add a comparission with deep-analyze extracted with and with no, also with more tokens the times comparission).

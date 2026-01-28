@@ -7,6 +7,7 @@ import threading
 import time
 import pandas as pd
 import json
+import re
 from utils.text_extraction.read_and_write_files import read_data_json,write_to_json
 from utils.colors.colors_terminal import Bcolors
 
@@ -25,16 +26,66 @@ runnning = True
 lock = threading.Lock()
 
 
-def consume_llm(metadata,text):
+def consume_llm(metadata, text, max_retries=3):
     input = f"""{PROMPT_CLEANER_METADATA}  
         - Metadata: {metadata}
         - Text: {text}"""
     
-    response = client.models.generate_content(
-        model=GENAI_MODEL,
-        contents=input,
-    )
-    return response.text
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=GENAI_MODEL,
+                contents=input,
+            )
+            return response.text
+        
+        except Exception as e:
+            error_str = str(e)
+            
+            # Check if it's a 429 rate limit error
+            if "429" in error_str and "RESOURCE_EXHAUSTED" in error_str:
+                # Extract retry delay from the error message
+                retry_delay = extract_retry_delay(error_str)
+                
+                if retry_delay:
+                    print(f"{Bcolors.WARNING}Rate limit hit. Waiting {retry_delay}s + 1s buffer before retry (attempt {attempt + 1}/{max_retries}){Bcolors.ENDC}")
+                    time.sleep(retry_delay + 1)  # Add 1 second buffer as suggested
+                    continue
+                else:
+                    # Fallback exponential backoff if we can't parse the delay
+                    backoff_time = (2 ** attempt) * 30  # 30s, 60s, 120s
+                    print(f"{Bcolors.WARNING}Rate limit hit, no retry delay found. Using exponential backoff: {backoff_time}s (attempt {attempt + 1}/{max_retries}){Bcolors.ENDC}")
+                    time.sleep(backoff_time)
+                    continue
+            
+            # If it's not a 429 error or we've exhausted retries, re-raise
+            if attempt == max_retries - 1:
+                raise e
+            else:
+                # For other errors, wait briefly before retry
+                print(f"{Bcolors.WARNING}Error: {e}. Retrying in 5s (attempt {attempt + 1}/{max_retries}){Bcolors.ENDC}")
+                time.sleep(5)
+
+
+def extract_retry_delay(error_str):
+    """
+    Extract retry delay from Gemini API error message.
+    Returns delay in seconds or None if not found.
+    """
+    try:
+        # Look for "Please retry in X.Xs." pattern
+        retry_match = re.search(r'Please retry in ([\d.]+)s\.', error_str)
+        if retry_match:
+            return float(retry_match.group(1))
+        
+        # Alternative pattern: look for retryDelay in JSON-like structure
+        retry_match = re.search(r"'retryDelay': '(\d+)s'", error_str)
+        if retry_match:
+            return float(retry_match.group(1))
+            
+        return None
+    except (ValueError, AttributeError):
+        return None
 
 
 def make_request(metadata, extracted_text):

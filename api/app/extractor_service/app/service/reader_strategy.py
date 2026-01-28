@@ -38,7 +38,7 @@ class Reader:
             raise ValueError(f"No strategy for extension: {ext}")
 
     
-    def extract(self, strategy_method: Callable[[str], str], normalization: bool = True):
+    def extract(self, strategy_method: Callable[[str], str], normalization: bool = True, ocr: bool = False) -> str:
         if self.error:
             return {
                 "success": False,
@@ -51,7 +51,7 @@ class Reader:
 
         try:
             logging.info(f"Extracting text using {strategy_method.__name__} from {temp_file_path}")
-            text = strategy_method(temp_file_path)
+            text = strategy_method(temp_file_path, ocr)
             logging.info(f"Extracted text: {text}")
             if normalization:
                 text = normalice_text(text)
@@ -68,8 +68,8 @@ class Reader:
                 "error": {"message": IN_E["ERROR_EXTARCTING_TEXT"],"code": IN_E["CODE_ERROR_EXTARCTING_TEXT"]}}
           
 
-    def get_text(self, normalization: bool = True):
-        return self.extract(self.strategy.extract_text, normalization)
+    def get_text(self, normalization: bool = True, ocr: bool = False):
+        return self.extract(self.strategy.extract_text, normalization, ocr)
 
-    def get_text_with_tags(self, normalization: bool = True):
-        return self.extract(self.strategy.extract_text_with_xml_tags, normalization)
+    def get_text_with_tags(self, normalization: bool = True, ocr: bool = False):
+        return self.extract(self.strategy.extract_text_with_xml_tags, normalization, ocr)

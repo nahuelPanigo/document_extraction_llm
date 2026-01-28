@@ -73,6 +73,7 @@ async def upload_file(
     normalization: Optional[bool] = Form(True),
     type: Optional[Type] = Form(Type.none),
     deepanalyze: Optional[bool] = Form(False),
+    ocr: Optional[bool] = Form(False),
 ):
     if not file:
         return error_response(
@@ -83,7 +84,7 @@ async def upload_file(
     dc_type = None if type == Type.none else type.value
 
     orchestrator = Orchestrator()
-    response, error = orchestrator.orchestrate(file=file, normalization=normalization, type=dc_type, deepanalyze=deepanalyze)
+    response, error = orchestrator.orchestrate(file=file, normalization=normalization, type=dc_type, deepanalyze=deepanalyze, ocr=ocr)
 
     if error is not None:
         return error_response(

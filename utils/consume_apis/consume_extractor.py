@@ -2,7 +2,7 @@ import requests
 
 
 
-def make_requests_xml_text(file_path: str, token: str, normalization: bool=True, host_url: str = None) -> str:
+def make_requests_xml_text(file_path: str, token: str, normalization: bool=True, host_url: str = None, ocr: bool=False) -> str:
     base_url = host_url if host_url else "http://localhost:8001"
     url = f"{base_url}/extract-with-tags"
 
@@ -16,7 +16,8 @@ def make_requests_xml_text(file_path: str, token: str, normalization: bool=True,
             "file": (file_path.name, f, file_type)
         }
         data = {
-            "normalization": normalization
+            "normalization": normalization,
+            "ocr": ocr
         }
         headers = {
             "Authorization": f"Bearer {token}"
@@ -28,7 +29,7 @@ def make_requests_xml_text(file_path: str, token: str, normalization: bool=True,
 
 
 
-def make_requests_only_text(file_path: str, token: str, normalization: bool=True, host_url: str = None) -> str:
+def make_requests_only_text(file_path: str, token: str, normalization: bool=True, host_url: str = None, ocr: bool=False) -> str:
     base_url = host_url if host_url else "http://localhost:8001"
     url = f"{base_url}/extract"
 
@@ -43,7 +44,8 @@ def make_requests_only_text(file_path: str, token: str, normalization: bool=True
             "file": (file_path.name, f, file_type)
         }
         data = {
-            "normalization": normalization
+            "normalization": normalization,
+            "ocr": ocr
         }
         headers = {
             "Authorization": f"Bearer {token}"

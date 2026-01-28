@@ -69,7 +69,8 @@ class Orchestrator:
             r'\(dir\.\)\s*', r'\(dra\.\)\s*', r'\(drª\.\)\s*',
             r'\(codir\.\)\s*', r'\(codira\.\)\s*', r'\(codirª\.\)\s*',
             r'\(lic\.\)\s*', r'\(lica\.\)\s*', r'\(licª\.\)\s*',
-            r'\(ing\.\)\s*', r'\(inga\.\)\s*', r'\(ingª\.\)\s*'
+            r'\(ing\.\)\s*', r'\(inga\.\)\s*', r'\(ingª\.\)\s*',
+            r'\bdoctor\s*', r'\bdoctor\.\s*', r'\bdoctora\.\s*', r'\bdoctorª\.\s*',
         ]
         
         text_cleaned = text
@@ -96,7 +97,7 @@ class Orchestrator:
         
         return metadata
 
-    def _extract_text(self, file_bytes: bytes, filename: str, content_type: str, normalization: bool) -> Tuple[Optional[str], Optional[dict]]:
+    def _extract_text(self, file_bytes: bytes, filename: str, content_type: str, normalization: bool, ocr: bool = False) -> Tuple[Optional[str], Optional[dict]]:
         self.logger.info("calling extractor service only text")
         stream = io.BytesIO(file_bytes)
         payload = (filename, stream, content_type)
@@ -105,7 +106,7 @@ class Orchestrator:
             self.extractor_service_url + "/extract",
             headers=self._get_headers(api_key=self.extractor_service_api_key),
             files={"file": payload},
-            params={"normalization": normalization}
+            params={"normalization": normalization, "ocr": ocr}
         )
 
         extractor_json = response_extractor.json()
@@ -153,15 +154,15 @@ class Orchestrator:
         file_stream.seek(0)
         return file.filename, file_stream, file.content_type
 
-    def orchestrate(self, file: UploadFile, normalization: bool = True, type: str = None, deepanalyze: bool = False) -> Tuple[dict, Optional[int]]:
-        self.logger.info(f"Orchestrating file: {file.filename} with normalization={normalization}")
+    def orchestrate(self, file: UploadFile, normalization: bool = True, type: str = None, deepanalyze: bool = False, ocr: bool = False) -> Tuple[dict, Optional[int]]:
+        self.logger.info(f"Orchestrating file: {file.filename} with normalization={normalization}, ocr={ocr}")
         try:
             file_bytes = file.file.read()
             filename = file.filename
             content_type = file.content_type
 
             # step 1: extract text for subject and type prediction
-            plain_text, error_response = self._extract_text(file_bytes, filename, content_type, normalization)
+            plain_text, error_response = self._extract_text(file_bytes, filename, content_type, normalization, ocr)
             if error_response is not None:
                 return error_response
 
@@ -185,7 +186,7 @@ class Orchestrator:
                 self.extractor_service_url + "/extract-with-tags",
                 headers=self._get_headers(api_key=self.extractor_service_api_key),
                 files={"file": payload2},
-                params={"normalization": normalization}
+                params={"normalization": normalization, "ocr": ocr}
             )
 
             extractor_with_tags_json = response_extractor_with_tags.json()

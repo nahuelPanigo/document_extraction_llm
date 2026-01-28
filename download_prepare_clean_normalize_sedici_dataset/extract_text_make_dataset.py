@@ -21,15 +21,14 @@ def process_pdf_data(pdf_path, pdf_id):
 
 def extract_text(selected_ids=None):
     text = [x.replace(".txt",".pdf") for x in os.listdir(TXT_FOLDER)]
-    
     if selected_ids:
         pdf_paths = [(str(PDF_FOLDER / f"{id_val}.pdf"), id_val) for id_val in selected_ids if f"{id_val}.pdf" not in text and (PDF_FOLDER / f"{id_val}.pdf").exists()]
     else:
-        pdf_paths = [(os.path.join(PDF_FOLDER,x),x.replace(".pdf","")) for x in os.listdir(PDF_FOLDER) if x not in text]   
-    
+        pdf_paths = [(os.path.join(PDF_FOLDER,x),x.replace(".pdf","")) for x in os.listdir(PDF_FOLDER) if x not in text]      
     with Pool(2) as pool:
         pool.map(process_pdf_data_wrapper, pdf_paths)
     return
+
 
 def make_json_metadata(metadata_filename,csv_filename,selected_ids):
     df = pd.read_csv(csv_filename)

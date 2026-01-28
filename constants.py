@@ -37,6 +37,8 @@ DATASET_SEDICI_URL_BASE = "https://sedici.unlp.edu.ar/oai/openaire?verb=ListReco
 DOWNLOAD_URL = "https://sedici.unlp.edu.ar"
 PDF_URL = DOWNLOAD_URL + "/bitstream/handle/"
 GROBID_URL = "http://localhost:8070/api/processFulltextDocument"
+GROBID_SERVICE = "http://localhost:8070"
+GROBID_FOLDER = RESULT_FOLDER_VALIDATION / "GROBID"
 
 
 # DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata.json" #final dataset
@@ -586,3 +588,96 @@ SCHEMA_GENERAL = """ {
 
         # "dc.uri": "",
         # "sedici.uri": "",
+
+PROMPT_CLOUD_LLM_VALIDATOR = """You are an expert metadata extraction system specialized in analyzing academic documents from SEDICI (Servicio de Difusión de la Creación Intelectual) repository of Universidad Nacional de La Plata.
+
+**TASK**: Extract metadata from the provided academic document text and return it in JSON format.
+
+**DOCUMENT TYPES TO CONSIDER**:
+The document could be one of these types, each with specific metadata fields:
+
+1. **TESIS** (Thesis): Includes director, codirector, degree.grantor, degree.name
+2. **ARTÍCULO** (Article): Includes journalTitle, journalVolumeAndIssue, issn, event
+3. **LIBRO** (Book): Includes publisher, isbn, compiler, editor
+4. **OBJETO DE CONFERENCIA** (Conference Object): Includes issn, event
+
+**METADATA FIELDS TO EXTRACT**:
+
+**Common fields for all document types:**
+- language: Document language (es/en/pt/etc.)
+- title: Main document title
+- creator: Author(s) - extract as array if multiple authors
+- subject: Academic subject/discipline (map to FORD classification if possible)
+- keywords: Keywords or terms describing the document content
+- rights: License information (e.g., Creative Commons)
+- rightsurl: URL of the license
+- date: Publication date (format: YYYY-MM-DD, YYYY-MM, or YYYY)
+- originPlaceInfo: Institution, faculty, or organization
+- isRelatedWith: Related URI or identifier
+
+**Type-specific fields (include only if document type is identified):**
+
+**For TESIS:**
+- director: Thesis director/supervisor
+- codirector: Co-director/co-supervisor
+- degree.grantor: Institution granting the degree
+- degree.name: Name of the degree program
+
+**For ARTÍCULO:**
+- journalTitle: Name of the journal
+- journalVolumeAndIssue: Volume and issue information
+- issn: Journal ISSN
+- event: Conference or event name if applicable
+
+**For LIBRO:**
+- publisher: Publisher name
+- isbn: Book ISBN
+- compiler: Compiler if applicable
+- editor: Editor if applicable
+
+**For OBJETO DE CONFERENCIA:**
+- issn: ISSN if available
+- event: Conference name and details
+
+**EXTRACTION RULES**:
+1. Extract ONLY information that is clearly present and unambiguous in the text
+2. If a field cannot be determined with high confidence, omit it from the JSON
+3. Pay special attention to distinguishing between similar concepts (e.g., advisor vs. director)
+4. For dates, extract only the publication/creation date, not submission or defense dates
+5. For creators, maintain the order and format as they appear in the document
+6. For URIs/URLs, extract exactly as they appear
+7. Ignore page numbers, headers, footers, and bibliographic references when extracting metadata
+8. For subject classification, try to map to FORD categories when possible
+
+**FORD SUBJECT MAPPING** (if applicable):
+Map Spanish subject terms to these FORD categories:
+- Ciencias físicas, Ciencias químicas, Ciencias de la tierra y ciencias ambientales relacionadas
+- Ciencias biológicas, Otras ciencias naturales
+- Ciencias de la computación e información, Ingeniería civil, Ingeniería eléctrica, electrónica e informática
+- Ingeniería mecánica, Ingeniería química, Ingeniería de los materiales
+- Economía y negocios, Educación, Sociología, Derecho, Ciencia política
+- Psicología y ciencias cognitivas, Educación, Geografía social y económica
+- Artes, Historia y arqueología, Lenguas y literatura, Filosofía, ética y religión
+
+**OUTPUT FORMAT**:
+Return ONLY a valid JSON object with the extracted metadata. Do not include explanations, comments, or the document type classification.
+
+**EXAMPLE OUTPUT**:
+```json
+{
+    "language": "es",
+    "title": "Análisis de sistemas fotovoltaicos distribuidos en redes eléctricas urbanas",
+    "creator": ["García, María Elena", "Rodríguez, Carlos Alberto"],
+    "subject": "Ingeniería eléctrica, electrónica e informática",
+    "keywords": ["energía solar", "sistemas fotovoltaicos", "redes distribuidas"],
+    "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+    "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "date": "2023-06-15",
+    "originPlaceInfo": "Facultad de Ingeniería, Universidad Nacional de La Plata",
+    "director": "Dr. Juan Carlos Mendez",
+    "degree.grantor": "Universidad Nacional de La Plata",
+    "degree.name": "Ingeniero Electricista"
+}
+```
+
+Now analyze the following document text and extract the metadata:"""

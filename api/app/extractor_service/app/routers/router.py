@@ -47,7 +47,8 @@ async def test_integration():
 @router.post("/extract", dependencies=[Depends(verify_bearer_token)])
 async def extract_text(
     file: UploadFile = File(...),
-    normalization: Optional[bool] = Form(True, description="Apply text normalization")
+    normalization: Optional[bool] = Form(True, description="Apply text normalization"),
+    ocr: Optional[bool] = Form(True, description="Apply text extraction from images with ocr")
 ):
     
     if not is_valid_filetype(file.filename, FILETYPES):
@@ -56,7 +57,7 @@ async def extract_text(
             message=f"Unsupported file type. Allowed types are: {', '.join(FILETYPES)}"
         )
     reader = Reader(file)
-    result = reader.get_text(normalization=normalization)
+    result = reader.get_text(normalization=normalization, ocr=ocr)
 
     if not result["success"]:
         return error_response(
@@ -70,7 +71,8 @@ async def extract_text(
 @router.post("/extract-with-tags", dependencies=[Depends(verify_bearer_token)])
 async def extract_text_with_tags(
     file: UploadFile = File(...),
-    normalization: Optional[bool] = Form(True, description="Apply text normalization")
+    normalization: Optional[bool] = Form(True, description="Apply text normalization"),
+    ocr: Optional[bool] = Form(True, description="Apply text extraction from images with ocr")
 ):
     if not is_valid_filetype(file.filename, FILETYPES):
         return error_response(
@@ -78,7 +80,7 @@ async def extract_text_with_tags(
             message=f"Unsupported file type. Allowed types are: {', '.join(FILETYPES)}"
     )
     reader = Reader(file)
-    result = reader.get_text_with_tags(normalization=normalization)
+    result = reader.get_text_with_tags(normalization=normalization, ocr=ocr)
 
     if not result["success"]:
         return error_response(
