@@ -370,9 +370,9 @@ Incluye ejemplos en el prompt si pueden ayudar al modelo a mejorar la precisión
 
 HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
 You have to extract the metadata:
-language, title,  creator, rights, rightsurl, date, originPlaceInfo,isrelatedwith"""
+language, title,  creator, rights, rightsurl, date, originPlaceInfo"""
 
-#dc.uri, sedici.uri,subtitle, subject
+#dc.uri, sedici.uri,subtitle, subject,isRelatedWith
 
 
 MIDDLE_PROMPT = """Here is a JSON Example format:"""
@@ -393,7 +393,7 @@ JSON_GENERAL = {
 #  "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
   "date": "2018-01-01",
   "originPlaceInfo": "ASADES",
-  "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/128795",
+#  "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/128795",
 }
 
 PROMPT_GENERAL = f"""{HEADER_PROMPT}{MIDDLE_PROMPT}{JSON_GENERAL}{END_PROMPT}"""
@@ -412,7 +412,7 @@ JSON_TESIS = {
 #        "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/159750",
         "date": "2023-01-01",
         "originPlaceInfo": "Facultad de Ciencias Agrarias y Forestales",
-        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118764",
+#        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118764",
         "codirector": "Ing. Agr. Bárbara Heguy",
         "director": "Dra. Carolina Pérez",
         "degree.grantor": "Universidad Nacional de La Plata",
@@ -437,7 +437,7 @@ JSON_ARTICULO = {
  #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2022-01-01",
         "originPlaceInfo.": "Asociación Argentina de Astronomía",
-        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
+#        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
         "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
         "journalVolumeAndIssue": "Vol. 63",
         "issn": "1669-9521",
@@ -461,7 +461,7 @@ JSON_OBJECTO_CONFERENCIA = {
  #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2022-01-01",
         "originPlaceInfo.": "Asociación Argentina de Astronomía",
-        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
+#        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
         "issn": "1669-9521",
         "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)",
     },
@@ -483,7 +483,7 @@ JSON_LIBRO =  {
 #        "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2021-01-01",
         "originPlaceInfo": "['Facultad de Ciencias Naturales y Museo', 'Facultad de Ciencias Exactas']",
-        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118183",
+#        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118183",
         "publisher": "Editorial de la Universidad Nacional de La Plata (EDULP)",
         "isbn": "978-950-34-1987-8",
         "compiler": "Pedro Carriquiriborde",

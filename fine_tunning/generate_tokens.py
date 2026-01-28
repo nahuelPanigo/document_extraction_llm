@@ -43,8 +43,8 @@ def get_schema_by_type(type):
 def  get_general_dict(dict):
     items_to_add = {"dc.language" : "language","dc.title" : "title" ,"dc.title.subtitle" : "subtitle" , "sedici.creator.person" : "creator" ,
                     "sedici.rights.license" : "rights", "sedici.rights.uri" : "rightsurl","dc.date.issued" : "date",
-                    "mods.originInfo.place" : "originPlaceInfo","sedici.relation.isRelatedWith":"isrelatedwith"}
-    #"dc.identifier.uri": "dc.uri" ,"sedici.rights.uri":"sedici.uri","dc.subject.ford" : "subject",
+                    "mods.originInfo.place" : "originPlaceInfo"}
+    #"dc.identifier.uri": "dc.uri" ,"sedici.rights.uri":"sedici.uri","dc.subject.ford" : "subject", "sedici.relation.isRelatedWith":"isrelatedwith"
     return {k: v for k, v in dict.items() if k in items_to_add.values()}
 
 
@@ -59,7 +59,7 @@ def add_schema_and_structure(dict_dataset):
             schema_type =get_schema_by_type(item["type"]) 
             output_text = json.dumps(get_general_dict(item))
             step_data.append({"input": input_text_schema(original_text,SCHEMA_GENERAL), "output": output_text})
-            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject"}
+            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject" and k != "isRelatedWith"}
             output_text = json.dumps(final_dict)
             step_data.append({"input": input_text_schema(original_text,schema_type), "output": output_text})
         formatted_data[step] = step_data
@@ -80,7 +80,7 @@ def add_prompt_and_structure(dict_dataset):
             prompt_type =get_prompt_by_type(item["type"]) 
             output_text = json.dumps(get_general_dict(item))
             step_data.append({"input": input_text(original_text,PROMPT_GENERAL), "output": output_text})
-            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject"}
+            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject" and k != "isRelatedWith"}
             output_text = json.dumps(final_dict)
             step_data.append({"input": input_text(original_text,prompt_type), "output": output_text})
         formatted_data[step] = step_data
