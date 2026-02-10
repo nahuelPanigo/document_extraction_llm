@@ -31,7 +31,17 @@ class TrainingStrategy(ABC):
     def get_model_files(self):
         """Get list of model files that will be saved"""
         pass
-    
+
+    @abstractmethod
+    def load_model(self):
+        """Load a previously trained model. Returns True if successful, False otherwise."""
+        pass
+
+    @abstractmethod
+    def predict(self, X_test):
+        """Make predictions on test data. Returns list of predicted labels."""
+        pass
+
     def get_default_params(self):
         """Get default parameters for this strategy"""
         return {}

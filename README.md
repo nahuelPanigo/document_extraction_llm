@@ -2,6 +2,10 @@
 
 This project provides automated scripts for running different modules with isolated virtual environments and specific dependencies.
 
+## Documentation
+
+For a complete visual documentation of the project (architecture diagrams, API reference, module details), see the [docs/ README](docs/README.md) to build and run the documentation site locally.
+
 ## Quick Start - Running Modules
 
 ### Using the Run Scripts
@@ -354,8 +358,37 @@ document_extraction_llm
 ```
 
 ## TODO
-- check jupyter notebook if extract ok the issn, after that check if dataset is ok.. we can run again, or maybe just add issn and isbn that are in the documents with ocr extraction.
-- run new fine_tunning
-- run new validation
+ changes to do in dataset:
+- add 2 more thesis and 2 more objects of conference to our dataset to have 15 types of each.
+- check isbn (see if it is better to do with rules... make a validation if the isbn that appears match with the real isbn)
+- see date in dataset. (make a double check only for date to see if we can increase the llm prediction remove date format, we could have only years years and month and year day and month... think in a way to translate to formated way)
+- events check as in dates.. maybe we have to remove parts of the event for example the date and only get the event title that is what appears in the pdf.
+
+other changes and tasks for our api and fine_tuning:
+- run all validation again with no isRelatedWith field.
+- run again fine_tunning-type with object of conference.
+- simil tables format in pdf (change extraction for this cases?)
+- as for tables what happends for pages with entire image?
+
+
+
+for our thesis:
 - make the comparission for each model. compare loss in training and loss in validation. Also make a comparission with frontend for each type and also by metadata.
 - add times comparision. (text extraction, running n pages, simple cant of pages, comparission of with tags and with no tags, comparission with abstract with no abtract, comparission with obj confe with no obj conf, comp with keywords with no keywords, comparission with susbject and with subject extracted by ml model, type ml model. finally we could add a comparission with deep-analyze extracted with and with no, also with more tokens the times comparission).
+
+
+
+de la cahrla:
+docker
+documentacino de la api y el proyecto.
+estructurar le proyecto kedro.
+imagenes del proyecto.
+
+
+
+- chequear varios con titulos extrajo bien?? hizo la normalizacion??
+: AAAANNNNÁÁÁÁLLLLIIIISSSSIIIISSSS DDDDEEEE LLLLOOOOSSSS CCCCIIIIRRRRCCCCUUUUIIIITTTTOOOOSSSS CCCCOOOORRRRTTTTOOOOSSSS DDDDEEEE CCCCOOOOMMMMEEEERRRRCCCCIIIIAAAALLLLIIIIZZZZAAAACCCCIIIIÓÓÓÓNNNN DDDDEEEE HHHHOOOORRRRTTTTAAAALLLLIIIIZZZZAAAASSSS YYYY SSSSUUUUSSSS IIIIMMMMPPPPLLLLIIIICCCCAAAANNNNCCCCIIIIAAAASSSS TTTTEEEERRRRRRRRIIIITTTTOOOORRRRIIIIAAAALLLLEEEESSSS EEEENNNN EEEELLLL PPPPEEEERRRRIIIIUUUURRRRBBBBAAAANNNNOOOO SSSSUUUURRRR DDDDEEEELLLL ÁÁÁÁRRRREtodasEEEAAAA MMMMEEEETTTTRRRROOOOPPPPOOOOLLLLIIIITTTTAAAANNNNAAAA DDDDEEEE BBBBUUUUEEEENNNNOOOOSSSS AAAAIIIIRRRREEEESSSS EEEENNNNTTTTRRRREEEE 2222000000009999 YYYY 2222000011119999
+
+- fine_tune_subject mejoras quedaron bien? cambiar el readme, agregar en la docs, agregar en el sh the run_all, a su vez pensar la logica de activar y desaactivar con y isn tags via flag (todas las extracciones con tags? conviene hacerla con el api o con utils?(con utils mas facil me parece a su vez conviene q la extraccion este directametne en util? o simplemente llamar a pdreader de ahi?))
+
+- agregar fine_tune_type el objeto de conferencia y correr esta nueva.

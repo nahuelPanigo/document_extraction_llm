@@ -9,6 +9,15 @@ interface MetricResult {
   total_items: number;
   exact_matches?: number;
   accuracy?: number;
+  null_count?: number;
+  null_both?: number;
+  null_false?: number;
+  true_positives?: number;
+  false_positives?: number;
+  false_negatives?: number;
+  precision?: number;
+  recall?: number;
+  f1_score?: number;
   mismatches?: Array<{
     id: string;
     field?: string;
@@ -108,13 +117,29 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
             <span className="stat-label">Mismatches:</span>
             <span className="stat-value">{result.mismatches?.length || 0}</span>
           </div>
+          {result.field_name && (result.null_count ?? 0) > 0 && (
+            <>
+              <div className="stat-item">
+                <span className="stat-label">Nulls:</span>
+                <span className="stat-value">{result.null_count}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Null in both:</span>
+                <span className="stat-value">{result.null_both}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">False nulls:</span>
+                <span className="stat-value">{result.null_false}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {result.mismatches && result.mismatches.length > 0 && (
           <details className="mismatches-details">
             <summary>View Mismatches ({result.mismatches.length})</summary>
             <div className="mismatches-list">
-              {result.mismatches.slice(0, 5).map((mismatch, index) => (
+              {result.mismatches.map((mismatch, index) => (
                 <div key={index} className="mismatch-item">
                   <strong>ID: {mismatch.id}</strong>
                   {mismatch.field && (
@@ -135,7 +160,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
                   {mismatch.mismatched_fields && (
                     <div className="mismatched-fields">
                       <p><strong>Mismatched Fields:</strong></p>
-                      {mismatch.mismatched_fields.slice(0, 3).map((field, fidx) => (
+                      {mismatch.mismatched_fields.map((field, fidx) => (
                         <div key={fidx} className="field-detail">
                           <span className="field-name">{field.field}:</span>
                           <span className="predicted">Predicted: {JSON.stringify(field.predicted)}</span>
@@ -146,12 +171,50 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
                   )}
                 </div>
               ))}
-              {result.mismatches.length > 5 && (
-                <p className="more-items">... and {result.mismatches.length - 5} more</p>
-              )}
             </div>
           </details>
         )}
+      </div>
+    );
+  };
+
+  const renderF1ScoreMetric = (result: MetricResult) => {
+    const f1 = result.f1_score || 0;
+    const scoreColor = getScoreColor(f1);
+
+    return (
+      <div key={`${result.metric_type}-${result.field_name}`} className="metric-card f1-score">
+        <div className="metric-header">
+          <h3>F1 Score</h3>
+          <span className="field-name">{result.field_name || 'All Fields'}</span>
+        </div>
+
+        <div className="metric-score">
+          <div className="score-circle" style={{ borderColor: scoreColor }}>
+            <span className="score-text" style={{ color: scoreColor }}>
+              {formatPercentage(f1)}
+            </span>
+          </div>
+        </div>
+
+        <div className="metric-stats">
+          <div className="stat-item">
+            <span className="stat-label">Total Items:</span>
+            <span className="stat-value">{result.total_items}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Precision:</span>
+            <span className="stat-value">{formatPercentage(result.precision || 0)}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Recall:</span>
+            <span className="stat-value">{formatPercentage(result.recall || 0)}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">TP / FP / FN:</span>
+            <span className="stat-value">{result.true_positives} / {result.false_positives} / {result.false_negatives}</span>
+          </div>
+        </div>
       </div>
     );
   };
@@ -194,7 +257,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
           <details className="details-section">
             <summary>View Detailed Comparisons ({result.details.length})</summary>
             <div className="details-list">
-              {result.details.slice(0, 5).map((detail, index) => (
+              {result.details.map((detail, index) => (
                 <div key={index} className="detail-item">
                   <div className="detail-header">
                     <strong>ID: {detail.id}</strong>
@@ -202,7 +265,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
                       {formatPercentage(detail.match_percentage)}
                     </span>
                   </div>
-                  
+
                   <div className="list-comparison">
                     <div className="list-section">
                       <span className="list-label">Predicted:</span>
@@ -212,7 +275,7 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
                         ))}
                       </div>
                     </div>
-                    
+
                     <div className="list-section">
                       <span className="list-label">Real:</span>
                       <div className="list-items">
@@ -257,9 +320,6 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
                   )}
                 </div>
               ))}
-              {result.details.length > 5 && (
-                <p className="more-items">... and {result.details.length - 5} more</p>
-              )}
             </div>
           </details>
         )}
@@ -302,10 +362,15 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
 
   const renderSummaryStats = () => {
     const exactEqualityResults = currentResults.filter(r => r.metric_type === 'exact_equality');
+    const f1ScoreResults = currentResults.filter(r => r.metric_type === 'f1_score');
     const listPercentageResults = currentResults.filter(r => r.metric_type === 'list_percentage_match');
 
-    const avgExactAccuracy = exactEqualityResults.length > 0 
+    const avgExactAccuracy = exactEqualityResults.length > 0
       ? exactEqualityResults.reduce((sum, r) => sum + (r.accuracy || 0), 0) / exactEqualityResults.length
+      : 0;
+
+    const avgF1Score = f1ScoreResults.length > 0
+      ? f1ScoreResults.reduce((sum, r) => sum + (r.f1_score || 0), 0) / f1ScoreResults.length
       : 0;
 
     const avgListPercentage = listPercentageResults.length > 0
@@ -328,6 +393,10 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
           <div className="summary-item">
             <span className="summary-label">Avg. Exact Accuracy:</span>
             <span className="summary-value">{formatPercentage(avgExactAccuracy)}</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Avg. F1 Score:</span>
+            <span className="summary-value">{formatPercentage(avgF1Score)}</span>
           </div>
           <div className="summary-item">
             <span className="summary-label">Avg. List Match:</span>
@@ -380,6 +449,8 @@ const MetricsVisualization: React.FC<MetricsVisualizationProps> = ({ results, ty
         {currentResults.map(result => {
           if (result.metric_type === 'exact_equality') {
             return renderExactEqualityMetric(result);
+          } else if (result.metric_type === 'f1_score') {
+            return renderF1ScoreMetric(result);
           } else if (result.metric_type === 'list_percentage_match') {
             return renderListPercentageMetric(result);
           }

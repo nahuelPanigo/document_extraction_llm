@@ -121,6 +121,22 @@ class EmbeddingsKNNTrainingStrategy(TrainingStrategy):
         
         return accuracy
 
+    def load_model(self):
+        try:
+            self.classifier = joblib.load(self.model_dir / "embeddings_knn_classifier.pkl")
+            self.label_encoder = joblib.load(self.model_dir / "embeddings_knn_label_encoder.pkl")
+            with open(self.model_dir / "embeddings_knn_model_info.pkl", 'rb') as f:
+                self.model_info = pickle.load(f)
+            self.transformer_model = SentenceTransformer(self.model_info['embedding_model_name'])
+            return True
+        except (FileNotFoundError, ImportError):
+            return False
+
+    def predict(self, X_test):
+        test_embeddings = self.transformer_model.encode(X_test, batch_size=32, normalize_embeddings=True)
+        y_pred_encoded = self.classifier.predict(test_embeddings)
+        return self.label_encoder.inverse_transform(y_pred_encoded)
+
 
 def train_embeddings_knn_model(documents, labels):
     """Convenience function for backward compatibility"""

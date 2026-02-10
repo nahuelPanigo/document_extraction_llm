@@ -6,13 +6,13 @@ import pandas as pd
 import random
 import os
 from collections import Counter
-from constants import CSV_FOLDER, CSV_FORD_SUBJECTS, TXT_FOLDER
+from constants import CSV_FOLDER, CSV_SUBJECTS, TXT_FOLDER
 from utils.colors.colors_terminal import Bcolors
 
 
 def load_csv_subjects():
-    """Load subject mapping from FORD subjects CSV"""
-    csv_path = CSV_FOLDER / CSV_FORD_SUBJECTS
+    """Load subject mapping from subjects CSV"""
+    csv_path = CSV_FOLDER / CSV_SUBJECTS
     df = pd.read_csv(csv_path)
     
     subject_mapping = {}
@@ -25,7 +25,7 @@ def load_csv_subjects():
             
         subject_mapping[doc_id] = subject
     
-    print(f"{Bcolors.OKGREEN}FORD CSV loaded: {len(subject_mapping)} documents with subjects{Bcolors.ENDC}")
+    print(f"{Bcolors.OKGREEN}Subjects CSV loaded: {len(subject_mapping)} documents with subjects{Bcolors.ENDC}")
     return subject_mapping
 
 

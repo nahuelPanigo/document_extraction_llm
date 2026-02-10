@@ -144,7 +144,9 @@ def main():
         )
 
         # Read JSON file
-        json_file_path = RESULT_FOLDER_VALIDATION / "test_metadata_validada.json"
+        #json_file_path = RESULT_FOLDER_VALIDATION / "test_metadata_validada.json"
+
+        json_file_path = RESULT_FOLDER_VALIDATION / "test_metadata_to_validate.json"
 
         try:
             data = read_data_json(json_file_path, 'utf-8')

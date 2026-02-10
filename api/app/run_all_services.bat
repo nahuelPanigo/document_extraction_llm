@@ -60,26 +60,31 @@ start run_led_temp.bat
 cd ..
 
 
-REM -------- LLM Service qwen --------
-echo.
-echo Iniciando llm_service_qwen...
-cd llm_service
-echo Carpeta actual: %cd%
+REM -------- LLM Service qwen (opcional) --------
+if /i "%ENABLE_QWEN_SERVICE%"=="true" (
+    echo.
+    echo Iniciando llm_service_qwen...
+    cd llm_service
+    echo Carpeta actual: %cd%
 
-if exist requirements.txt (
-    echo Instalando dependencias...
-    pip install -r requirements.txt
+    if exist requirements.txt (
+        echo Instalando dependencias...
+        pip install -r requirements.txt
+    ) else (
+        echo [ERROR] requirements.txt no encontrado en llm_service
+    )
+    echo set IS_LOCAL_MODEL=%IS_LOCAL_MODEL2%> run_qwen_temp.bat
+    echo set IS_OLLAMA_MODEL=%IS_OLLAMA_MODEL2%>> run_qwen_temp.bat
+    echo set SERVICE_TOKEN=%LLM_DEEPANALYZE_TOKEN%>> run_qwen_temp.bat
+    echo set MODEL_SELECTED=%MODEL_SELECTED_SERVICE2%>> run_qwen_temp.bat
+    echo set OLLAMA_HOST_URL=%OLLAMA_HOST_URL%>> run_qwen_temp.bat
+    echo uvicorn app.main:app --port 8003 --reload>> run_qwen_temp.bat
+    start run_qwen_temp.bat
+    cd ..
 ) else (
-    echo [ERROR] requirements.txt no encontrado en llm_service
+    echo.
+    echo [INFO] LLM Service QWEN deshabilitado (ENABLE_QWEN_SERVICE=%ENABLE_QWEN_SERVICE%)
 )
-echo set IS_LOCAL_MODEL=%IS_LOCAL_MODEL2%> run_qwen_temp.bat
-echo set IS_OLLAMA_MODEL=%IS_OLLAMA_MODEL2%>> run_qwen_temp.bat
-echo set SERVICE_TOKEN=%LLM_DEEPANALYZE_TOKEN%>> run_qwen_temp.bat
-echo set MODEL_SELECTED=%MODEL_SELECTED_SERVICE2%>> run_qwen_temp.bat
-echo set OLLAMA_HOST_URL=%OLLAMA_HOST_URL%>> run_qwen_temp.bat
-echo uvicorn app.main:app --port 8003 --reload>> run_qwen_temp.bat
-start run_qwen_temp.bat
-cd ..
 
 
 REM -------- Orchestrator --------
@@ -117,8 +122,10 @@ timeout /t 10 >nul
 echo Ejecutando pruebas de integración...
 curl -s http://127.0.0.1:8000/health || echo [ERROR] Orchestrator no responde
 curl -s http://127.0.0.1:8001/health || echo [ERROR] Extractor no responde
-curl -s http://127.0.0.1:8002/health || echo [ERROR] LLM Service no responde
-curl -s http://127.0.0.1:8003/health || echo [ERROR] LLM Service no responde
+curl -s http://127.0.0.1:8002/health || echo [ERROR] LLM Service LED no responde
+if /i "%ENABLE_QWEN_SERVICE%"=="true" (
+    curl -s http://127.0.0.1:8003/health || echo [ERROR] LLM Service QWEN no responde
+)
 
 echo.
 echo Ejecutando test de integración entre servicios...

@@ -8,7 +8,10 @@ PDF_FOLDER = DATA_FOLDER / "pdfs/"
 JSON_FOLDER = DATA_FOLDER / "jsons/"
 TXT_FOLDER = DATA_FOLDER / "texts/"
 CSV_FOLDER = DATA_FOLDER / "csv/"
-CSV_FORD_SUBJECTS = "ford_subjects.csv"
+CSV_FORD_SUBJECTS = "ford_subjects.csv"  # legacy reference
+CSV_SUBJECTS = "subjects.csv"
+
+
 SUBJECT_MODEL_FOLDER = ROOT_DIR / "fine_tune_subject/models"
 SUBJECT_MODEL_FOLDERS = {
     "svm": SUBJECT_MODEL_FOLDER / "svm",
@@ -25,12 +28,21 @@ SUBJECT_MODEL_RESULTS_FOLDER = ROOT_DIR / "fine_tune_subject/model_results"
 RESULT_FOLDER_VALIDATION = ROOT_DIR / "validation/result/"
 
 
+CLEAN_PROVIDER_TO_USE = "openai"  # "genai" or "openai"
+
 GENAI_REQUEST_LIMIT = {
     "req_per_day": 1000,
     "req_per_min": 15,
     "tok_per_min": 250000,
 }
-GENAI_MODEL = "gemini-2.5-flash-lite"
+GENAI_MODEL = "gemini-2.5-flash"
+
+OPENAI_REQUEST_LIMIT = {
+    "req_per_day": 10000,
+    "req_per_min": 60,
+    "tok_per_min": 200000,
+}
+OPENAI_MODEL = "gpt-5-mini"
 
 URL_SERVICES_EXTRACTION = "http://localhost:8000/upload"
 DATASET_SEDICI_URL_BASE = "https://sedici.unlp.edu.ar/oai/openaire?verb=ListRecords&resumptionToken=oai_dc////"
@@ -51,7 +63,7 @@ DATASET_WITH_METADATA_AND_TEXT_DOC = "metadata_sedici_and_text_with_ocr.json" #i
 DATASET_TYPE = "dataset_type.json"
 CSV_SEDICI = "sedici.csv"
 CSV_SEDICI_FILTERED = "sedici_filtered_2019_2024.csv"
-CSV_FORD_SUBJECTS = "ford_subjects.csv"
+
 
 # Model management constants for fine_tune_subject
 MODEL_FOLDER = ROOT_DIR / "fine_tune_subject/models"
@@ -134,6 +146,9 @@ COLUMNS_TYPES = {
 
 FORD_SEDICI_MATERIAS = {"Geofísica":"Ciencias físicas","Administración":"Economía y negocios","Agrimensura":"Ciencias de la tierra y ciencias ambientales relacionadas","Antropología":"Otras humanidades","Arqueología":"Historia y arqueología","Arquitectura":"Ingeniería civil","Artes Audiovisuales":"Artes","Artes Plásticas":"Artes","Artes y Humanidades":"Artes","Astronomía":"Ciencias físicas","Bellas Artes":"Artes","Bibliotecología y ciencia de la información":"Geografía social y económica","Bibliotecología":"Geografía social y económica","Biología":"Ciencias biológicas","Bioquímica":"Ciencias biológicas","Botánica":"Ciencias biológicas","Ciencias Agrarias":"Agricultura,silvicultura y pesca","Ciencias Astronómicas":"Ciencias físicas","Ciencias de la Educación":"Educación","Ciencias Económicas":"Economía y negocios","Ciencias Exactas":"Ciencias físicas","Ciencias Informáticas":"Ciencias de la computación e información","Ciencias Jurídicas":"Derecho","Ciencias Médicas":"Medicina básica","Ciencias Naturales":"Ciencias biológicas","Ciencias Sociales":"Sociología","Ciencias Veterinarias":"Ciencia veterinaria","Comunicación Social":"Geografía social y económica","Comunicación Visual":"Geografía social y económica","Comunicación":"Geografía social y económica","Contabilidad":"Economía y negocios","Cooperativismo":"Economía y negocios","Cs de la Computación":"Ciencias de la computación e información","Cs. Agrícolas y Biológicas":"Ciencias biológicas","Cs. Ambientales":"Ciencias de la tierra y ciencias ambientales relacionadas","Cs. de la Tierra y Planetarias":"Ciencias de la tierra y ciencias ambientales relacionadas","Cs. de los Materiales":"Ingeniería de los materiales","Cs. Sociales":"Sociología","Derecho":"Derecho","Derechos Humanos":"Derecho","Desarrollo Regional":"Otras ciencias sociales","Diseño Industrial":"Biotecnología industrial","Ecología":"Biotecnología ambiental","Econometría y Finanzas":"Economía y negocios","Economía":"Economía y negocios","Educación Física":"Educación","Educación":"Educación","Electrotecnia":"Ingeniería eléctrica, electrónica e informática","Energía":"Ingenieria ambiental","Farmac.":"Biotecnología médica","Farmacia":"Biotecnología médica","Filosofía":"Filosofía, ética y religión","Física y Astronomía":"Ciencias físicas","Física":"Ciencias físicas","Genética y Biología Molecular":"Ciencias biológicas","Geografía":"Otras ciencias sociales","Geología":"Ciencias de la tierra y ciencias ambientales relacionadas","Gestión y Contabilidad":"Economía y negocios","Historia del Arte":"Artes","Historia":"Historia y arqueología","Humanidades":"Otras humanidades","Información":"Geografía social y económica","Informática":"Ciencias de la computación e información","Ingeniería Aeronáutica":"Ingeniería mecánica","Ingeniería Agronómica":"Agricultura,silvicultura y pesca","Ingeniería Civil":"Ingeniería civil","Ingeniería Electrónica":"Ingeniería eléctrica, electrónica e informática","Ingeniería en Materiales":"Ingeniería de los materiales","Ingeniería Forestal":"Agricultura,silvicultura y pesca","Ingeniería Hidráulica":"Ingeniería civil","Ingeniería Mecánica":"Ingeniería mecánica","Ingeniería Química":"Ingeniería química","Ingeniería":" Otras ingenierías y tecnologías","Inmunología y Microbiología":"Ciencias biológicas","Legislación":"Derecho","Letras":"Lenguas y literatura","Matemática":"Matemáticas","Medicina":"Medicina clínica","Medios de Comunicación":"Geografía social y económica","Multidisciplina":"Otras humanidades","Multimedia":"Geografía social y económica","Música":"Artes","Negocios":"Economía y negocios","Neurociencia":"Psicología y ciencias cognitivas","Odontología":"Medicina clínica","Paleontología":"Ciencias de la tierra y ciencias ambientales relacionadas","Periodismo":"Geografía social y económica","Política":"Ciencia política","Profesiones de la Salud":"Ciencias de la salud","Psicología":"Psicología y ciencias cognitivas","Psiquiatría":"Medicina clínica","Química":"Ciencias químicas","Redes y Seguridad":"Ciencias de la computación e información","Relaciones Internacionales":"Ciencia política","Salud":"Ciencias de la salud","Sociología Jurídica":"Derecho","Sociología":"Sociología","Software":"Ciencias de la computación e información","Toxicología y Farmacia":"Biotecnología médica","Trabajo Social":"Sociología","Turismo":"Medios de comunicación","Urbanismo":"Ingeniería civil","Veterinaria":"Ciencia veterinaria","Zoología":"Ciencias biológicas","Zoonosis":"Ciencia veterinaria"}
 
+# Active subject mapping — change this to swap to a different classification standard
+SUBJECT_MAPPING = FORD_SEDICI_MATERIAS
+
 
 BASE_MODEL_LED="allenai/led-base-16384"
 BASE_MODEL_LED_LARGE="allenai/led-large-16384"
@@ -157,16 +172,190 @@ You are an expert in metadata validation and text analysis. Your task is to proc
 
 1. Analyze the provided text and metadata object.
 
-2. For each key-value pair in the metadata:
+2. The metadata includes a "dc.type" field that indicates the document type (e.g. "Tesis", "Articulo", "Libro", "Objeto de conferencia"). Use this field to determine which type-specific rules to apply (e.g. institucionDesarrollo for Tesis). Always return "dc.type" as-is in the output — do NOT validate it against the text.
+
+3. For each key-value pair in the metadata (except dc.type):
     - Search the text for the metadata value (or a variation of it, such as differences in case, abbreviations, punctuation, or word order).
     - If the value exists in the text but is written differently, update the metadata value to match the exact appearance in the text.
     - If the value does not appear in the text, remove that key from the metadata.
     - for sedici.uri dc.uri and isrelatedwith must be exactly the same if not match exactly the same just put like null
     - Same for issn and isbn has to be exactly the same if not match exactly the same just put like null
+    - For issn and isbn values, return ONLY the number itself (e.g. "2314-3991"), never include prefixes like "ISSN:", "ISBN:", "ISSN: ", etc.
 
-3. Ensure all metadata values in the JSON object match their exact appearance in the text.
+4. Ensure all metadata values in the JSON object match their exact appearance in the text.
 
-4. Return **only** the corrected JSON schema. Do not include explanations, comments, the original text, or the original metadata. The output first char must be '{' and the last one'}'
+5. Return **only** the corrected JSON schema. Do not include explanations, comments, the original text, or the original metadata. The output first char must be '{' and the last one'}'
+
+### special case for date:
+
+The date field MUST always be normalized to one of these ISO-like formats (from most specific to least specific):
+- "dd-mm-yyyy" (e.g. "15-03-2020") — when full date is available
+- "mm-yyyy" (e.g. "08-2023") — when only month and year are available
+- "yyyy" (e.g. "2021") — when only year is available
+- null — when no date information appears in the text at all
+
+Strict rules for date:
+- If the text contains a month name (in any language), translate it to its 2-digit number. Use leading zeros (e.g. January = 01, August = 08).
+- If the text contains only a year, return only "yyyy".
+- If the text contains month and year but no day, return "mm-yyyy".
+- If the text contains day, month, and year, return "dd-mm-yyyy". Use leading zeros for day (e.g. 5 = 05).
+- If the metadata has a date but NO date information appears anywhere in the text, set date to null.
+- Do NOT invent or guess date components that are not present in the text.
+- IMPORTANT: When in doubt, prefer null. If you are not certain that a date in the text corresponds to the publication/submission date of the document (and not some other date mentioned in the content), set date to null. It is better to return null than to return a wrong date.
+
+Month name translation reference:
+- enero/january = 01, febrero/february = 02, marzo/march = 03, abril/april = 04
+- mayo/may = 05, junio/june = 06, julio/july = 07, agosto/august = 08
+- septiembre/september = 09, octubre/october = 10, noviembre/november = 11, diciembre/december = 12
+
+Date examples:
+
+Input text mentions: "agosto 2016"
+Output date: "08-2016"
+
+Input text mentions: "published in 2024"
+Output date: "2024"
+
+Input text mentions: "15 de marzo de 2020"
+Output date: "15-03-2020"
+
+Input text mentions: "September 2019"
+Output date: "09-2019"
+
+Input text mentions: "submitted on March 5, 2021"
+Output date: "05-03-2021"
+
+Input text mentions no date at all:
+Output date: null
+
+### special case for event:
+
+The event field must contain ONLY the event name as it appears in the text. Do NOT include location, city, date, modality, or any other information appended to the event name.
+
+Strict rules for event:
+- Extract only the event/conference name itself.
+- Remove any parenthetical information containing location, city, date, or modality (e.g. "(La Plata, 2019)", "(modalidad virtual, 23 al 26 de agosto de 2019)").
+- Remove trailing location or date information even if not in parentheses.
+- If the event name does not appear in the text at all, set it to null.
+
+Event examples:
+
+Input metadata: "IV Congreso Internacional de Enseñanza del Derecho (La Plata, modalidad virtual, 23 al 26 de agosto de 2019)"
+Text only contains: "IV Congreso Internacional de Enseñanza del Derecho"
+Output event: "IV Congreso Internacional de Enseñanza del Derecho"
+
+Input metadata: "X Jornadas de Sociología (Buenos Aires, noviembre 2018)"
+Text contains: "X Jornadas de Sociología"
+Output event: "X Jornadas de Sociología"
+
+Input metadata: "Workshop on NLP, held in Madrid, 2023"
+Text contains: "Workshop on NLP"
+Output event: "Workshop on NLP"
+
+### special case for language:
+
+The language field is an EXCEPTION to the general rule. Do NOT remove it even if no explicit language mention appears in the text.
+Instead, always detect the language of the text and return it.
+
+Strict rules for language:
+- Detect the language the text is written in.
+- Return the language as a two-letter ISO 639-1 code (e.g. "es", "en", "pt", "fr").
+- If the metadata has a language value, validate it against the actual text language. If it matches, keep it. If it does not match, correct it to the actual language of the text.
+- NEVER return null or None for language. Always return a value.
+
+### special case for originPlaceInfo:
+
+originPlaceInfo represents the broader institutional origin of the document: the faculty, university, or organization that published or hosts the work. It applies to ALL document types.
+Typical values are faculties (e.g. "Facultad de Informática", "Facultad de Ciencias Exactas"), universities (e.g. "Universidad Nacional de La Plata"), editorial units, or organizations.
+
+Pay special attention to abbreviations and initials for institutions and places. Academic texts frequently use abbreviations like:
+- "UNLP" = "Universidad Nacional de La Plata"
+- "UBA" = "Universidad de Buenos Aires"
+- "CONICET" = "Consejo Nacional de Investigaciones Científicas y Técnicas"
+- "FCE" = "Facultad de Ciencias Exactas"
+- "FaHCE" = "Facultad de Humanidades y Ciencias de la Educación"
+- And similar institutional abbreviations.
+
+Strict rules for originPlaceInfo:
+- If the metadata contains a full institution name (e.g. "Universidad Nacional de La Plata") and the text contains its abbreviation or initials (e.g. "UNLP"), consider it a match and keep the full name from the metadata.
+- If the text contains the abbreviation/initials but NOT the full name, still keep the metadata value as it matches the institution.
+- This field is an EXCEPTION to the general rule: even if the metadata value is null, empty, or does not match the text, if the text clearly mentions a faculty, university, or organization where the work originates, you should extract and return it.
+- originPlaceInfo can be a SINGLE value (string) or MULTIPLE values (comma-separated string) when multiple faculties or institutions are involved.
+- When multiple distinct faculties or institutions appear in the text as author affiliations, include ALL of them separated by ", " (e.g. "Facultad de Ciencias Exactas, Facultad de Ciencias de la Salud").
+- Do not duplicate: if multiple authors share the same faculty, list it only once.
+- Typical values include: "Facultad de ..." (faculties), "Universidad Nacional de ..." (universities), organizations, editorial units, or research networks.
+- Do NOT confuse originPlaceInfo with institucionDesarrollo. originPlaceInfo is the broader origin (faculty, university), while institucionDesarrollo is the specific research unit (lab, institute, center).
+
+### special case for institucionDesarrollo (Tesis only):
+
+institucionDesarrollo represents the specific research center, laboratory, or institute where the thesis research was developed. This field is ONLY relevant for Tesis (thesis) documents.
+Typical values are research labs, institutes, or centers within a university, such as:
+- "Instituto de Investigaciones en Informática"
+- "Laboratorio de Investigación y Formación en Informática Avanzada"
+- "Centro de Investigaciones Cardiovasculares"
+- "Centro de Investigación y Desarrollo en Criotecnología de Alimentos"
+- "Instituto de Estudios Inmunológicos y Fisiopatológicos"
+
+This field is an EXCEPTION to the general rule: even if the metadata value is null or empty, if the text mentions a specific research center, laboratory, or institute where the research was conducted, you should extract and return it.
+
+Strict rules for institucionDesarrollo:
+- This field applies ONLY to Tesis documents. For other document types, ignore it.
+- Look for mentions of research units identified by keywords like "Instituto", "Laboratorio", "Centro de Investigación", "Centro de Estudios", "Grupo de Investigación", "Unidad de Investigación", "Cátedra".
+- If the metadata has a value, validate it against the text using the same abbreviation matching rules as originPlaceInfo.
+- If the metadata is null/empty but the text clearly mentions a research center, lab, or institute where the thesis was developed, extract and return it.
+- If multiple institutions are mentioned, include only the one(s) directly related to the thesis research development.
+- Use the full institutional name as it appears in the text. If only an abbreviation appears, return the abbreviation.
+- Do NOT confuse with originPlaceInfo: institucionDesarrollo is the specific research unit (lab/institute/center), not the faculty or university.
+
+### special case for journalVolumeAndIssue:
+
+You are cleaning and normalizing volume and issue information from academic publication metadata.
+
+Your task is to normalize the input text into a single, consistent textual format.
+This is a normalization step only — do NOT infer or add information that is not explicitly present.
+
+Strict rules:
+
+- Use only lowercase.
+- Remove punctuation, symbols, and parentheses.
+- Use the following canonical tokens only:
+  - "vol {number}" for volume
+  - "no {number}" for issue
+  - "especial" for special issues (use this exact word only)
+  - "suplemento {number}" for supplements
+  - "{year}" for years (4 digits, 1900–2099)
+
+- All elements are optional.
+- Always use the same order:
+  vol → no → especial → suplemento → year
+- Separate elements using ", " (comma + space).
+- Do NOT use abbreviations, symbols, or alternative words.
+
+Normalization rules:
+
+- Convert all variants of "volume" to "vol".
+- Convert all variants of "number", "issue", "n°", "nº", etc. to "no".
+- Convert any form of "special issue" or "special number" to "especial".
+- Convert patterns like "7 (2)" or "9(2)" into "vol 7, no 2".
+- If the text contains only a year, return only the year.
+- Remove months, editorial notes, and unrelated text.
+- Do NOT invent missing values.
+
+journalVolumeAndIssue examples:
+
+Input: "Vol. 7 (2)"
+Output: "vol 7, no 2"
+
+Input: "Vol8, N°2, Suplemento N°1"
+Output: "vol 8, no 2, suplemento 1"
+
+Input: "Número Especial, Septiembre 2020"
+Output: "especial, 2020"
+
+Input: "2021"
+Output: "2021"
+
+### Full input/output examples:
 
 Input example:
 - Text: "This paper was written by Juan M. Pérez in 2024."
@@ -176,197 +365,37 @@ Output example:
 {"creator": "Juan M. Pérez", "date": "2024"}
 
 Input example:
-- Text: "Dr. María García collaborated with John O'Connor to publish this work in 2023."
-- Metadata: {"creator":["Garcia, Maria", "OConnor, John"], "date": "2023", "publisher": "AI Press"}
+- Text: "Dr. María García collaborated with John O'Connor to publish this work in august 2023."
+- Metadata: {"creator":["Garcia, Maria", "OConnor, John"], "date": "01-08-2023", "publisher": "AI Press"}
 
 Output example:
-{"creator": ["María García", "John O'Connor"], "date": "2023"}
+{"creator": ["María García", "John O'Connor"], "date": "08-2023"}
+
+Input example:
+- Text: "Presentado en el IV Congreso Internacional de Enseñanza del Derecho durante agosto 2019."
+- Metadata: {"event": "IV Congreso Internacional de Enseñanza del Derecho (La Plata, modalidad virtual, 23 al 26 de agosto de 2019)", "date": "23-08-2019"}
+
+Output example:
+{"event": "IV Congreso Internacional de Enseñanza del Derecho", "date": "08-2019"}
+
+Input example:
+- Text: "Publicado en Revista de Derecho, volumen 5 número 3, septiembre 2020."
+- Metadata: {"journalTitle": "Revista de Derecho", "journalVolumeAndIssue": "Vol. 5, N° 3", "date": "01-09-2020"}
+
+Output example:
+{"journalTitle": "Revista de Derecho", "journalVolumeAndIssue": "vol 5, no 3", "date": "09-2020"}
+
+Input example (Tesis with institucionDesarrollo):
+- Text: "Tesis presentada para obtener el grado de Doctor en Ciencias Naturales, Facultad de Ciencias Naturales y Museo, UNLP. El trabajo fue realizado en el Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas (INIFTA). Director: Dr. Juan Pérez."
+- Metadata: {"originPlaceInfo": "Facultad de Ciencias Naturales y Museo", "institucionDesarrollo": null, "director": "Dr. Juan Pérez", "degree.grantor": "Universidad Nacional de La Plata", "degree.name": "Doctor en Ciencias Naturales", "date": "2022"}
+
+Output example:
+{"originPlaceInfo": "Facultad de Ciencias Naturales y Museo", "institucionDesarrollo": "Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas", "director": "Dr. Juan Pérez", "degree.grantor": "Universidad Nacional de La Plata", "degree.name": "Doctor en Ciencias Naturales", "date": "2022"}
 
 you must pay attention in the json provided after this:
 """
 
 
-PROMPT_UPPERFORM_GENERAL = """
-Eres un asistente experto en diseño y optimización de prompts para agentes LLM orientados a tareas especializadas. Tu tarea es mejorar prompts existentes para que el agente cumpla con mayor precisión los objetivos definidos.
-
-Vas a recibir un bloque de entrada estructurado con las siguientes secciones:
-
-<INSTRUCTS> Contiene la consigna original que describe el propósito del agente y los objetivos que debe cumplir. 
-</INSTRUCTS>
-
-<ACTUAL_PROMPT> Contiene el prompt actual utilizado por el agente, que será objeto de mejora.
-</ACTUAL_PROMPT>
-
-<RESULTS_OBTAINED> Contiene una muestra de los resultados reales que está generando el agente al ejecutar ese prompt.
-</RESULTS_OBTAINED>
-
-<EXPECTED_RESULTS> Contiene los resultados esperados, es decir, la salida correcta que el agente debería generar si el prompt estuviera bien diseñado.
-</EXPECTED_RESULTS>
-
-### TU TAREA
-
-Tu objetivo es mejorar el contenido dentro de `<ACTUAL_PROMPT>` para que el agente, al recibir el mismo tipo de entrada, genere resultados más cercanos o idénticos a los de `<EXPECTED_RESULTS>`, corrigiendo los desvíos observados en `<RESULTS_OBTAINED>`.
-
-Sigue estas instrucciones al pie de la letra:
-
-1. **Analiza la brecha** entre `<RESULTS_OBTAINED>` y `<EXPECTED_RESULTS>`. Identifica omisiones, errores de formato, inferencias erróneas, o falta de precisión en los metadatos extraídos.
-2. **Evalúa el prompt actual** dentro de `<ACTUAL_PROMPT>` y detecta si hay ambigüedad, falta de instrucciones, tono incorrecto, o necesidad de ejemplos.
-3. **Rediseña completamente el prompt si es necesario**, o edítalo puntualmente si se puede corregir manteniendo su estructura.
-
-"""
-
-PROMPT_UPPERFORM_GENERAL_GUARDIALS = """
-Tu salida debe ser únicamente el nuevo prompt mejorado, sin explicaciones adicionales.
-Recuerda: el resultado de tu trabajo será usado como el nuevo prompt de producción para este agente. No debes comentar ni justificar tus cambios. Solo devuelve el prompt optimizado final.
-"""
-
-PROMPT_UPPERFORM_METADATA = PROMPT_UPPERFORM_GENERAL + """
-4. Asegúrate de que el nuevo prompt:
-   - Sea claro y específico para el tipo de documento (tesis, artículo, etc.).
-   - Incluya ejemplos si pueden ayudar a guiar mejor al modelo.
-   - Incluya instrucciones explícitas sobre el **formato de salida** y los **campos obligatorios de metadatos**.
-   - Oriente al modelo a **ignorar contenido irrelevante** (por ejemplo, encabezados institucionales repetitivos, números de página, bibliografía, etc.).
-
-Este agente se aplica en el dominio de extracción de metadatos académicos, por lo tanto:
-- Asegúrate de cubrir campos típicos como: título, autor, fecha, resumen, palabras clave, tipo de documento, idioma, universidad, carrera, etc.
-- Distingue entre tipos de documentos si corresponde (ej. artículo vs tesis) y adapta la instrucción si es posible.
-
-""" + PROMPT_UPPERFORM_GENERAL_GUARDIALS
-
-
-
-
-PROMPT_UPPERFORM_DATE = """
-Eres un experto en diseño de prompts para LLMs orientados a tareas de extracción de metadatos.
-
-Recibirás un conjunto estructurado con:
-<INSTRUCTS> Instrucciones de la tarea
-<ACTUAL_PROMPT> Prompt actual que está fallando
-<RESULTS_OBTAINED> Lo que devuelve el modelo con ese prompt
-<EXPECTED_RESULTS> Lo que debería haber devuelto si el prompt fuera correcto
-
-### TU TAREA
-
-Debes rediseñar el prompt dentro de <ACTUAL_PROMPT> para que el modelo LLM:
-
-1. Extraiga **exclusivamente** el valor `date` desde un texto cualquiera.
-2. Ignore contenido irrelevante o ambiguo (como encabezados, bibliografía, fechas de eventos o notas al pie).
-3. Devuelva el valor `"null"` si no puede identificar con claridad una fecha válida.
-4. Cumpla con el formato estricto:
-   - `"YYYY-MM-DD"` si día, mes y año están presentes
-   - `"YYYY-MM"` si sólo mes y año
-   - `"YYYY"` si solo el año
-5. **No debe incluir el texto fuente en el prompt**. El prompt debe ser una plantilla que funcione con cualquier texto nuevo.
-
-Incluye ejemplos en el prompt si pueden ayudar al modelo a mejorar la precisión.
-
-🔴 **Devuelve únicamente el nuevo prompt, como string sin envolverlo en comillas, sin formatearlo como código, sin incluir el texto original.**
-🔴 **No incluyas codigo python ni explicaciones de tus decisiones.**
-🔴 **No intentes extraer la fecha o agregar algun dato del texto que viene en el rasonamiento de `RESULTS_OBTAINED`.**
-"""
-
-
-# HEADER_PROMPT = """Extract the metadata from the text and provide it in JSON format.
-# You have to extract the following metadata fields only if you are confident in their accuracy:
-# language, cretor, rights, rightsurl, originPlaceInfo, isrelatedwith"""
-
-
-# JSON_GENERAL = {
-#     "language": "es",
-#     "creator": "['Lazzari, Florencia', 'Otero, Alejandro']",
-#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-#     "originPlaceInfo": "Universidad Nacional de La Plata",
-#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118183",
-# }
-
-# PROMPT_GENERAL = f"""{HEADER_PROMPT}
-# {MIDDLE_PROMPT}{JSON_GENERAL}{END_PROMPT}"""
-
-
-# JSON_TESIS = {
-#     "language": "es",
-#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-#     "originPlaceInfo": "Facultad de Ciencias Agrarias y Forestales",
-#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118764",
-#     "director": "Dra. Carolina Pérez",
-#     "codirector": "Ing. Agr. Bárbara Heguy",
-#     "degree.grantor": "Universidad Nacional de La Plata",
-#     "degree.name": "Ingeniero Forestal",
-# }
-
-# PROMPT_TESIS = f"""{HEADER_PROMPT}, director, codirector, degree.grantor, degree.name
-# {MIDDLE_PROMPT}{JSON_TESIS}{END_PROMPT}"""
-
-# JSON_LIBRO = {
-#     "language": "es",
-#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-#     "originPlaceInfo": "Facultad de Ciencias Naturales y Museo",
-#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118183",
-#     "dc.publisher": "Editorial de la Universidad Nacional de La Plata (EDULP)",
-#     "isbn": "978-950-34-1987-8",
-#     "compiler": "Pedro Carriquiriborde"
-# }
-
-# PROMPT_LIBRO = f"""{HEADER_PROMPT}, dc.publisher, isbn, compiler
-# {MIDDLE_PROMPT}{JSON_LIBRO}{END_PROMPT}"""
-
-
-# JSON_ARTICULO = {
-#     "language": "es",
-#     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
-#     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-#     "originPlaceInfo": "Asociación Argentina de Astronomía",
-#     "isrelatedwith": "http://sedici.unlp.edu.ar/handle/10915/118464",
-#     "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
-#     "journalVolumeAndIssue": "Vol. 63",
-#     "issn": "1669-9521",
-#     "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)"
-# }
-
-# PROMPT_ARTICULO = f"""{HEADER_PROMPT}, journalTitle, journalVolumeAndIssue, issn, event
-# {MIDDLE_PROMPT}{JSON_ARTICULO}{END_PROMPT}"""
-
-
-# HEADER_PROMPT_SEMANTICO = """Extract the following metadata from the text and return them in a JSON format:
-
-# - title
-# - abstract
-# - keywords
-# - subject
-
-# Return only the fields you can infer with high confidence from the text. If you are not sure about a field, leave it out of the JSON.
-# """
-
-# JSON_SEMANTICO = {
-#     "title": "Estudio sobre los patrones de migración en comunidades indígenas del NEA: Una mirada intercultural desde la antropología urbana",
-#     "abstract": "Este trabajo analiza los procesos de desplazamiento urbano de familias Qom...",
-#     "keywords": ["migración", "pueblos originarios", "interculturalidad", "antropología urbana"],
-#     "subject": "Antropología social"
-# }
-
-# PROMPT_SEMANTICO = f"""{HEADER_PROMPT_SEMANTICO}
-# {MIDDLE_PROMPT}{JSON_SEMANTICO}{END_PROMPT}"""
-
-
-
-# HEADER_PROMPT_DATE = """Extract the publication date from the following text **only if you are completely sure**.
-
-# The date must refer to the official publication or creation of the document.
-
-# If the date is ambiguous, conflicting, or not clearly present, return `"null"`.
-
-# if it presetnt month and day format as: "YYYY-MM-DD", if only present month and year format as: "YYYY-MM", if only present year format as: "YYYY"
-# """
-
-# JSON_DATE = {
-#     "date": "2018-05-10"
-# }
-
-# PROMPT_DATE = f"""{HEADER_PROMPT_DATE}
-# {MIDDLE_PROMPT}{JSON_DATE}{END_PROMPT}"""
 
 HEADER_PROMPT = """ Extract the metadata from the text and provide it in JSON format:
 You have to extract the metadata:
@@ -436,7 +465,7 @@ JSON_ARTICULO = {
   #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
  #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2022-01-01",
-        "originPlaceInfo.": "Asociación Argentina de Astronomía",
+        "originPlaceInfo": "Asociación Argentina de Astronomía",
 #        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
         "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
         "journalVolumeAndIssue": "Vol. 63",
@@ -460,7 +489,7 @@ JSON_OBJECTO_CONFERENCIA = {
   #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
  #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2022-01-01",
-        "originPlaceInfo.": "Asociación Argentina de Astronomía",
+        "originPlaceInfo": "Asociación Argentina de Astronomía",
 #        "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
         "issn": "1669-9521",
         "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)",
@@ -503,7 +532,7 @@ SCHEMA_LIBRO =  """
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": "",
         "publisher": "",
         "isbn": "",
@@ -522,7 +551,7 @@ SCHEMA_ARTICULO = """ {
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": "",
         "journalTitle": "",
         "journalVolumeAndIssue": "",
@@ -539,7 +568,7 @@ SCHEMA_OBJECTO_CONFERENCIA = """ {
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": "",
         "issn": "",
         "event": ""
@@ -561,7 +590,7 @@ SCHEMA_TESIS = """ {
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": "",
         "codirector": "",
         "director": "",
@@ -582,7 +611,7 @@ SCHEMA_GENERAL = """ {
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": ""
 }"""
 

@@ -12,57 +12,118 @@ from metric_checker import MetricChecker
 from fastapi import File, UploadFile
 
 
+# Fields common to all document types
+COMMON_FIELDS = {
+    'language', 'title', 'creator', 'rights', 'rightsurl',
+    'date', 'originPlaceInfo', 'isRelatedWith', 'type', 'subject',
+}
+
+# Type-specific fields: only relevant for their corresponding type
+TYPE_SPECIFIC_FIELDS = {
+    'tesis': {'codirector', 'director', 'degree.grantor', 'degree.name'},
+    'articulo': {'journalTitle', 'journalVolumeAndIssue', 'issn', 'event'},
+    'libro': {'publisher', 'isbn', 'compiler'},
+    'objeto de conferencia': {'event', 'issn'},
+}
+
+
+def _get_types_for_field(field_name):
+    """Return the set of doc types (lowercase) for which a field is relevant, or None if common."""
+    if field_name in COMMON_FIELDS:
+        return None
+    types = set()
+    for doc_type, fields in TYPE_SPECIFIC_FIELDS.items():
+        if field_name in fields:
+            types.add(doc_type)
+    return types if types else None
+
+
+def _filter_data_by_types(data, common_ids, allowed_types, original_data):
+    """Filter data to only include documents whose type (from original) is in allowed_types."""
+    filtered = {}
+    for item_id in common_ids:
+        if item_id in original_data and isinstance(original_data[item_id], dict):
+            doc_type = original_data[item_id].get('type', '')
+            if doc_type and doc_type.lower() in allowed_types:
+                filtered[item_id] = data[item_id]
+    return filtered
+
+
+def _get_checker_for_field(field_name, predicted_data, original_data, common_ids, default_checker):
+    """Return the appropriate checker for a field: filtered by type if type-specific, or the default."""
+    allowed_types = _get_types_for_field(field_name)
+    if allowed_types is None:
+        return default_checker
+    filtered_predicted = _filter_data_by_types(predicted_data, common_ids, allowed_types, original_data)
+    filtered_original = _filter_data_by_types(original_data, common_ids, allowed_types, original_data)
+    if not filtered_predicted and not filtered_original:
+        return None
+    return MetricChecker(filtered_predicted, filtered_original)
+
+
 def run_metric_comparison(original_content: bytes, predicted_content: bytes):
     """
     Run comprehensive metric comparison between predicted and real JSON content.
-    
+
     Args:
         original_content: Original/ground truth JSON file content as bytes
         predicted_content: Predicted output JSON file content as bytes
     """
-    
+
     # Parse JSON content
     try:
         original_data = json.loads(original_content.decode('utf-8'))
         predicted_data = json.loads(predicted_content.decode('utf-8'))
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON content: {e}")
-    
+
+    common_ids = set(predicted_data.keys()) & set(original_data.keys())
+
     # Initialize MetricChecker with parsed data
     checker = MetricChecker(predicted_data, original_data)
-    
+
     # List to store all results
     all_results = []
-    
+
     # 1. Overall exact equality comparison
     overall_equality = checker.exact_equality_metric()
     all_results.append(overall_equality)
-    
-    # 2. Discover all metadata fields present in the data
+
+    # 2. Overall F1 Score
+    overall_f1 = checker.f1_score_metric()
+    all_results.append(overall_f1)
+
+    # 3. Discover all metadata fields present in the data
     all_fields = checker.discover_all_fields()
-    
-    # 3. Field-specific exact equality comparisons for all discovered fields
+
+    # 4. Field-specific exact equality and F1 comparisons for all discovered fields
+    #    For type-specific fields, only evaluate documents of the relevant type
     for field in all_fields:
         try:
-            field_equality = checker.exact_equality_metric(field_name=field)
+            field_checker = _get_checker_for_field(field, predicted_data, original_data, common_ids, checker)
+            if field_checker is None:
+                continue
+            field_equality = field_checker.exact_equality_metric(field_name=field)
             all_results.append(field_equality)
+            field_f1 = field_checker.f1_score_metric(field_name=field)
+            all_results.append(field_f1)
         except Exception as e:
-            # Skip fields that don't exist or cause errors
             continue
-    
-    # 4. List percentage matching for fields that might be lists
-    # These are commonly list-type fields, but we'll check others too
+
+    # 5. List percentage matching for fields that might be lists
     commonly_list_fields = ['subject', 'keywords', 'creator', 'author', 'contributors', 'editors']
-    
+
     for field in commonly_list_fields:
-        if field in all_fields:  # Only check if field exists in data
+        if field in all_fields:
             try:
-                list_percentage = checker.list_percentage_match_metric(field_name=field)
+                field_checker = _get_checker_for_field(field, predicted_data, original_data, common_ids, checker)
+                if field_checker is None:
+                    continue
+                list_percentage = field_checker.list_percentage_match_metric(field_name=field)
                 all_results.append(list_percentage)
             except Exception as e:
-                # Skip fields that don't exist or cause errors
                 continue
-    
+
     # 5. Create summary statistics
     summary = create_summary_statistics(all_results)
     
@@ -103,12 +164,18 @@ def generate_type_specific_results(predicted_data: dict, original_data: dict) ->
     all_types = set()
     common_ids = set(predicted_data.keys()) & set(original_data.keys())
     
-    # Extract all unique types
+    # Normalize type to title case (e.g. "tesis" -> "Tesis", "objeto de conferencia" -> "Objeto De Conferencia")
+    def normalize_type(t):
+        if not t:
+            return t
+        return t[0].upper() + t[1:]
+
+    # Extract all unique types (normalized)
     for item_id in common_ids:
         if 'type' in predicted_data[item_id]:
-            all_types.add(predicted_data[item_id]['type'])
+            all_types.add(normalize_type(predicted_data[item_id]['type']))
         if 'type' in original_data[item_id]:
-            all_types.add(original_data[item_id]['type'])
+            all_types.add(normalize_type(original_data[item_id]['type']))
     
     type_specific_results = {}
     
@@ -121,8 +188,8 @@ def generate_type_specific_results(predicted_data: dict, original_data: dict) ->
             pred_item = predicted_data[item_id]
             orig_item = original_data[item_id]
             
-            # Include item if either predicted or original has this type
-            if (pred_item.get('type') == doc_type or orig_item.get('type') == doc_type):
+            # Include item if either predicted or original has this type (case-insensitive)
+            if (normalize_type(pred_item.get('type', '')) == doc_type or normalize_type(orig_item.get('type', '')) == doc_type):
                 filtered_predicted[item_id] = pred_item
                 filtered_original[item_id] = orig_item
         
@@ -136,15 +203,21 @@ def generate_type_specific_results(predicted_data: dict, original_data: dict) ->
             # Overall exact equality
             overall_equality = type_checker.exact_equality_metric()
             type_results.append(overall_equality)
-            
+
+            # Overall F1 Score
+            overall_f1 = type_checker.f1_score_metric()
+            type_results.append(overall_f1)
+
             # Discover all fields present in this type's data
             type_fields = type_checker.discover_all_fields()
-            
+
             # Field-specific metrics for all discovered fields
             for field in type_fields:
                 try:
                     field_equality = type_checker.exact_equality_metric(field_name=field)
                     type_results.append(field_equality)
+                    field_f1 = type_checker.f1_score_metric(field_name=field)
+                    type_results.append(field_f1)
                 except Exception:
                     continue
             
@@ -177,13 +250,15 @@ def create_summary_statistics(results: list) -> dict:
     summary = {
         "total_metrics_run": len(results),
         "exact_equality_metrics": [],
+        "f1_score_metrics": [],
         "list_percentage_metrics": [],
         "overall_performance": {}
     }
-    
+
     exact_accuracies = []
+    f1_scores = []
     list_percentages = []
-    
+
     for result in results:
         if result["metric_type"] == "exact_equality":
             metric_summary = {
@@ -194,7 +269,18 @@ def create_summary_statistics(results: list) -> dict:
             }
             summary["exact_equality_metrics"].append(metric_summary)
             exact_accuracies.append(result["accuracy"])
-            
+
+        elif result["metric_type"] == "f1_score":
+            metric_summary = {
+                "field": result["field_name"],
+                "f1_score": result["f1_score"],
+                "precision": result["precision"],
+                "recall": result["recall"],
+                "total_items": result["total_items"],
+            }
+            summary["f1_score_metrics"].append(metric_summary)
+            f1_scores.append(result["f1_score"])
+
         elif result["metric_type"] == "list_percentage_match":
             metric_summary = {
                 "field": result["field_name"],
@@ -204,18 +290,23 @@ def create_summary_statistics(results: list) -> dict:
             }
             summary["list_percentage_metrics"].append(metric_summary)
             list_percentages.append(result["average_percentage"])
-    
+
     # Calculate overall performance statistics
     if exact_accuracies:
         summary["overall_performance"]["average_exact_accuracy"] = sum(exact_accuracies) / len(exact_accuracies)
         summary["overall_performance"]["min_exact_accuracy"] = min(exact_accuracies)
         summary["overall_performance"]["max_exact_accuracy"] = max(exact_accuracies)
-    
+
+    if f1_scores:
+        summary["overall_performance"]["average_f1_score"] = sum(f1_scores) / len(f1_scores)
+        summary["overall_performance"]["min_f1_score"] = min(f1_scores)
+        summary["overall_performance"]["max_f1_score"] = max(f1_scores)
+
     if list_percentages:
         summary["overall_performance"]["average_list_percentage"] = sum(list_percentages) / len(list_percentages)
         summary["overall_performance"]["min_list_percentage"] = min(list_percentages)
         summary["overall_performance"]["max_list_percentage"] = max(list_percentages)
-    
+
     return summary
 
 

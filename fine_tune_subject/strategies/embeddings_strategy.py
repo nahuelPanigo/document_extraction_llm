@@ -124,6 +124,28 @@ class EmbeddingsTrainingStrategy(TrainingStrategy):
         
         return accuracy
 
+    def load_model(self):
+        try:
+            with open(self.model_dir / "embeddings_centroids.pkl", 'rb') as f:
+                self.model_data = pickle.load(f)
+            self.label_encoder = joblib.load(self.model_dir / "embeddings_label_encoder.pkl")
+            self.embedding_model = SentenceTransformer(self.model_data['model_name'])
+            return True
+        except (FileNotFoundError, ImportError):
+            return False
+
+    def predict(self, X_test):
+        test_embeddings = self.embedding_model.encode(X_test, batch_size=32, show_progress_bar=False)
+        centroids = self.model_data['centroids']
+        y_pred = []
+        for emb in test_embeddings:
+            similarities = {}
+            for label, centroid in centroids.items():
+                sim = np.dot(emb, centroid) / (np.linalg.norm(emb) * np.linalg.norm(centroid))
+                similarities[label] = sim
+            y_pred.append(max(similarities, key=similarities.get))
+        return self.label_encoder.inverse_transform(y_pred)
+
 
 def train_embeddings_model(documents, labels):
     """Convenience function for backward compatibility"""

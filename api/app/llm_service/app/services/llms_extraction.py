@@ -42,5 +42,6 @@ class ModelExtraction:
         except Exception as e:
             logging.error(f"error extracting model: {e}")
             return MD_E["ERROR_OPENING_MODEL"],MD_E["CODE_ERROR_OPENING_MODEL"]
+        print("prediction with no clean",prediction)
         return  self.strategy.clean_json(prediction)
 

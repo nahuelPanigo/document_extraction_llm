@@ -1,5 +1,5 @@
 import pandas as pd
-from constants import COLUMNS_TYPES, FORD_SEDICI_MATERIAS,VALID_TYPES,LENGTH_DATASET,SAMPLES_PER_TYPE
+from constants import COLUMNS_TYPES, SUBJECT_MAPPING, VALID_TYPES, LENGTH_DATASET, SAMPLES_PER_TYPE
 
 pd.set_option('display.max_colwidth', None)
 
@@ -29,7 +29,7 @@ def transform_subject(subject):
         return None
     try:
         key = safe_split(safe_split(subject, "||"), "::")
-        return FORD_SEDICI_MATERIAS.get(key, None)
+        return SUBJECT_MAPPING.get(key, None)
     except Exception as e:
         print(f"subject mal formateado: {subject} - {e}")
         return None

@@ -132,3 +132,16 @@ def normalice_keys(json):
         if elem in json:
             json[keys[elem]] = json.pop(elem)
     return json
+
+
+from constants import TXT_FOLDER
+
+if __name__ == "__main__":
+    filename= "10915-94779"
+    file = TXT_FOLDER / f"{filename}.txt"
+    with open(file, "r") as f:
+        text = f.read()
+    
+    print(text[:1000])
+    print("-------------------------------------------------------")
+    print(normalice_text(text[:1000]))

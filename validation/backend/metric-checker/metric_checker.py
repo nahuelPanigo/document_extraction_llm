@@ -15,11 +15,11 @@ import re
 
 class MetricChecker:
     """Class for comparing JSON files with different metric strategies."""
-    
+
     def __init__(self, predict_data: Dict[str, Any], real_data: Dict[str, Any]):
         """
         Initialize the MetricChecker with predicted and real JSON data.
-        
+
         Args:
             predict_data: Predicted output JSON data
             real_data: Real/ground truth JSON data
@@ -124,11 +124,11 @@ class MetricChecker:
         """
         Compare two names by matching individual words regardless of order.
         Handles cases like "Andrea Soledad Orsatti" vs "Orsatti, Andrea Soledad".
-        
+
         Args:
             name1: First name to compare
             name2: Second name to compare
-            
+
         Returns:
             True if names contain the same words, False otherwise
         """
@@ -138,11 +138,11 @@ class MetricChecker:
             return True
         if name1 is None or name2 is None:
             return False
-            
+
         # Normalize both names into sets of words
         words1 = self._normalize_name_parts(name1)
         words2 = self._normalize_name_parts(name2)
-        
+
         # Names match if they contain the same words (regardless of order)
         return words1 == words2
     
@@ -303,27 +303,43 @@ class MetricChecker:
             "total_items": 0,
             "exact_matches": 0,
             "accuracy": 0.0,
+            "null_count": 0,
+            "null_both": 0,
+            "null_false": 0,
             "mismatches": []
         }
-        
+
         # Get common IDs between both datasets
         common_ids = set(self.predict_data.keys()) & set(self.real_data.keys())
         results["total_items"] = len(common_ids)
-        
+
         if results["total_items"] == 0:
             return results
-        
+
         exact_matches = 0
-        
+        null_count = 0
+        null_both = 0
+        null_false = 0
+
         for item_id in common_ids:
             predict_item = self.predict_data[item_id]
             real_item = self.real_data[item_id]
-            
+
             if field_name:
                 # Compare specific field
                 predict_value = predict_item.get(field_name)
                 real_value = real_item.get(field_name)
-                
+
+                pred_null = not self._is_value_present(predict_value)
+                real_null = not self._is_value_present(real_value)
+
+                if pred_null or real_null:
+                    null_count += 1
+                    if pred_null and real_null:
+                        null_both += 1
+                    else:
+                        null_false += 1
+
                 if self._compare_values_with_normalization(predict_value, real_value, field_name):
                     exact_matches += 1
                 else:
@@ -362,9 +378,122 @@ class MetricChecker:
         
         results["exact_matches"] = exact_matches
         results["accuracy"] = exact_matches / results["total_items"]
-        
+        results["null_count"] = null_count
+        results["null_both"] = null_both
+        results["null_false"] = null_false
+
         return results
     
+    def _is_value_present(self, value: Any) -> bool:
+        """Check if a value is considered present (not null/empty)."""
+        if value is None:
+            return False
+        if value == "null":
+            return False
+        if isinstance(value, str) and value.strip() == "":
+            return False
+        if isinstance(value, list) and len(value) == 0:
+            return False
+        return True
+
+    def f1_score_metric(self, field_name: str = None) -> Dict[str, Any]:
+        """
+        Calculate F1 Score for metadata comparison.
+
+        For a specific field:
+          - TP: Model extracted a value AND it matches the real value
+          - FN: Real has a value BUT model extracted nothing (null/empty)
+          - FP: Model extracted something incorrect (wrong value OR hallucination when real is null)
+
+        For all fields (field_name=None):
+          - Aggregates TP/FP/FN across all fields for each document
+
+        Args:
+            field_name: Specific field to compare. If None, compares all fields.
+
+        Returns:
+            Dictionary with F1 score results
+        """
+        results = {
+            "metric_type": "f1_score",
+            "field_name": field_name,
+            "total_items": 0,
+            "true_positives": 0,
+            "false_positives": 0,
+            "false_negatives": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0,
+        }
+
+        common_ids = set(self.predict_data.keys()) & set(self.real_data.keys())
+        results["total_items"] = len(common_ids)
+
+        if results["total_items"] == 0:
+            return results
+
+        tp = 0
+        fp = 0
+        fn = 0
+
+        for item_id in common_ids:
+            predict_item = self.predict_data[item_id]
+            real_item = self.real_data[item_id]
+
+            if field_name:
+                predict_value = predict_item.get(field_name)
+                real_value = real_item.get(field_name)
+                real_present = self._is_value_present(real_value)
+                pred_present = self._is_value_present(predict_value)
+                match = self._compare_values_with_normalization(predict_value, real_value, field_name)
+
+                if real_present and pred_present and match:
+                    # TP: Both have values and they match
+                    tp += 1
+                elif real_present and not pred_present:
+                    # FN: Real has value but model extracted nothing
+                    fn += 1
+                elif pred_present and not match:
+                    # FP: Model extracted something incorrect (wrong value or hallucination)
+                    fp += 1
+                # If both are null/empty, it's a True Negative (not counted in F1)
+            else:
+                all_fields = set(predict_item.keys()) | set(real_item.keys())
+                all_fields.discard('id')
+                for field in all_fields:
+                    pred_val = predict_item.get(field)
+                    real_val = real_item.get(field)
+                    real_present = self._is_value_present(real_val)
+                    pred_present = self._is_value_present(pred_val)
+                    match = self._compare_values_with_normalization(pred_val, real_val, field)
+
+                    if real_present and pred_present and match:
+                        tp += 1
+                    elif real_present and not pred_present:
+                        fn += 1
+                    elif pred_present and not match:
+                        fp += 1
+
+        results["true_positives"] = tp
+        results["false_positives"] = fp
+        results["false_negatives"] = fn
+
+        # When TP+FP+FN=0, all cases are True Negatives (both null) - that's 100% correct
+        if tp == 0 and fp == 0 and fn == 0:
+            precision = 1.0
+            recall = 1.0
+            f1 = 1.0
+        else:
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+            f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+
+        results["precision"] = precision
+        results["recall"] = recall
+        results["f1_score"] = f1
+
+        return results
+
     def list_percentage_match_metric(self, field_name: str) -> Dict[str, Any]:
         """
         Compare list-type metadata using percentage of matching elements.
@@ -403,20 +532,20 @@ class MetricChecker:
             real_list = self._safe_parse_list(real_item.get(field_name))
             
             # Calculate percentage match
-            percentage = self._calculate_list_match_percentage(predict_list, real_list)
+            percentage = self._calculate_list_match_percentage(predict_list, real_list, field_name)
             total_percentage += percentage
-            
+
             if percentage == 1.0:
                 perfect_matches += 1
-            
+
             results["details"].append({
                 "id": item_id,
                 "predicted_list": predict_list,
                 "real_list": real_list,
                 "match_percentage": percentage,
-                "matching_elements": self._get_matching_elements(predict_list, real_list),
-                "missing_elements": self._get_missing_elements(predict_list, real_list),
-                "extra_elements": self._get_extra_elements(predict_list, real_list)
+                "matching_elements": self._get_matching_elements(predict_list, real_list, field_name),
+                "missing_elements": self._get_missing_elements(predict_list, real_list, field_name),
+                "extra_elements": self._get_extra_elements(predict_list, real_list, field_name)
             })
         
         results["perfect_matches"] = perfect_matches
@@ -424,64 +553,110 @@ class MetricChecker:
         
         return results
     
-    def _calculate_list_match_percentage(self, predict_list: List[str], real_list: List[str]) -> float:
+    def _calculate_list_match_percentage(self, predict_list: List[str], real_list: List[str], field_name: str = None) -> float:
         """Calculate the percentage of matching elements between two lists with normalization."""
         if not real_list and not predict_list:
             return 1.0  # Both empty lists are considered a perfect match
         if not real_list or not predict_list:
             return 0.0  # One empty, one not empty
-        
-        # Normalize all elements before comparison
-        normalized_predict = set()
-        for item in predict_list:
-            normalized_predict.add(self._normalize_text(str(item)))
-        
-        normalized_real = set()
-        for item in real_list:
-            normalized_real.add(self._normalize_text(str(item)))
-        
-        # Calculate intersection
-        intersection = normalized_predict & normalized_real
-        union = normalized_predict | normalized_real
-        
-        # Return Jaccard similarity (intersection over union)
-        return len(intersection) / len(union) if union else 1.0
+
+        # For name fields, use name-aware comparison
+        is_name_field = field_name and field_name.lower() in ['creator', 'director', 'codirector', 'author', 'contributors', 'editors']
+
+        if is_name_field:
+            # Use name-aware matching (order-independent)
+            matched_real = set()
+            matched_predict = set()
+            for i, pred_item in enumerate(predict_list):
+                for j, real_item in enumerate(real_list):
+                    if j not in matched_real and self._compare_names(pred_item, real_item):
+                        matched_predict.add(i)
+                        matched_real.add(j)
+                        break
+            # Jaccard: intersection / union
+            intersection_count = len(matched_real)
+            union_count = len(predict_list) + len(real_list) - intersection_count
+            return intersection_count / union_count if union_count > 0 else 1.0
+        else:
+            # Standard text normalization for non-name fields
+            normalized_predict = set()
+            for item in predict_list:
+                normalized_predict.add(self._normalize_text(str(item)))
+
+            normalized_real = set()
+            for item in real_list:
+                normalized_real.add(self._normalize_text(str(item)))
+
+            intersection = normalized_predict & normalized_real
+            union = normalized_predict | normalized_real
+            return len(intersection) / len(union) if union else 1.0
     
-    def _get_matching_elements(self, predict_list: List[str], real_list: List[str]) -> List[str]:
+    def _get_matching_elements(self, predict_list: List[str], real_list: List[str], field_name: str = None) -> List[str]:
         """Get elements that are present in both lists (normalized comparison)."""
-        # Create mapping from normalized to original values
-        pred_norm_to_orig = {}
-        for item in predict_list:
-            norm = self._normalize_text(str(item))
-            pred_norm_to_orig[norm] = item
-        
-        real_norm_to_orig = {}
-        for item in real_list:
-            norm = self._normalize_text(str(item))
-            real_norm_to_orig[norm] = item
-        
-        # Find intersection and return original values
-        matching_normalized = set(pred_norm_to_orig.keys()) & set(real_norm_to_orig.keys())
-        return [real_norm_to_orig[norm] for norm in matching_normalized]
-    
-    def _get_missing_elements(self, predict_list: List[str], real_list: List[str]) -> List[str]:
+        is_name_field = field_name and field_name.lower() in ['creator', 'director', 'codirector', 'author', 'contributors', 'editors']
+
+        if is_name_field:
+            matching = []
+            matched_real_indices = set()
+            for pred_item in predict_list:
+                for j, real_item in enumerate(real_list):
+                    if j not in matched_real_indices and self._compare_names(pred_item, real_item):
+                        matching.append(real_item)
+                        matched_real_indices.add(j)
+                        break
+            return matching
+        else:
+            pred_norm_to_orig = {}
+            for item in predict_list:
+                norm = self._normalize_text(str(item))
+                pred_norm_to_orig[norm] = item
+
+            real_norm_to_orig = {}
+            for item in real_list:
+                norm = self._normalize_text(str(item))
+                real_norm_to_orig[norm] = item
+
+            matching_normalized = set(pred_norm_to_orig.keys()) & set(real_norm_to_orig.keys())
+            return [real_norm_to_orig[norm] for norm in matching_normalized]
+
+    def _get_missing_elements(self, predict_list: List[str], real_list: List[str], field_name: str = None) -> List[str]:
         """Get elements that are in real_list but missing from predict_list (normalized comparison)."""
-        pred_normalized = set(self._normalize_text(str(item)) for item in predict_list)
-        
+        is_name_field = field_name and field_name.lower() in ['creator', 'director', 'codirector', 'author', 'contributors', 'editors']
+
         missing = []
-        for item in real_list:
-            if self._normalize_text(str(item)) not in pred_normalized:
-                missing.append(item)
+        for real_item in real_list:
+            found = False
+            for pred_item in predict_list:
+                if is_name_field:
+                    if self._compare_names(pred_item, real_item):
+                        found = True
+                        break
+                else:
+                    if self._normalize_text(str(pred_item)) == self._normalize_text(str(real_item)):
+                        found = True
+                        break
+            if not found:
+                missing.append(real_item)
         return missing
-    
-    def _get_extra_elements(self, predict_list: List[str], real_list: List[str]) -> List[str]:
+
+    def _get_extra_elements(self, predict_list: List[str], real_list: List[str], field_name: str = None) -> List[str]:
         """Get elements that are in predict_list but not in real_list (normalized comparison)."""
-        real_normalized = set(self._normalize_text(str(item)) for item in real_list)
-        
+        is_name_field = field_name and field_name.lower() in ['creator', 'director', 'codirector', 'author', 'contributors', 'editors']
+
         extra = []
-        for item in predict_list:
-            if self._normalize_text(str(item)) not in real_normalized:
-                extra.append(item)
+        for pred_item in predict_list:
+            found = False
+            for real_item in real_list:
+                if is_name_field:
+                    if self._compare_names(pred_item, real_item):
+                        found = True
+                        break
+                else:
+                    if self._normalize_text(str(pred_item)) == self._normalize_text(str(real_item)):
+                        found = True
+                        break
+            if not found:
+                extra.append(pred_item)
         return extra
     
     def generate_report(self, results: List[Dict[str, Any]], output_path: str = None) -> str:

@@ -230,6 +230,51 @@ class PdfReader:
             }
 
 
+    def extract_text(self, pdf_path: str, ocr: bool = False) -> str:
+        """
+        Extract plain text from PDF and optionally OCR from images
+
+        Args:
+            pdf_path: Path to PDF file
+            ocr: Boolean flag to enable/disable OCR processing
+        """
+        print("Extracting text from PDF...")
+
+        # Initialize OCR if enabled
+        ocr_reader = None
+        processed_image_sizes = set()
+
+        if ocr:
+            try:
+                import easyocr
+                print("🔧 Initializing EasyOCR for image text extraction...")
+                ocr_reader = easyocr.Reader(['en', 'es'])
+            except ImportError:
+                print("❌ EasyOCR not available. Install with: pip install easyocr")
+                ocr = False
+
+        with pdfplumber.open(pdf_path) as pdf:
+            lines = []
+            for page_idx, page in enumerate(pdf.pages):
+                # Try column detection first, fall back to normal extraction
+                text = self._detect_column_layout(page)
+                if text is None:
+                    text = page.extract_text()
+                if text:
+                    lines.append(text.strip())
+
+                # Extract OCR text from images if enabled
+                if ocr and ocr_reader:
+                    ocr_text = self._extract_ocr_from_page(
+                        pdf_path, page_idx + 1, page, processed_image_sizes, ocr_reader
+                    )
+                    if ocr_text:
+                        # Remove tags for plain text output
+                        ocr_plain = ocr_text.replace('<img>', '').replace('</img>', '')
+                        lines.append(ocr_plain.strip())
+
+            return "\n\n".join(lines) 
+
 
 if __name__ == '__main__':
     pdf_reader = PdfReader()

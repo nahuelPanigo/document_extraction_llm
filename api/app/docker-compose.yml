@@ -11,6 +11,10 @@ services:
       - SERVICE_TOKEN=${ORCHESTRATOR_TOKEN}
       - EXTRACTOR_TOKEN=${EXTRACTOR_TOKEN}
       - LLM_LED_TOKEN=${LLM_LED_TOKEN}
+      - LLM_DEEPANALYZE_TOKEN=${LLM_DEEPANALYZE_TOKEN}
+      - EXTRACTOR_URL=http://extractor_service:8001
+      - LLM_LED_URL=http://llm_service_led:8002
+      - LLM_DEEPANALYZE_URL=http://llm_service_qwen:8003
       - IDENTIFIER_PATH_MODEL=${IDENTIFIER_PATH_MODEL}
       - IDENTIFIER_PATH_VECTORIZER=${IDENTIFIER_PATH_VECTORIZER}
     depends_on:
@@ -34,7 +38,8 @@ services:
       - "8002:8002"
     environment:
       - SERVICE_TOKEN=${LLM_LED_TOKEN}
-      - IS_LOCAL_MODEL=${IS_LOCAL_MODEL}
+      - IS_LOCAL_MODEL=${IS_LOCAL_MODEL1}
+      - IS_OLLAMA_MODEL=${IS_OLLAMA_MODEL1}
       - MODEL_SELECTED=${MODEL_SELECTED_SERVICE1}
       - MODEL_PATH=${MODEL_PATH_SERVICE1}
       - MAX_TOKENS_INPUT=${MAX_TOKENS_INPUT_SERVICE1}
@@ -45,3 +50,19 @@ services:
       - QUANTIZATION=${QUANTIZATION_SERVICE1}
     volumes:
       - ./models:/models
+
+  llm_service_qwen:
+    build:
+      context: ./llm_service
+    container_name: llm_service_qwen
+    ports:
+      - "8003:8003"
+    environment:
+      - SERVICE_PORT=8003
+      - SERVICE_TOKEN=${LLM_DEEPANALYZE_TOKEN}
+      - IS_LOCAL_MODEL=${IS_LOCAL_MODEL2}
+      - IS_OLLAMA_MODEL=${IS_OLLAMA_MODEL2}
+      - MODEL_SELECTED=${MODEL_SELECTED_SERVICE2}
+      - OLLAMA_HOST_URL=${OLLAMA_HOST_URL}
+    profiles:
+      - qwen

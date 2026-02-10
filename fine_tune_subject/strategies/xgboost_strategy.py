@@ -120,6 +120,20 @@ class XGBoostTrainingStrategy(TrainingStrategy):
         
         return accuracy
 
+    def load_model(self):
+        try:
+            self.clf = joblib.load(self.model_dir / 'xgboost_classifier.pkl')
+            self.vectorizer = joblib.load(self.model_dir / 'xgboost_vectorizer.pkl')
+            self.label_encoder = joblib.load(self.model_dir / 'xgboost_label_encoder.pkl')
+            return True
+        except FileNotFoundError:
+            return False
+
+    def predict(self, X_test):
+        X_features = self.vectorizer.transform(X_test)
+        y_pred_encoded = self.clf.predict(X_features)
+        return self.label_encoder.inverse_transform(y_pred_encoded)
+
 
 def train_xgboost_model(documents, labels):
     """Convenience function for backward compatibility"""

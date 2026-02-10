@@ -186,6 +186,29 @@ class NeuralTorchTrainingStrategy(TrainingStrategy):
         
         return accuracy
 
+    def load_model(self):
+        try:
+            checkpoint = torch.load(self.model_dir / "neural_torch_classifier.pth", map_location=self.device)
+            self.nn_model = SubjectClassifier(
+                checkpoint['input_dim'], checkpoint['hidden_dim'],
+                checkpoint['num_classes'], checkpoint['dropout_rate']
+            ).to(self.device)
+            self.nn_model.load_state_dict(checkpoint['model_state_dict'])
+            self.nn_model.eval()
+            self.label_encoder = joblib.load(self.model_dir / "neural_torch_label_encoder.pkl")
+            self.transformer_model = SentenceTransformer(checkpoint['embedding_model_name'])
+            return True
+        except (FileNotFoundError, ImportError):
+            return False
+
+    def predict(self, X_test):
+        test_embeddings = self.transformer_model.encode(X_test, batch_size=32, normalize_embeddings=True)
+        X_tensor = torch.FloatTensor(test_embeddings).to(self.device)
+        with torch.no_grad():
+            outputs = self.nn_model(X_tensor)
+            y_pred_encoded = torch.argmax(outputs, dim=1).cpu().numpy()
+        return self.label_encoder.inverse_transform(y_pred_encoded)
+
 
 def train_neural_torch_model(documents, labels):
     """Convenience function for backward compatibility"""

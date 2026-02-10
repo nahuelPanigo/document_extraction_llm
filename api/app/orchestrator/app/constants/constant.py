@@ -12,7 +12,7 @@ MODEL_PARAMETERS = {
 }
 
 
-KEYS_GENERAL = ["creator", "title", "rights", "rightsurl", "date", "originPlaceInfo.", "isRelatedWith"] #,"subtitle","subject"
+KEYS_GENERAL = ["creator", "title", "rights", "rightsurl", "date", "originPlaceInfo", "isRelatedWith"] #,"subtitle","subject"
 KEYS_TESIS = KEYS_GENERAL +["codirector", "director", "degree.grantor", "degree.name"]
 KEYS_LIBRO = KEYS_GENERAL +["publisher", "isbn", "compiler"]
 KEYS_ARTICULO = KEYS_GENERAL + ["journalTitle", "journalVolumeAndIssue", "issn", "event"]
@@ -58,7 +58,7 @@ SCHEMA_GENERAL = """ {
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": ""
 }"""
 
@@ -93,7 +93,7 @@ SCHEMA_TESIS = """ {
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": "",
         "codirector": "",
         "director": "",
@@ -138,7 +138,7 @@ SCHEMA_ARTICULO = """ {
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": "",
         "journalTitle": "",
         "journalVolumeAndIssue": "",
@@ -163,7 +163,7 @@ JSON_ARTICULO = {
   #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
  #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2022-01-01",
-        "originPlaceInfo.": "Asociación Argentina de Astronomía",
+        "originPlaceInfo": "Asociación Argentina de Astronomía",
         "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
         "journalTitle": "Boletín de la Asociación Argentina de Astronomía",
         "journalVolumeAndIssue": "Vol. 63",
@@ -185,7 +185,7 @@ SCHEMA_LIBRO =  """
         "rights": "",
         "rightsurl" : "",
         "date": "",
-        "originPlaceInfo.": "",
+        "originPlaceInfo": "",
         "isRelatedWith": "",
         "publisher": "",
         "isbn": "",
@@ -232,7 +232,7 @@ JSON_OBJECTO_CONFERENCIA = {
   #      "dc.uri": "http://sedici.unlp.edu.ar/handle/10915/168246",
  #       "sedici.uri": "http://portalderevistas.unsa.edu.ar/index.php/averma/article/view/1213",
         "date": "2022-01-01",
-        "originPlaceInfo.": "Asociación Argentina de Astronomía",
+        "originPlaceInfo": "Asociación Argentina de Astronomía",
         "isRelatedWith": "http://sedici.unlp.edu.ar/handle/10915/118464",
         "issn": "1669-9521",
         "event": "LXIII Reunión Anual de la Asociación Argentina de Astronomía (Córdoba, 25 al 29 de octubre de 2021)",

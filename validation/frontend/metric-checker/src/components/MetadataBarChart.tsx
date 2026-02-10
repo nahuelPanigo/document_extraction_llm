@@ -25,6 +25,7 @@ interface MetricResult {
   metric_type: string;
   field_name: string | null;
   accuracy?: number;
+  f1_score?: number;
   average_percentage?: number;
 }
 
@@ -44,10 +45,13 @@ const MetadataBarChart: React.FC<MetadataBarChartProps> = ({
   // Process data for chart
   const chartData = React.useMemo(() => {
     const processedData = results.map(result => {
-      const percentage = (result.accuracy || result.average_percentage || 0) * 100;
+      const percentage = (result.accuracy || result.f1_score || result.average_percentage || 0) * 100;
       const fieldName = result.field_name || 'All Fields';
+      const metricLabel = result.metric_type === 'exact_equality' ? 'Exact'
+        : result.metric_type === 'f1_score' ? 'F1'
+        : 'List Match';
       return {
-        label: `${fieldName} (${result.metric_type})`,
+        label: `${fieldName} (${metricLabel})`,
         value: percentage,
         color: getBarColor(percentage / 100)
       };

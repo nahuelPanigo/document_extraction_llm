@@ -225,15 +225,26 @@ def clean_metadata_nulls(metadata):
     return metadata, total_fields_removed
 
 
+def normalize_dataset_pre_llm(json_filename, original_json_filename):
+    data = read_data_json(json_filename, "utf-8")
+    original_metadata = read_data_json(original_json_filename, "utf-8")
+
+    # Filter heavily corrupted documents (>70% CID) and clean lightly corrupted ones
+    data, corruption_stats = filter_heavily_corrupted_documents(data, corruption_threshold=70.0)
+
+    data = final_normalization_post_llm(data, original_metadata)
+    write_to_json(json_filename, data, "utf-8")
+
+
 def normalize_and_split_dataset(json_filename,original_json_filename,split_filename):
     data = read_data_json(json_filename,"utf-8")
     original_metadata = read_data_json(original_json_filename,"utf-8")
-    
+
     # Clean null/empty values before normalization
     data, removed_fields = clean_metadata_nulls(data)
-    
+
     # Filter heavily corrupted documents (>70% CID) and clean lightly corrupted ones
     data, corruption_stats = filter_heavily_corrupted_documents(data, corruption_threshold=70.0)
-    
+
     data = final_normalization_post_llm(data,original_metadata)
     write_to_json(split_filename,split_dataset(data),"utf-8")

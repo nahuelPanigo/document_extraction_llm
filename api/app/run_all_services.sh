@@ -31,10 +31,11 @@ echo "DEBUG: Valor de MODEL_SELECTED_SERVICE1: '$MODEL_SELECTED_SERVICE1'"
 start_uvicorn_service() {
     SERVICE_DIR=$1
     PORT=$2
-    shift 2 # Elimina SERVICE_DIR y PORT de los argumentos, el resto son VAR=VAL
+    LOG_NAME=$3
+    shift 3 # Elimina SERVICE_DIR, PORT y LOG_NAME de los argumentos, el resto son VAR=VAL
 
     echo ""
-    echo "Iniciando ${SERVICE_DIR}..."
+    echo "Iniciando ${LOG_NAME}..."
     if [ ! -d "$SERVICE_DIR" ]; then
         echo "[ERROR] Directorio '$SERVICE_DIR' no encontrado."
         exit 1
@@ -50,21 +51,20 @@ start_uvicorn_service() {
         echo "[ADVERTENCIA] requirements.txt no encontrado en $SERVICE_DIR. Continuando..."
     fi
 
-    echo "Lanzando ${SERVICE_DIR} en segundo plano. Logs en ${SERVICE_DIR}.log..."
-    # ¡LA SOLUCIÓN! Usar 'env' para pasar las variables a uvicorn
-    nohup env "$@" uvicorn app.main:app --port "$PORT" --reload > "../${SERVICE_DIR}.log" 2>&1 &
-    
+    echo "Lanzando ${LOG_NAME} en segundo plano. Logs en ${LOG_NAME}.log..."
+    nohup env "$@" uvicorn app.main:app --port "$PORT" --reload > "../${LOG_NAME}.log" 2>&1 &
+
     cd ..
 }
 
 # --- Iniciar Extractor Service ---
 # Pasar EXTRACTOR_TOKEN como SERVICE_TOKEN para este proceso de uvicorn
-start_uvicorn_service extractor_service 8001 \
+start_uvicorn_service extractor_service 8001 extractor_service \
     SERVICE_TOKEN="$EXTRACTOR_TOKEN"
 
 # --- Iniciar LLM Service LED ---
 # Pasar las variables específicas del LLM Service, incluyendo LLM_LED_TOKEN como SERVICE_TOKEN
-start_uvicorn_service llm_service 8002 \
+start_uvicorn_service llm_service 8002 llm_service_led \
     IS_LOCAL_MODEL="$IS_LOCAL_MODEL1" \
     IS_OLLAMA_MODEL="$IS_OLLAMA_MODEL1" \
     SERVICE_TOKEN="$LLM_LED_TOKEN" \
@@ -77,19 +77,22 @@ start_uvicorn_service llm_service 8002 \
     ERRORS_TREATMENT="$ERRORS_TREATMENT_SERVICE1" \
     QUANTIZATION="$QUANTIZATION_SERVICE1"
 
-# --- Iniciar LLM Service QWEN ---
-# Pasar las variables específicas del LLM Service, incluyendo LLM_LED_TOKEN como SERVICE_TOKEN
-start_uvicorn_service llm_service 8003 \
-    IS_OLLAMA_MODEL="$IS_OLLAMA_MODEL2" \
-    IS_LOCAL_MODEL="$IS_LOCAL_MODEL2" \
-    SERVICE_TOKEN="$LLM_DEEPANALYZE_TOKEN" \
-    MODEL_SELECTED="$MODEL_SELECTED_SERVICE2" \
-    OLLAMA_HOST_URl="$OLLAMA_HOST_URL"\
-
+# --- Iniciar LLM Service QWEN (opcional) ---
+if [ "$ENABLE_QWEN_SERVICE" = "true" ]; then
+    start_uvicorn_service llm_service 8003 llm_service_qwen \
+        IS_OLLAMA_MODEL="$IS_OLLAMA_MODEL2" \
+        IS_LOCAL_MODEL="$IS_LOCAL_MODEL2" \
+        SERVICE_TOKEN="$LLM_DEEPANALYZE_TOKEN" \
+        MODEL_SELECTED="$MODEL_SELECTED_SERVICE2" \
+        OLLAMA_HOST_URl="$OLLAMA_HOST_URL"
+else
+    echo ""
+    echo "[INFO] LLM Service QWEN deshabilitado (ENABLE_QWEN_SERVICE=$ENABLE_QWEN_SERVICE)"
+fi
 
 # --- Iniciar Orchestrator ---
 # Pasar todas las variables que el Orchestrator necesita, incluyendo su propio SERVICE_TOKEN
-start_uvicorn_service orchestrator 8000 \
+start_uvicorn_service orchestrator 8000 orchestrator \
     SERVICE_TOKEN="$ORCHESTRATOR_TOKEN" \
     EXTRACTOR_TOKEN="$EXTRACTOR_TOKEN" \
     LLM_LED_TOKEN="$LLM_LED_TOKEN" \
@@ -113,9 +116,11 @@ curl -s http://127.0.0.1:8000/health || echo "[ERROR] Orchestrator no responde"
 sleep 1
 curl -s http://127.0.0.1:8001/health || echo "[ERROR] Extractor no responde"
 sleep 1
-curl -s http://127.0.0.1:8002/health || echo "[ERROR] LLM Service no responde"
-sleep 1
-curl -s http://127.0.0.1:8003/health || echo "[ERROR] LLM Service qwen no responde"
+curl -s http://127.0.0.1:8002/health || echo "[ERROR] LLM Service LED no responde"
+if [ "$ENABLE_QWEN_SERVICE" = "true" ]; then
+    sleep 1
+    curl -s http://127.0.0.1:8003/health || echo "[ERROR] LLM Service QWEN no responde"
+fi
 
 echo "DEBUG (Bash - curl): Sending Authorization: Bearer '$ORCHESTRATOR_TOKEN'"
 echo ""

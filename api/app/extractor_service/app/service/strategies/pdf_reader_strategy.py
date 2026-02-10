@@ -16,6 +16,69 @@ class PdfReader(ReaderStrategy):
             cls.instance = super(PdfReader, cls).__new__(cls)
         return cls.instance
 
+    def _detect_column_layout(self, page):
+        """
+        Detect if a page has a 2-column layout and extract accordingly.
+        Returns column-extracted text if columns detected, None otherwise.
+        """
+        words = page.extract_words()
+        if not words:
+            return None
+
+        page_width = page.width
+        gap_threshold = page_width * 0.15
+
+        # Group words by row
+        rows = {}
+        for word in words:
+            row_key = round(word['top'] / 5) * 5
+            if row_key not in rows:
+                rows[row_key] = []
+            rows[row_key].append(word)
+
+        total_rows = len(rows)
+        if total_rows < 4:
+            return None
+
+        # Count how many rows have a large horizontal gap (column separator)
+        rows_with_gap = 0
+        for row_key in rows:
+            row_words = sorted(rows[row_key], key=lambda w: w['x0'])
+            for i in range(1, len(row_words)):
+                gap = row_words[i]['x0'] - row_words[i - 1]['x1']
+                if gap > gap_threshold:
+                    rows_with_gap += 1
+                    break
+
+        # Need >50% of rows with gaps to consider it a column layout
+        if rows_with_gap <= total_rows * 0.5:
+            return None
+
+        # It's a 2-column layout - split words by midpoint
+        mid_point = page_width / 2
+        left_words = [w for w in words if (w['x0'] + w['x1']) / 2 < mid_point]
+        right_words = [w for w in words if (w['x0'] + w['x1']) / 2 >= mid_point]
+
+        def words_to_text(col_words):
+            col_rows = {}
+            for word in col_words:
+                row_key = round(word['top'] / 5) * 5
+                if row_key not in col_rows:
+                    col_rows[row_key] = []
+                col_rows[row_key].append(word)
+            lines = []
+            for rk in sorted(col_rows.keys()):
+                rw = sorted(col_rows[rk], key=lambda w: w['x0'])
+                line = ' '.join(w['text'] for w in rw)
+                if line.strip():
+                    lines.append(line)
+            return '\n'.join(lines)
+
+        left_text = words_to_text(left_words)
+        right_text = words_to_text(right_words)
+
+        return f"{left_text}\n\n{right_text}"
+
     def get_correct_tag(self,font_size,sizes):
         """this function returns the correct tag based on the font size"""
         if font_size >= sizes['h1']:
@@ -247,8 +310,10 @@ class PdfReader(ReaderStrategy):
         with pdfplumber.open(pdf_path) as pdf:
             lines = []
             for page_idx, page in enumerate(pdf.pages):
-                # Extract regular text
-                text = page.extract_text()
+                # Try column detection first, fall back to normal extraction
+                text = self._detect_column_layout(page)
+                if text is None:
+                    text = page.extract_text()
                 if text:
                     lines.append(text.strip())
 
