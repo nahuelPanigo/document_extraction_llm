@@ -30,6 +30,11 @@ class OpenaiConsumer(BaseCloudLLMConsumer):
                         {"role": "user", "content": input},
                     ],
                 )
+                usage = response.usage
+                print(
+                    f"{Bcolors.OKBLUE}Tokens usados: prompt={usage.prompt_tokens}, "
+                    f"completion={usage.completion_tokens}, total={usage.total_tokens}{Bcolors.ENDC}"
+                )
                 return response.choices[0].message.content
 
             except Exception as e:

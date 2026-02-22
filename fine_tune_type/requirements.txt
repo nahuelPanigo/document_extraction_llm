@@ -1,6 +1,11 @@
 pandas
+numpy
 python-dotenv
 requests
 scikit-learn
 beautifulsoup4
 joblib
+xgboost
+sentence-transformers
+torch
+pdfplumber

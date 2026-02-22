@@ -25,6 +25,23 @@ SUBJECT_MODEL_FOLDERS = {
     "minilm": SUBJECT_MODEL_FOLDER / "minilm"
 }
 SUBJECT_MODEL_RESULTS_FOLDER = ROOT_DIR / "fine_tune_subject/model_results"
+
+# Type classification
+TXT_NO_TAGS_FOLDER = DATA_FOLDER / "texts_no_tags/"
+CSV_TYPES = "types.csv"
+TYPE_MODEL_FOLDER = ROOT_DIR / "fine_tune_type/models"
+TYPE_MODEL_FOLDERS = {
+    "svm_linear": TYPE_MODEL_FOLDER / "svm_linear",
+    "svm_rbf": TYPE_MODEL_FOLDER / "svm_rbf",
+    "xgboost": TYPE_MODEL_FOLDER / "xgboost",
+    "random_forest": TYPE_MODEL_FOLDER / "random_forest",
+    "embeddings": TYPE_MODEL_FOLDER / "embeddings",
+    "embeddings_knn": TYPE_MODEL_FOLDER / "embeddings_knn",
+    "neural": TYPE_MODEL_FOLDER / "neural",
+    "minilm": TYPE_MODEL_FOLDER / "minilm",
+}
+TYPE_MODEL_RESULTS_FOLDER = ROOT_DIR / "fine_tune_type/model_results"
+
 RESULT_FOLDER_VALIDATION = ROOT_DIR / "validation/result/"
 
 

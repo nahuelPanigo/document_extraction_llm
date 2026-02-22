@@ -209,6 +209,69 @@ class PdfReader:
         
         return width_ratio >= tolerance and height_ratio >= tolerance
             
+    def _detect_column_layout(self, page):
+        """
+        Detect if a page has a 2-column layout and extract accordingly.
+        Returns column-extracted text if columns detected, None otherwise.
+        """
+        words = page.extract_words()
+        if not words:
+            return None
+
+        page_width = page.width
+        gap_threshold = page_width * 0.15
+
+        # Group words by row
+        rows = {}
+        for word in words:
+            row_key = round(word['top'] / 5) * 5
+            if row_key not in rows:
+                rows[row_key] = []
+            rows[row_key].append(word)
+
+        total_rows = len(rows)
+        if total_rows < 4:
+            return None
+
+        # Count how many rows have a large horizontal gap (column separator)
+        rows_with_gap = 0
+        for row_key in rows:
+            row_words = sorted(rows[row_key], key=lambda w: w['x0'])
+            for i in range(1, len(row_words)):
+                gap = row_words[i]['x0'] - row_words[i - 1]['x1']
+                if gap > gap_threshold:
+                    rows_with_gap += 1
+                    break
+
+        # Need >50% of rows with gaps to consider it a column layout
+        if rows_with_gap <= total_rows * 0.5:
+            return None
+
+        # It's a 2-column layout - split words by midpoint
+        mid_point = page_width / 2
+        left_words = [w for w in words if (w['x0'] + w['x1']) / 2 < mid_point]
+        right_words = [w for w in words if (w['x0'] + w['x1']) / 2 >= mid_point]
+
+        def words_to_text(col_words):
+            col_rows = {}
+            for word in col_words:
+                row_key = round(word['top'] / 5) * 5
+                if row_key not in col_rows:
+                    col_rows[row_key] = []
+                col_rows[row_key].append(word)
+            lines = []
+            for rk in sorted(col_rows.keys()):
+                rw = sorted(col_rows[rk], key=lambda w: w['x0'])
+                line = ' '.join(w['text'] for w in rw)
+                if line.strip():
+                    lines.append(line)
+            return '\n'.join(lines)
+
+        left_text = words_to_text(left_words)
+        right_text = words_to_text(right_words)
+
+        return f"{left_text}\n\n{right_text}"
+
     def get_fontsizes(self,pdf_path):
         fontsizes = []
         count = 0
@@ -230,50 +293,98 @@ class PdfReader:
             }
 
 
+    # def extract_text(self, pdf_path: str, ocr: bool = False) -> str:
+    #     """
+    #     Extract plain text from PDF and optionally OCR from images
+
+    #     Args:
+    #         pdf_path: Path to PDF file
+    #         ocr: Boolean flag to enable/disable OCR processing
+    #     """
+    #     print("Extracting text from PDF...")
+
+    #     # Initialize OCR if enabled
+    #     ocr_reader = None
+    #     processed_image_sizes = set()
+
+    #     if ocr:
+    #         try:
+    #             import easyocr
+    #             print("🔧 Initializing EasyOCR for image text extraction...")
+    #             ocr_reader = easyocr.Reader(['en', 'es'])
+    #         except ImportError:
+    #             print("❌ EasyOCR not available. Install with: pip install easyocr")
+    #             ocr = False
+
+    #     with pdfplumber.open(pdf_path) as pdf:
+    #         lines = []
+    #         for page_idx, page in enumerate(pdf.pages):
+    #             # Try column detection first, fall back to normal extraction
+    #             text = self._detect_column_layout(page)
+    #             if text is None:
+    #                 text = page.extract_text()
+    #             if text:
+    #                 lines.append(text.strip())
+
+    #             # Extract OCR text from images if enabled
+    #             if ocr and ocr_reader:
+    #                 ocr_text = self._extract_ocr_from_page(
+    #                     pdf_path, page_idx + 1, page, processed_image_sizes, ocr_reader
+    #                 )
+    #                 if ocr_text:
+    #                     # Remove tags for plain text output
+    #                     ocr_plain = ocr_text.replace('<img>', '').replace('</img>', '')
+    #                     lines.append(ocr_plain.strip())
+
+    #         return "\n\n".join(lines) 
+
+
     def extract_text(self, pdf_path: str, ocr: bool = False) -> str:
         """
-        Extract plain text from PDF and optionally OCR from images
+        Extract plain text from PDF.
+        Optionally apply OCR to full pages.
 
         Args:
             pdf_path: Path to PDF file
-            ocr: Boolean flag to enable/disable OCR processing
+            ocr: Enable OCR (default: False)
         """
         print("Extracting text from PDF...")
 
-        # Initialize OCR if enabled
-        ocr_reader = None
-        processed_image_sizes = set()
+        text_chunks = []
 
+        # Optional OCR initialization
+        ocr_reader = None
         if ocr:
             try:
                 import easyocr
-                print("🔧 Initializing EasyOCR for image text extraction...")
+                print("🔧 Initializing EasyOCR...")
                 ocr_reader = easyocr.Reader(['en', 'es'])
             except ImportError:
-                print("❌ EasyOCR not available. Install with: pip install easyocr")
+                print("❌ EasyOCR not installed. Run: pip install easyocr")
                 ocr = False
 
+        import pdfplumber
+
         with pdfplumber.open(pdf_path) as pdf:
-            lines = []
-            for page_idx, page in enumerate(pdf.pages):
-                # Try column detection first, fall back to normal extraction
-                text = self._detect_column_layout(page)
-                if text is None:
-                    text = page.extract_text()
+            for page in pdf.pages:
+
+                # 1️⃣ Extract normal text
+                text = page.extract_text()
                 if text:
-                    lines.append(text.strip())
+                    text_chunks.append(text.strip())
 
-                # Extract OCR text from images if enabled
+                # 2️⃣ Optional OCR on full page image
                 if ocr and ocr_reader:
-                    ocr_text = self._extract_ocr_from_page(
-                        pdf_path, page_idx + 1, page, processed_image_sizes, ocr_reader
-                    )
-                    if ocr_text:
-                        # Remove tags for plain text output
-                        ocr_plain = ocr_text.replace('<img>', '').replace('</img>', '')
-                        lines.append(ocr_plain.strip())
+                    try:
+                        page_image = page.to_image(resolution=300).original
+                        results = ocr_reader.readtext(page_image, detail=0)
+                        ocr_text = "\n".join(results)
+                        if ocr_text.strip():
+                            text_chunks.append(ocr_text.strip())
+                    except Exception as e:
+                        print(f"OCR failed on page: {e}")
 
-            return "\n\n".join(lines) 
+        return "\n\n".join(text_chunks)
 
 
 if __name__ == '__main__':

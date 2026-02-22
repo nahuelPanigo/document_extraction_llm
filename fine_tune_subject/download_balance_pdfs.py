@@ -4,12 +4,9 @@ Analyzes current distribution, identifies what's needed, and downloads in one st
 Target: 200 PDFs per subject, skips subjects with < 5 available docs.
 """
 import pandas as pd
-import requests
-import os
-import time
-from collections import Counter
-from constants import PDF_FOLDER, CSV_FOLDER, CSV_SUBJECTS, PDF_URL
+from constants import PDF_FOLDER, CSV_FOLDER, CSV_SUBJECTS
 from utils.colors.colors_terminal import Bcolors
+from utils.download.pdf_downloader import download_batch
 
 
 TARGET_PER_SUBJECT = 200
@@ -94,89 +91,6 @@ def analyze_and_plan(subject_mapping):
     return ids_to_download
 
 
-def transform_id(doc_id):
-    """Transform ID from handle format (10915-123) to path format (10915/123)"""
-    return doc_id.replace("-", "/")
-
-
-def download_pdf(doc_id):
-    """Download a single PDF. Returns True if done (success or permanent fail), False if should retry."""
-    transformed_id = transform_id(doc_id)
-    url = f"{PDF_URL}{transformed_id}/Documento_completo.pdf?sequence=1&isAllowed=y"
-    file_path = PDF_FOLDER / f"{doc_id}.pdf"
-
-    if file_path.exists():
-        return True
-
-    try:
-        response = requests.get(url, timeout=30)
-
-        if response.status_code == 200:
-            with open(file_path, 'wb') as f:
-                f.write(response.content)
-            return True
-        elif response.status_code == 429:
-            print(f"{Bcolors.WARNING}  Rate limited. Waiting 10s...{Bcolors.ENDC}")
-            time.sleep(10)
-            return False  # Retry
-        else:
-            print(f"{Bcolors.FAIL}  HTTP {response.status_code}{Bcolors.ENDC}")
-            return True  # Don't retry
-
-    except requests.exceptions.RequestException as e:
-        print(f"{Bcolors.FAIL}  Error: {e}{Bcolors.ENDC}")
-        return True  # Don't retry
-
-
-def download_all(ids_to_download):
-    """Download all PDFs with retry logic"""
-    if not ids_to_download:
-        print(f"{Bcolors.OKGREEN}Nothing to download!{Bcolors.ENDC}")
-        return
-
-    PDF_FOLDER.mkdir(parents=True, exist_ok=True)
-
-    downloaded = 0
-    failed = 0
-    skipped = 0
-    total = len(ids_to_download)
-
-    for i, (doc_id, subject) in enumerate(ids_to_download, 1):
-        file_path = PDF_FOLDER / f"{doc_id}.pdf"
-        if file_path.exists():
-            skipped += 1
-            continue
-
-        print(f"[{i}/{total}] {doc_id} ({subject})", end=" ")
-
-        max_retries = 3
-        success = False
-        for attempt in range(max_retries):
-            done = download_pdf(doc_id)
-            if done:
-                if file_path.exists():
-                    print(f"{Bcolors.OKGREEN}OK{Bcolors.ENDC}")
-                    downloaded += 1
-                    success = True
-                else:
-                    failed += 1
-                    success = True
-                break
-
-        if not success:
-            print(f"{Bcolors.FAIL}FAILED (max retries){Bcolors.ENDC}")
-            failed += 1
-
-        time.sleep(1)  # Be respectful to the server
-
-    print(f"\n{Bcolors.HEADER}=== Download Summary ==={Bcolors.ENDC}")
-    print(f"{Bcolors.OKGREEN}Downloaded: {downloaded}{Bcolors.ENDC}")
-    if skipped:
-        print(f"{Bcolors.OKBLUE}Already existed: {skipped}{Bcolors.ENDC}")
-    if failed:
-        print(f"{Bcolors.FAIL}Failed: {failed}{Bcolors.ENDC}")
-
-
 def main():
     """Analyze distribution and download PDFs to balance the dataset"""
     print(f"{Bcolors.HEADER}=== Balanced PDF Download ==={Bcolors.ENDC}")
@@ -200,7 +114,7 @@ def main():
         print(f"{Bcolors.OKBLUE}Cancelled.{Bcolors.ENDC}")
         return
 
-    download_all(ids_to_download)
+    download_batch(ids_to_download, PDF_FOLDER)
 
 
 if __name__ == "__main__":

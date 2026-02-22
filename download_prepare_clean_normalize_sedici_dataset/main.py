@@ -58,6 +58,6 @@ if __name__ == "__main__":
     print(f"{Bcolors.OKGREEN}applying exact match validation{Bcolors.ENDC}")
     apply_exact_match_validation(json_metadata_and_text_cleaned_filename, json_metadata_and_text_filename)
     # split dataset and normalize text
-    # print(f"{Bcolors.OKGREEN}splitting dataset and normalizing text{Bcolors.ENDC}")
-    # normalize_and_split_dataset(json_metadata_and_text_cleaned_filename,json_metadata_filename,json_metadata_and_text_checked_filename)
+    print(f"{Bcolors.OKGREEN}splitting dataset and normalizing text{Bcolors.ENDC}")
+    normalize_and_split_dataset(json_metadata_and_text_cleaned_filename,json_metadata_filename,json_metadata_and_text_checked_filename)
    

@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-Training entry point for subject classification models.
+Training entry point for type classification models.
 
 Usage:
-    python -m fine_tune_subject.train                # Interactive model selection
-    python -m fine_tune_subject.train svm            # Train single model
-    python -m fine_tune_subject.train all             # Train all models + ranking
-    python -m fine_tune_subject.train all --compare   # Train all + comparison charts
-    python -m fine_tune_subject.train --compare-only  # Compare already-trained models (no training)
+    python -m fine_tune_type.train                # Interactive model selection
+    python -m fine_tune_type.train svm            # Train single model
+    python -m fine_tune_type.train all             # Train all models + ranking
+    python -m fine_tune_type.train all --compare   # Train all + comparison charts
+    python -m fine_tune_type.train --compare-only  # Compare already-trained models (no training)
 """
 import sys
 import argparse
 import numpy as np
+from constants import CSV_FOLDER, CSV_TYPES, TXT_NO_TAGS_FOLDER, TYPE_MODEL_FOLDERS, SAMPLES_PER_TYPE
 from utils.colors.colors_terminal import Bcolors
-from fine_tune_subject.utils.dataset.data_loader import load_csv_subjects, create_dataset
-from fine_tune_subject.strategies import (
+from utils.ml_strategies.data_loader import load_csv_labels, create_dataset
+from utils.ml_strategies.strategies import (
     SVMTrainingStrategy,
     XGBoostTrainingStrategy,
     RandomForestTrainingStrategy,
@@ -25,17 +26,26 @@ from fine_tune_subject.strategies import (
 )
 
 
+def load_type_data():
+    """Load type classification data"""
+    type_mapping = load_csv_labels(CSV_FOLDER / CSV_TYPES, label_column='type')
+    return create_dataset(
+        type_mapping, TXT_NO_TAGS_FOLDER,
+        min_frequency=5, max_per_label=SAMPLES_PER_TYPE, random_state=42
+    )
+
+
 def get_available_strategies():
-    """Get mapping of available training strategies"""
+    """Get mapping of available training strategies with type-specific model dirs"""
     return {
-        'svm': lambda: SVMTrainingStrategy(kernel='linear'),
-        'svm_rbf': lambda: SVMTrainingStrategy(kernel='rbf'),
-        'xgboost': XGBoostTrainingStrategy,
-        'random_forest': RandomForestTrainingStrategy,
-        'embeddings': EmbeddingsTrainingStrategy,
-        'embeddings_knn': EmbeddingsKNNTrainingStrategy,
-        'neural': NeuralTorchTrainingStrategy,
-        'minilm': MiniLMTrainingStrategy
+        'svm': lambda: SVMTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['svm_linear'], kernel='linear'),
+        'svm_rbf': lambda: SVMTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['svm_rbf'], kernel='rbf'),
+        'xgboost': lambda: XGBoostTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['xgboost']),
+        'random_forest': lambda: RandomForestTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['random_forest']),
+        'embeddings': lambda: EmbeddingsTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['embeddings']),
+        'embeddings_knn': lambda: EmbeddingsKNNTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['embeddings_knn']),
+        'neural': lambda: NeuralTorchTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['neural']),
+        'minilm': lambda: MiniLMTrainingStrategy(model_dir=TYPE_MODEL_FOLDERS['minilm']),
     }
 
 
@@ -44,14 +54,14 @@ def display_menu():
     strategies = get_available_strategies()
 
     print(f"\n{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
-    print(f"{Bcolors.HEADER}SUBJECT CLASSIFICATION - MODEL SELECTION{Bcolors.ENDC}")
+    print(f"{Bcolors.HEADER}TYPE CLASSIFICATION - MODEL SELECTION{Bcolors.ENDC}")
     print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
 
     print(f"\n{Bcolors.OKBLUE}Available Models:{Bcolors.ENDC}")
 
     menu_options = []
-    for i, (key, strategy_class) in enumerate(strategies.items(), 1):
-        strategy = strategy_class()
+    for i, (key, strategy_fn) in enumerate(strategies.items(), 1):
+        strategy = strategy_fn()
         print(f"{i}. {strategy.get_model_name()}")
         menu_options.append(key)
 
@@ -100,16 +110,13 @@ def train_single_model(model_name):
 
     # Load data
     print(f"\n{Bcolors.HEADER}=== Loading Data ==={Bcolors.ENDC}")
-    subject_mapping = load_csv_subjects()
-    documents, labels, document_ids = create_dataset(subject_mapping)
+    documents, labels, document_ids = load_type_data()
 
     if len(documents) == 0:
         print(f"{Bcolors.FAIL}No documents found!{Bcolors.ENDC}")
         return None
 
-    # Initialize and train the selected strategy
-    strategy_class = strategies[model_name]
-    strategy = strategy_class()
+    strategy = strategies[model_name]()
 
     try:
         accuracy = strategy.train(documents, labels)
@@ -133,21 +140,20 @@ def train_all_models(run_compare=False):
 
     # Load data once for all models
     print(f"\n{Bcolors.HEADER}=== Loading Data ==={Bcolors.ENDC}")
-    subject_mapping = load_csv_subjects()
-    documents, labels, document_ids = create_dataset(subject_mapping)
+    documents, labels, document_ids = load_type_data()
 
     if len(documents) == 0:
         print(f"{Bcolors.FAIL}No documents found!{Bcolors.ENDC}")
         return
 
     # Train each model
-    for model_name, strategy_class in strategies.items():
+    for model_name, strategy_fn in strategies.items():
         print(f"\n{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
         print(f"{Bcolors.HEADER}Training {model_name.upper()}{Bcolors.ENDC}")
         print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
 
         try:
-            strategy = strategy_class()
+            strategy = strategy_fn()
             accuracy = strategy.train(documents, labels)
             results[model_name] = {
                 'accuracy': accuracy,
@@ -159,7 +165,7 @@ def train_all_models(run_compare=False):
             print(f"{Bcolors.FAIL}Training {model_name} failed: {str(e)}{Bcolors.ENDC}")
             results[model_name] = {
                 'accuracy': None,
-                'model_name': strategy_class().get_model_name(),
+                'model_name': strategy_fn().get_model_name(),
                 'error': str(e)
             }
 
@@ -178,7 +184,6 @@ def train_all_models(run_compare=False):
             print(f"{Bcolors.FAIL}{result['model_name']}: FAILED{Bcolors.ENDC}")
 
     if successful_models:
-        # Sort by accuracy
         successful_models.sort(key=lambda x: x[1], reverse=True)
 
         print(f"\n{Bcolors.HEADER}RANKING (by accuracy):{Bcolors.ENDC}")
@@ -194,8 +199,8 @@ def train_all_models(run_compare=False):
         print(f"{Bcolors.HEADER}RUNNING MODEL COMPARISON{Bcolors.ENDC}")
         print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
         try:
-            from fine_tune_subject.model_comparison_framework import ModelComparator
-            comparator = ModelComparator()
+            from fine_tune_type.model_comparison_framework import TypeModelComparator
+            comparator = TypeModelComparator()
             models_to_test = [m[0] for m in successful_models]
             comparator.run_comparison(models_to_test)
         except Exception as e:
@@ -208,8 +213,8 @@ def run_comparison_only():
     print(f"{Bcolors.HEADER}MODEL COMPARISON (using saved models){Bcolors.ENDC}")
     print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
 
-    from fine_tune_subject.model_comparison_framework import ModelComparator
-    comparator = ModelComparator()
+    from fine_tune_type.model_comparison_framework import TypeModelComparator
+    comparator = TypeModelComparator()
     all_models = list(get_available_strategies().keys())
     comparator.run_comparison(all_models)
 
@@ -233,7 +238,6 @@ def interactive_mode():
         else:
             train_single_model(choice)
 
-        # Ask if user wants to train another model
         while True:
             try:
                 another = input(f"\n{Bcolors.OKBLUE}Train another model? (y/N): {Bcolors.ENDC}").lower().strip()
@@ -250,7 +254,7 @@ def interactive_mode():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Train subject classification models')
+    parser = argparse.ArgumentParser(description='Train type classification models')
     parser.add_argument('model', nargs='?', default=None,
                        help='Model to train (svm, svm_rbf, xgboost, random_forest, embeddings, embeddings_knn, neural, minilm, all)')
     parser.add_argument('--compare', action='store_true',
@@ -261,7 +265,7 @@ def main():
     args = parser.parse_args()
 
     print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
-    print(f"{Bcolors.HEADER}SUBJECT CLASSIFICATION - MODEL TRAINING{Bcolors.ENDC}")
+    print(f"{Bcolors.HEADER}TYPE CLASSIFICATION - MODEL TRAINING{Bcolors.ENDC}")
     print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
 
     np.random.seed(42)

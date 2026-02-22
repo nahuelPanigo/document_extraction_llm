@@ -1,6 +1,6 @@
 """
-Convert PDFs to plain text using PdfReader.extract_text().
-Saves to TXT_FOLDER for subject classification training.
+Convert PDFs to plain text (no tags) using PdfReader.extract_text().
+Saves to TXT_NO_TAGS_FOLDER for type classification training.
 Uses multiprocessing for performance.
 """
 import os
@@ -9,18 +9,18 @@ from pathlib import Path
 from multiprocessing import Pool, cpu_count
 
 sys.path.append(str(Path(__file__).parent.parent))
-from constants import PDF_FOLDER, TXT_FOLDER, CSV_FOLDER, CSV_SUBJECTS
+from constants import PDF_FOLDER, TXT_NO_TAGS_FOLDER, CSV_FOLDER, CSV_TYPES
 from utils.colors.colors_terminal import Bcolors
 from utils.text_extraction.pdf_reader import PdfReader
 import pandas as pd
 
 
-def get_subject_ids():
-    """Get list of document IDs from subjects CSV"""
-    csv_path = CSV_FOLDER / CSV_SUBJECTS
+def get_type_ids():
+    """Get list of document IDs from types CSV"""
+    csv_path = CSV_FOLDER / CSV_TYPES
     if not csv_path.exists():
-        print(f"{Bcolors.FAIL}Subjects CSV not found: {csv_path}{Bcolors.ENDC}")
-        print(f"{Bcolors.WARNING}Run: python -m fine_tune_subject.make_dataset --subjects{Bcolors.ENDC}")
+        print(f"{Bcolors.FAIL}Types CSV not found: {csv_path}{Bcolors.ENDC}")
+        print(f"{Bcolors.WARNING}Run: python -m fine_tune_type.make_dataset --types{Bcolors.ENDC}")
         return []
 
     df = pd.read_csv(csv_path)
@@ -29,18 +29,18 @@ def get_subject_ids():
 
 def get_pdfs_to_convert():
     """Get list of PDFs that need to be converted to TXT"""
-    subject_ids = get_subject_ids()
-    if not subject_ids:
+    type_ids = get_type_ids()
+    if not type_ids:
         return []
 
-    TXT_FOLDER.mkdir(parents=True, exist_ok=True)
+    TXT_NO_TAGS_FOLDER.mkdir(parents=True, exist_ok=True)
 
     pdfs_to_convert = []
     already_converted = 0
 
-    for doc_id in subject_ids:
+    for doc_id in type_ids:
         pdf_file = PDF_FOLDER / f"{doc_id}.pdf"
-        txt_file = TXT_FOLDER / f"{doc_id}.txt"
+        txt_file = TXT_NO_TAGS_FOLDER / f"{doc_id}.txt"
 
         if not pdf_file.exists():
             continue
@@ -61,7 +61,7 @@ def get_pdfs_to_convert():
 def convert_single_pdf(args):
     """Convert a single PDF to plain text (for multiprocessing)"""
     doc_id, pdf_path = args
-    txt_path = TXT_FOLDER / f"{doc_id}.txt"
+    txt_path = TXT_NO_TAGS_FOLDER / f"{doc_id}.txt"
 
     try:
         pdf_reader = PdfReader()
@@ -80,9 +80,9 @@ def convert_single_pdf(args):
 
 def main():
     """Main function to convert PDFs to plain text"""
-    print(f"{Bcolors.HEADER}=== PDF to Plain Text Converter (Subject Classification) ==={Bcolors.ENDC}")
+    print(f"{Bcolors.HEADER}=== PDF to Plain Text Converter (Type Classification) ==={Bcolors.ENDC}")
     print(f"PDF folder: {PDF_FOLDER}")
-    print(f"TXT folder: {TXT_FOLDER}")
+    print(f"TXT folder: {TXT_NO_TAGS_FOLDER}")
 
     pdfs_to_convert = get_pdfs_to_convert()
 

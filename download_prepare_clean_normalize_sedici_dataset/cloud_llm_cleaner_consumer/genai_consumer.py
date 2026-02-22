@@ -28,6 +28,11 @@ class GenaiConsumer(BaseCloudLLMConsumer):
                     model=GENAI_MODEL,
                     contents=input,
                 )
+                usage = response.usage_metadata
+                print(
+                    f"{Bcolors.OKBLUE}Tokens usados: prompt={usage.prompt_token_count}, "
+                    f"completion={usage.candidates_token_count}, total={usage.total_token_count}{Bcolors.ENDC}"
+                )
                 return response.text
 
             except Exception as e:

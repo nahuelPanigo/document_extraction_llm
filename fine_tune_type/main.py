@@ -1,51 +1,33 @@
-from constants import CSV_FOLDER, CSV_SEDICI_FILTERED, PDF_FOLDER, JSON_FOLDER, DATASET_TYPE,VALID_TYPES,DATA_FOLDER
-import pandas as pd
-from utils.text_extraction.read_and_write_files import write_to_json,read_data_json
-from download_prepare_clean_normalize_sedici_dataset.download_data import download_files
-from download_prepare_clean_normalize_sedici_dataset.extract_text_make_dataset import extract_text
-from utils.consume_apis.consume_extractor import make_requests_only_text
-import json
-from utils.colors.colors_terminal import Bcolors    
-import os
-from dotenv import load_dotenv
+#!/usr/bin/env python3
+"""
+Unified Type Classification - Backward compatible entry point.
+Runs make_dataset (interactive) then train (interactive).
 
-TEXT_FOLDER = DATA_FOLDER /  "texts2"
-
-dataset = {
-    "Libro": [],
-    "Tesis": [],    
-    "Articulo": [],
-}
-
-def get_ids_per_type():
-    df = pd.read_csv(CSV_FOLDER / CSV_SEDICI_FILTERED)
-    for _, row in df.iterrows():
-        if row["dc.type"] in VALID_TYPES:
-            dataset[row["dc.type"]].append(row.get("id",""))
-        else:
-            print(f"El documento es de tipo {row['dc.type']}")
-
-    write_to_json(JSON_FOLDER / DATASET_TYPE, dataset, "utf-8")
-    return  dataset
-
-def write_to_text(text, filename):
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(text)
+For direct usage, prefer:
+    python -m fine_tune_type.make_dataset [--all|--types|--download|--extract]
+    python -m fine_tune_type.train [model_name|all] [--compare]
+"""
+from fine_tune_type.make_dataset import ask_pipeline_steps, run_pipeline_steps
+from fine_tune_type.train import interactive_mode
+from utils.colors.colors_terminal import Bcolors
+import numpy as np
 
 
-def extract_texts(ids):
-    for key in ids:
-        try:
-            filename = PDF_FOLDER / f"{key}.pdf"
-            text = make_requests_only_text(filename,os.getenv("EXTRACTOR_TOKEN"))
-            write_to_text(text,TEXT_FOLDER / f"{key}.txt")
-            print(f"{Bcolors.OKGREEN} texto extraido {key} {Bcolors.ENDC}")
-        except:
-            print(f"{Bcolors.FAIL} error en el pdf {key} {Bcolors.ENDC}")
+def main():
+    """Main entry point: dataset pipeline then model training"""
+    np.random.seed(42)
+
+    print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
+    print(f"{Bcolors.HEADER}UNIFIED TYPE CLASSIFICATION TRAINING{Bcolors.ENDC}")
+    print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
+
+    # STEP 1: Data pipeline
+    pipeline_steps = ask_pipeline_steps()
+    run_pipeline_steps(pipeline_steps)
+
+    # STEP 2: Model training (interactive)
+    interactive_mode()
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    data =  read_data_json(JSON_FOLDER / DATASET_TYPE, "utf-8")
-    ids = data["Libro"] + data["Tesis"] + data["Articulo"]
-    extract_texts(ids)
+    main()
