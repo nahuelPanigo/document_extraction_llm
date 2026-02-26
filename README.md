@@ -366,9 +366,6 @@ document_extraction_llm
 
 other changes and tasks for our api and fine_tuning:
 - run all validation again with no isRelatedWith field.
-- run again fine_tunning-type with object of conference.
-- simil tables format in pdf (change extraction for this cases?)
-- as for tables what happends for pages with entire image?
 
 
 
@@ -379,16 +376,17 @@ for our thesis:
 
 
 de la cahrla:
-docker
-documentacino de la api y el proyecto.
-estructurar le proyecto kedro.
-imagenes del proyecto.
-
+docker  (probarlo)
+imagenes del proyecto (arquitectura completa de la api y del proyecto entero el flujo).
+check cant of pages/words used in eery machine learning model (see if accuracy changes, see if we could only extract first pages as for other documents. understand and explain the ml models in tesis, also add some explianations and details of the ml report and how to change easy for other subjects standard, new models or also new types)
 
 
 - chequear varios con titulos extrajo bien?? hizo la normalizacion??
 : AAAANNNNÁÁÁÁLLLLIIIISSSSIIIISSSS DDDDEEEE LLLLOOOOSSSS CCCCIIIIRRRRCCCCUUUUIIIITTTTOOOOSSSS CCCCOOOORRRRTTTTOOOOSSSS DDDDEEEE CCCCOOOOMMMMEEEERRRRCCCCIIIIAAAALLLLIIIIZZZZAAAACCCCIIIIÓÓÓÓNNNN DDDDEEEE HHHHOOOORRRRTTTTAAAALLLLIIIIZZZZAAAASSSS YYYY SSSSUUUUSSSS IIIIMMMMPPPPLLLLIIIICCCCAAAANNNNCCCCIIIIAAAASSSS TTTTEEEERRRRRRRRIIIITTTTOOOORRRRIIIIAAAALLLLEEEESSSS EEEENNNN EEEELLLL PPPPEEEERRRRIIIIUUUURRRRBBBBAAAANNNNOOOO SSSSUUUURRRR DDDDEEEELLLL ÁÁÁÁRRRREtodasEEEAAAA MMMMEEEETTTTRRRROOOOPPPPOOOOLLLLIIIITTTTAAAANNNNAAAA DDDDEEEE BBBBUUUUEEEENNNNOOOOSSSS AAAAIIIIRRRREEEESSSS EEEENNNNTTTTRRRREEEE 2222000000009999 YYYY 2222000011119999
 
-- fine_tune_subject mejoras quedaron bien? cambiar el readme, agregar en la docs, agregar en el sh the run_all, a su vez pensar la logica de activar y desaactivar con y isn tags via flag (todas las extracciones con tags? conviene hacerla con el api o con utils?(con utils mas facil me parece a su vez conviene q la extraccion este directametne en util? o simplemente llamar a pdreader de ahi?))
 
-- agregar fine_tune_type el objeto de conferencia y correr esta nueva.
+
+cases of study maybe possible tesys improvements:
+
+- simil tables format in pdf (change extraction for this cases?)
+- as for tables what happends for pages with entire image?

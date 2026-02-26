@@ -9,12 +9,13 @@ For direct usage, prefer:
 """
 from fine_tune_subject.make_dataset import ask_pipeline_steps, run_pipeline_steps
 from fine_tune_subject.train import interactive_mode
+from fine_tune_subject.test import interactive_mode as test_interactive_mode
 from utils.colors.colors_terminal import Bcolors
 import numpy as np
 
 
 def main():
-    """Main entry point: dataset pipeline then model training"""
+    """Main entry point: dataset pipeline then model training then optional PDF test"""
     np.random.seed(42)
 
     print(f"{Bcolors.HEADER}{'='*60}{Bcolors.ENDC}")
@@ -27,6 +28,9 @@ def main():
 
     # STEP 2: Model training (interactive)
     interactive_mode()
+
+    # STEP 3: Test on a PDF (optional)
+    test_interactive_mode()
 
 
 if __name__ == "__main__":

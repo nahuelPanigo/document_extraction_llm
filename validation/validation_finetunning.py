@@ -203,7 +203,7 @@ def main():
             timestamp = int(time.time())
             ocr_suffix = "_ocr" if ocr else ""
             deepanalyze_suffix = "_deepanalyze" if deepanalyze else ""
-            filename = f"finetuned_validation{ocr_suffix}{deepanalyze_suffix}_{timestamp}.json"
+            filename = f"finetuned_validation{ocr_suffix}{deepanalyze_suffix}_{timestamp}_with_date_fixed.json"
             validator.save_results(results, filename)
 
             print(f"\n✅ Validation completed!")

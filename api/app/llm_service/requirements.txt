@@ -6,3 +6,4 @@ torch
 torchvision
 torchaudio
 ollama
+python-dotenv

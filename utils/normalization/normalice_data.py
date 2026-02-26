@@ -50,8 +50,26 @@ def remove_accents(text):
 #     return text
 
 
+def fix_unicode_escapes(text):
+    # Converts literal \uXXXX escape sequences to real Unicode characters.
+    # e.g. the 6-char string "\u00f3" becomes the single char "ó".
+    #
+    # Why NOT remove_accents(): that strips accents permanently (ó→o), which is
+    # destructive for stored metadata and training data.
+    #
+    # Why NOT bytes().decode("unicode_escape") (normalice_latin_char approach):
+    # that is fragile — if the text already contains real non-ASCII chars (like
+    # "ó" encoded as 2 UTF-8 bytes), the latin-1 re-decode corrupts them.
+    #
+    # This regex only replaces \uXXXX patterns and leaves everything else untouched.
+    if '\\u' not in text:
+        return text
+    return re.sub(r'\\u([0-9A-Fa-f]{4})', lambda m: chr(int(m.group(1), 16)), text)
+
+
 def normalice_text(text):
-    text =  re.sub(r"\.{2,}", " ", text)  
+    text = fix_unicode_escapes(text)
+    text =  re.sub(r"\.{2,}", " ", text)
     text = corregir_numeros_repetidos(text)
     text = re.sub(r"([{}[\]()*\-+?,:;._!@#$%^&])\1{2,}", r"\1", text)
     text = re.sub(r"([{}[\]()*\-+?,:;._!@#$%^&])\1{2,}", r"\1", text)
@@ -84,17 +102,40 @@ def remove_honorifics(text):
         r'\bdr\.\s*', r'\bdra\.\s*', r'\bdrª\.\s*',
         r'\blic\.\s*', r'\blica\.\s*', r'\blicª\.\s*',
         r'\bing\.\s*', r'\binga\.\s*', r'\bingª\.\s*',
-        r'\bmg\.\s*', r'\bmgr\.\s*', r'\bmgs\.\s*',
+        r'\bmg\.\s*', r'\bmgr\.\s*', r'\bmgs\.\s*', r'\bmgtr\.\s*',
+        r'\bmag\.\s*', r'\bmsc\.\s*',
         r'\bphd\.\s*', r'\bph\.d\.\s*',
         r'\bprof\.\s*', r'\bprofa\.\s*', r'\bprofª\.\s*',
         r'\bsr\.\s*', r'\bsra\.\s*', r'\bsrª\.\s*',
         r'\bmr\.\s*', r'\bmrs\.\s*', r'\bms\.\s*',
         r'\bdir\.\s*', r'\bdira\.\s*', r'\bdirª\.\s*',
         r'\bcodir\.\s*', r'\bcodira\.\s*', r'\bcodirª\.\s*',
+        r'\bcoord\.\s*',
+        r'\bcolab\.\s*',
+        r'\bcolaborador\b\s*', r'\bcolaboradora\b\s*',
+        r'\bagr\.\s*', r'\bagra\.\s*',
+        r'\barq\.\s*', r'\barqa\.\s*',
+        r'\besp\.\s*',
+        r'\babog\.\s*',
+        r'\bcdor\.\s*', r'\bcdora\.\s*', r'\bcra\.\s*',
+        r'\bmed\.\s*',
+        r'\bvet\.\s*', r'\bmv\.\s*',
+        r'\bzoot\.\s*',
+        r'\bfarm\.\s*',
+        r'\bpsic\.\s*',
+        r'\bgeof\.\s*',
+        r'\bftal\.\s*',
+        r'\bsc\.\s*',
+        r'\bec\.\s*',
+        r'\btec\.\s*', r'\btéc\.\s*',
+        r'\bbio\.\s*', r'\bbiol\.\s*',
+        # Parenthesised institutional suffixes, e.g. (FCAyF-UNLP), (COORDINADOR)
+        r'\s*\([^)]{1,80}\)\s*',
+        # Legacy parenthesised role patterns
         r'\(dir\.\)\s*', r'\(dra\.\)\s*', r'\(drª\.\)\s*',
         r'\(codir\.\)\s*', r'\(codira\.\)\s*', r'\(codirª\.\)\s*',
         r'\(lic\.\)\s*', r'\(lica\.\)\s*', r'\(licª\.\)\s*',
-        r'\(ing\.\)\s*', r'\(inga\.\)\s*', r'\(ingª\.\)\s*'
+        r'\(ing\.\)\s*', r'\(inga\.\)\s*', r'\(ingª\.\)\s*',
     ]
     
     text_cleaned = text
@@ -103,6 +144,8 @@ def remove_honorifics(text):
     
     # Limpiar espacios extra
     text_cleaned = re.sub(r'\s+', ' ', text_cleaned).strip()
+    # Remover punto final suelto (e.g. "Leandro Adrián." → "Leandro Adrián")
+    text_cleaned = re.sub(r'\.\s*$', '', text_cleaned).strip()
     return text_cleaned
 
 

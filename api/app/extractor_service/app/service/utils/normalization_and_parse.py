@@ -38,14 +38,28 @@ def corregir_numeros_repetidos(texto):
     return patron.sub(reemplazo, texto)
 
 
+def fix_unicode_escapes(text):
+    # Converts literal \uXXXX escape sequences to real Unicode characters.
+    # Safe alternative to bytes().decode("unicode_escape") — only touches \uXXXX
+    # patterns and leaves real Unicode chars already in the string untouched.
+    if '\\u' not in text:
+        return text
+    return re.sub(r'\\u([0-9A-Fa-f]{4})', lambda m: chr(int(m.group(1), 16)), text)
+
+
 def normalice_text(text):
-    text =  re.sub(r"\.{2,}", " ", text)  
+    text = fix_unicode_escapes(text)
+    text =  re.sub(r"\.{2,}", " ", text)
     text = corregir_numeros_repetidos(text)
     text = re.sub(r"([{}[\]()*\-+?,:;._!@#$%^&])\1{2,}", r"\1", text)
     text = re.sub(r"([{}[\]()*\-+?,:;._!@#$%^&])\1{2,}", r"\1", text)
     return  re.sub(r"([A-Za-zÁÉÍÓÚáéíóúÑñ])\1{2,}", r"\1", text)
 
 
+# NOTE: normalice_latin_char is defined here but not called in this service.
+# It IS used in llm_service/app/services/utils.py inside parse_json().
+# It works there because LLM output is pure ASCII + \uXXXX escapes, so the
+# bytes().decode("unicode_escape") is safe in that specific context.
 def normalice_latin_char(text):
         text = text.replace("\\r\\n", " ")
         text = re.sub(r'\\[Rp/c]', '', text)  # Si hay más casos, agrégalos aquí

@@ -5,3 +5,4 @@ pdfplumber
 uvicorn
 numpy
 Pillow
+easyocr

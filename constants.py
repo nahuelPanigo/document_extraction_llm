@@ -324,6 +324,65 @@ Strict rules for institucionDesarrollo:
 - Use the full institutional name as it appears in the text. If only an abbreviation appears, return the abbreviation.
 - Do NOT confuse with originPlaceInfo: institucionDesarrollo is the specific research unit (lab/institute/center), not the faculty or university.
 
+### special case for degree.name (Tesis only):
+
+degree.name represents the academic degree obtained by the author. It MUST always be expressed in the person/graduate form, NOT the program name.
+
+Strict rules:
+- Always convert the program form to the person form:
+  - "Licenciatura en X"  →  "Licenciado en X" (or "Licenciada en X" if author is female)
+  - "Doctorado en X"     →  "Doctor en X" (or "Doctora en X")
+  - "Ingeniería en X"    →  "Ingeniero en X" (or "Ingeniera en X")
+  - "Maestría en X"      →  "Magíster en X" (or use "Maestro/a en X" if the text uses that form)
+  - "Tecnicatura en X"   →  "Técnico en X" (or "Técnica en X")
+  - "Especialización en X" → "Especialista en X"
+  - Forms already in person form ("Licenciado en X", "Doctor en X") stay unchanged.
+- The degree MUST include the subject area when available (e.g. "Licenciado en Química", NOT just "Licenciado").
+- Gender: use masculine form unless the text or the author's name clearly indicates feminine gender.
+- Context inference — if degree.name is null/empty but the text contains enough context, infer it:
+  - Look for phrases like: "para obtener el grado de", "para acceder al título de", "trabajo final de licenciatura", "tesis doctoral", "tesis de grado".
+  - If the text mentions a faculty name alongside "trabajo final" or a degree reference, map it to its most common degree. Examples:
+    - "Facultad de Nutrición" → "Licenciado en Nutrición"
+    - "Facultad de Informática" → look for the specific program mentioned; if absent, return null.
+    - "Facultad de Medicina" + "tesis doctoral" → "Doctor en Medicina"
+  - If ambiguous or multiple degrees are possible, return null rather than guessing.
+
+degree.name examples:
+
+Metadata has "Doctorado en Ciencias Naturales" → Output: "Doctor en Ciencias Naturales"
+Metadata has "Licenciatura en Nutrición" → Output: "Licenciado en Nutrición"
+Metadata has "Ingeniería Forestal" → Output: "Ingeniero Forestal"
+Text: "trabajo final para obtener el título de Licenciada en Psicología" → Output: "Licenciada en Psicología"
+Text: "trabajo final" + "Facultad de Nutrición" (no explicit degree stated) → Output: "Licenciado en Nutrición"
+Text: "tesis doctoral" + "Facultad de Ciencias Exactas" (no specific degree) → Output: null
+
+### special case for name fields (creator, director, codirector, compiler, collaborator, editor, publisher):
+
+These fields contain people's names (or an organization name for publisher). Apply these cleaning rules to ALL of them:
+
+Strict rules:
+- Remove ALL honorific or academic title prefixes. Remove any abbreviation ending in a period that precedes a name:
+  Dr., Dra., Lic., Lica., Ing., Inga., Mg., Mgr., Mgtr., MSc., Mag., Prof., Profa., Agr., Arq.,
+  Abog., Med., Vet., MV., Esp., Psic., Farm., Geof., Ftal., Coord., Colab., Tec., Bio., Cra., Ec.,
+  and any similar abbreviated title followed by a period.
+- Remove ALL parenthetical content that refers to institutional affiliations, roles, or identifiers.
+  Examples to remove: (UNLP), (FCAyF-UNLP), (CONICET), (EEA INTA General Villegas),
+  (COORDINADOR), (COORDINADORA), (compiladoras), [o-oi-6404-0552], or any text in ( ) or [ ].
+- Remove trailing periods that are not part of the name (e.g. "Leandro Adrián." → "Leandro Adrián").
+- Do NOT remove organization names when they ARE the value (e.g. publisher: "Editorial UNLP" → keep).
+- If the field is a list, apply these rules to each element independently.
+- Return only the clean name: e.g. "García, María José" or "María José García".
+
+Name field examples:
+
+Input: "Dr. Juan García"                          → Output: "Juan García"
+Input: "Agr. Sc. Mariana del Pino"                → Output: "Mariana del Pino"
+Input: "ANTONIO CAMOU (COORDINADOR)"              → Output: "ANTONIO CAMOU"
+Input: "Chamorro, Adriana (FCAyF-UNLP)"           → Output: "Chamorro, Adriana"
+Input: "Girón, Paula (EEA INTA General Villegas)" → Output: "Girón, Paula"
+Input: "Di Paolo, Leandro Adrián."                → Output: "Di Paolo, Leandro Adrián"
+Input: ["Dr. Luis López", "Lic. Ana Martínez (CONICET)"] → Output: ["Luis López", "Ana Martínez"]
+
 ### special case for journalVolumeAndIssue:
 
 You are cleaning and normalizing volume and issue information from academic publication metadata.
@@ -407,7 +466,7 @@ Input example (Tesis with institucionDesarrollo):
 - Metadata: {"originPlaceInfo": "Facultad de Ciencias Naturales y Museo", "institucionDesarrollo": null, "director": "Dr. Juan Pérez", "degree.grantor": "Universidad Nacional de La Plata", "degree.name": "Doctor en Ciencias Naturales", "date": "2022"}
 
 Output example:
-{"originPlaceInfo": "Facultad de Ciencias Naturales y Museo", "institucionDesarrollo": "Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas", "director": "Dr. Juan Pérez", "degree.grantor": "Universidad Nacional de La Plata", "degree.name": "Doctor en Ciencias Naturales", "date": "2022"}
+{"originPlaceInfo": "Facultad de Ciencias Naturales y Museo", "institucionDesarrollo": "Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas", "director": "Juan Pérez", "degree.grantor": "Universidad Nacional de La Plata", "degree.name": "Doctor en Ciencias Naturales", "date": "2022"}
 
 you must pay attention in the json provided after this:
 """

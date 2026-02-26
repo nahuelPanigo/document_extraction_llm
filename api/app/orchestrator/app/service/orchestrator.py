@@ -19,7 +19,11 @@ class Orchestrator:
         self.llm_deepanalyze_url = os.getenv("LLM_DEEPANALYZE_URL")
         self.llm_deepanalyze_api_key = os.getenv("LLM_DEEPANALYZE_TOKEN")
         self.logger = logging.getLogger(__name__)
-        self.type_identifier = TypeIdentifier(path_clf =os.getenv("IDENTIFIER_PATH_MODEL"), path_vectorizer=os.getenv("IDENTIFIER_PATH_VECTORIZER"))
+        self.type_identifier = TypeIdentifier(
+            path_clf=os.getenv("IDENTIFIER_PATH_MODEL"),
+            path_vectorizer=os.getenv("IDENTIFIER_PATH_VECTORIZER"),
+            path_label_encoder=os.getenv("IDENTIFIER_PATH_LABEL_ENCODER")
+        )
         self.subject_identifier = SubjectIdentifier(
             path_classifier=os.getenv("SUBJECT_IDENTIFIER_PATH_CLASSIFIER", "models/svm_classifier.pkl"),
             path_vectorizer=os.getenv("SUBJECT_IDENTIFIER_PATH_VECTORIZER", "models/svm_vectorizer.pkl"),
@@ -59,18 +63,41 @@ class Orchestrator:
             r'\bdr\.\s*', r'\bdra\.\s*', r'\bdrª\.\s*',
             r'\blic\.\s*', r'\blica\.\s*', r'\blicª\.\s*',
             r'\bing\.\s*', r'\binga\.\s*', r'\bingª\.\s*',
-            r'\bmg\.\s*', r'\bmgr\.\s*', r'\bmgs\.\s*',
+            r'\bmg\.\s*', r'\bmgr\.\s*', r'\bmgs\.\s*', r'\bmgtr\.\s*',
+            r'\bmag\.\s*', r'\bmsc\.\s*',
             r'\bphd\.\s*', r'\bph\.d\.\s*',
             r'\bprof\.\s*', r'\bprofa\.\s*', r'\bprofª\.\s*',
             r'\bsr\.\s*', r'\bsra\.\s*', r'\bsrª\.\s*',
             r'\bmr\.\s*', r'\bmrs\.\s*', r'\bms\.\s*',
             r'\bdir\.\s*', r'\bdira\.\s*', r'\bdirª\.\s*',
             r'\bcodir\.\s*', r'\bcodira\.\s*', r'\bcodirª\.\s*',
+            r'\bcoord\.\s*',
+            r'\bcolab\.\s*',
+            r'\bcolaborador\b\s*', r'\bcolaboradora\b\s*',
+            r'\bagr\.\s*', r'\bagra\.\s*',
+            r'\barq\.\s*', r'\barqa\.\s*',
+            r'\besp\.\s*',
+            r'\babog\.\s*',
+            r'\bcdor\.\s*', r'\bcdora\.\s*', r'\bcra\.\s*',
+            r'\bmed\.\s*',
+            r'\bvet\.\s*', r'\bmv\.\s*',
+            r'\bzoot\.\s*',
+            r'\bfarm\.\s*',
+            r'\bpsic\.\s*',
+            r'\bgeof\.\s*',
+            r'\bftal\.\s*',
+            r'\bsc\.\s*',
+            r'\bec\.\s*',
+            r'\btec\.\s*', r'\btéc\.\s*',
+            r'\bbio\.\s*', r'\bbiol\.\s*',
+            r'\bdoctor\b\s*', r'\bdoctora\b\s*',
+            # Parenthesised institutional suffixes, e.g. (FCAyF-UNLP), (COORDINADOR)
+            r'\s*\([^)]{1,80}\)\s*',
+            # Legacy parenthesised role patterns
             r'\(dir\.\)\s*', r'\(dra\.\)\s*', r'\(drª\.\)\s*',
             r'\(codir\.\)\s*', r'\(codira\.\)\s*', r'\(codirª\.\)\s*',
             r'\(lic\.\)\s*', r'\(lica\.\)\s*', r'\(licª\.\)\s*',
             r'\(ing\.\)\s*', r'\(inga\.\)\s*', r'\(ingª\.\)\s*',
-            r'\bdoctor\s*', r'\bdoctor\.\s*', r'\bdoctora\.\s*', r'\bdoctorª\.\s*',
         ]
         
         text_cleaned = text
@@ -79,6 +106,8 @@ class Orchestrator:
         
         # Limpiar espacios extra
         text_cleaned = re.sub(r'\s+', ' ', text_cleaned).strip()
+        # Remover punto final suelto (e.g. "Leandro Adrián." → "Leandro Adrián")
+        text_cleaned = re.sub(r'\.\s*$', '', text_cleaned).strip()
         return text_cleaned
 
     def _clean_metadata_honorifics(self, metadata: dict) -> dict:

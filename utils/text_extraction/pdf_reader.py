@@ -395,7 +395,7 @@ if __name__ == '__main__':
     ROOT_DIR = Path(__file__).resolve().parents[2]
     DATA_FOLDER = Path(ROOT_DIR / "data" / "sedici")
     PDF_FOLDER = DATA_FOLDER / "pdfs/"
-    file = "10915-95206.pdf"  # Use the test PDF
+    file = "10915-20286.pdf"  # Use the test PDF
     filepath = PDF_FOLDER / file
     
     print("🔍 TESTING PDF READER WITH OCR")
@@ -410,41 +410,10 @@ if __name__ == '__main__':
     print(f"⏱️ Time without OCR: {no_ocr_time:.2f}ms")
     print(f"📝 Characters extracted: {len(extracted_text_no_ocr)}")
     
-    #print(extracted_text_no_ocr)
+    print(extracted_text_no_ocr)
     
 
-    import re
-
-    pattern = r'\(cid:\d+\)'
-    matches = re.findall(r'\(cid:(\d+)\)', extracted_text_no_ocr)
-    print("CID numbers found:", sorted([int(x)for x in set(matches)]))
-    
-    # Test PyMuPDF extraction
-    print("\n🔬 Testing PyMuPDF extraction...")
-    try:
-        import fitz
-        doc = fitz.open(str(filepath))
-        pymupdf_text = ""
-        for page_num in range(min(3, len(doc))):  # Test first 3 pages
-            page = doc.load_page(page_num)
-            pymupdf_text += page.get_text()
-        doc.close()
-        
-        print(f"📝 PyMuPDF extracted {len(pymupdf_text)} characters")
-        print("First 200 chars:", repr(pymupdf_text[:200]))
-        
-        # Check if PyMuPDF has CIDs too
-        pymupdf_cids = re.findall(r'\(cid:(\d+)\)', pymupdf_text)
-        if pymupdf_cids:
-            print("❌ PyMuPDF also has CID issues")
-        else:
-            print("✅ PyMuPDF extraction looks clean!")
-            
-    except ImportError:
-        print("❌ PyMuPDF not available")
-    except Exception as e:
-        print(f"❌ PyMuPDF failed: {e}")
-
+ 
     # # Test with OCR
     # print("\n📷 Testing WITH OCR...")
     # start_time = time.time()
