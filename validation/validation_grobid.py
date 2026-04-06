@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import re
+import time
 from pathlib import Path
 import sys
 from bs4 import BeautifulSoup
@@ -366,13 +367,14 @@ def extract_metadata_from_xmls(data):
     xml_files = list(GROBID_FOLDER.glob("*.xml"))
     print(f"Found {len(xml_files)} XML files to process")
     
+    xml_times_by_id = {}
     for xml_file in xml_files:
         doc_id = xml_file.stem  # Get filename without extension
-        
+
         # Get document type from original metadata if available
         doc_type = "general"
-        if doc_id in data and "dc.type" in data[doc_id]:
-            original_type = data[doc_id]["dc.type"].lower()
+        if doc_id in data and "type" in data[doc_id]:
+            original_type = data[doc_id]["type"].lower()
             if "tesis" in original_type:
                 doc_type = "tesis"
             elif "articulo" in original_type:
@@ -381,12 +383,23 @@ def extract_metadata_from_xmls(data):
                 doc_type = "libro"
             elif "conferencia" in original_type:
                 doc_type = "objeto_conferencia"
-        
+
         print(f"Processing {doc_id} as {doc_type}...")
-        
+
         # Extract metadata from XML
+        t0 = time.time()
         metadata = extract_metadata_from_xml(xml_file, doc_id, doc_type)
+        elapsed = time.time() - t0
+        xml_times_by_id[doc_id] = elapsed
+        print(f"⏱️  {doc_id} XML parsing took {elapsed:.2f}s")
         extracted_metadata[doc_id] = metadata
+
+    xml_times = list(xml_times_by_id.values())
+    if xml_times:
+        print(f"\n⏱️  XML parsing stats ({len(xml_times)} docs):")
+        print(f"   Min : {min(xml_times):.2f}s")
+        print(f"   Max : {max(xml_times):.2f}s")
+        print(f"   Avg : {sum(xml_times)/len(xml_times):.2f}s")
     
     # Save results
     results_file = GROBID_FOLDER / "extracted_metadata.json"
@@ -398,15 +411,15 @@ def extract_metadata_from_xmls(data):
     
     print(f"\n✅ XML metadata extraction completed!")
     print(f"📊 Processed {len(extracted_metadata)} documents")
-    
-    return extracted_metadata
+
+    return extracted_metadata, xml_times_by_id
 
 def main():
     # Create GROBID folder
     create_grobid_folder()
     
     # Read JSON file
-    json_file_path = RESULT_FOLDER_VALIDATION / "result_test_original_metadata-with-object-conference1.json"
+    json_file_path = RESULT_FOLDER_VALIDATION / "final_to_compare_original.json"
     
     try:
         data = read_data_json(json_file_path, 'utf-8')
@@ -420,37 +433,83 @@ def main():
     
     print(f"📋 Processing {len(data)} documents...")
     
-    # Process each document
+    def _norm_type(t):
+        t = str(t).lower()
+        if "tesis" in t: return "Tesis"
+        if "articulo" in t or "artículo" in t: return "Articulo"
+        if "libro" in t: return "Libro"
+        if "conferencia" in t: return "Objeto de conferencia"
+        return "Other"
+
+    # Process each document — track PDF→XML time per doc_id
+    pdf_times_by_id = {}
     for doc_id, metadata in data.items():
         if not doc_id:
             continue
-            
+
         # Construct PDF filename
         pdf_filename = f"{doc_id}.pdf"
         pdf_path = PDF_FOLDER / pdf_filename
-        
+
         if not pdf_path.exists():
             print(f"PDF file not found: {pdf_path}")
             continue
-        
+
         # Check if XML already exists
         xml_filename = GROBID_FOLDER / f"{doc_id}.xml"
-        
+
         if xml_filename.exists():
             print(f"✓ XML already exists for document {doc_id}, skipping Grobid processing")
         else:
             print(f"Processing document {doc_id} with Grobid...")
-            
+
             # Send PDF to Grobid service
+            t0 = time.time()
             xml_content = send_pdf_to_grobid(pdf_path)
-            
+            elapsed = time.time() - t0
+            pdf_times_by_id[doc_id] = elapsed
+            print(f"⏱️  {doc_id} took {elapsed:.2f}s")
+
             # Save XML to GROBID folder
             save_xml_file(xml_content, doc_id)
-    
+
+    pdf_times = list(pdf_times_by_id.values())
+    if pdf_times:
+        print(f"\n⏱️  Grobid PDF processing stats ({len(pdf_times)} docs):")
+        print(f"   Min : {min(pdf_times):.2f}s")
+        print(f"   Max : {max(pdf_times):.2f}s")
+        print(f"   Avg : {sum(pdf_times)/len(pdf_times):.2f}s")
+
     # Extract metadata from all XMLs
     print("\n" + "="*60)
-    extracted_metadata = extract_metadata_from_xmls(data)
-    
+    extracted_metadata, xml_times_by_id = extract_metadata_from_xmls(data)
+
+    # Combined total time per doc (PDF send + XML parse)
+    all_doc_ids = set(pdf_times_by_id) | set(xml_times_by_id)
+    total_times_by_id = {
+        doc_id: pdf_times_by_id.get(doc_id, 0) + xml_times_by_id.get(doc_id, 0)
+        for doc_id in all_doc_ids
+    }
+    total_times = list(total_times_by_id.values())
+    if total_times:
+        print(f"\n⏱️  Total (PDF + XML parsing) stats ({len(total_times)} docs):")
+        print(f"   Min : {min(total_times):.2f}s")
+        print(f"   Max : {max(total_times):.2f}s")
+        print(f"   Avg : {sum(total_times)/len(total_times):.2f}s")
+
+    # Per-type combined timing
+    type_times = {}
+    for doc_id, total in total_times_by_id.items():
+        raw_type = data.get(doc_id, {}).get("type", "")
+        norm = _norm_type(raw_type)
+        type_times.setdefault(norm, []).append(total)
+
+    print(f"\n⏱️  Total timing by type:")
+    for t in ["Libro", "Tesis", "Articulo", "Objeto de conferencia"]:
+        times = type_times.get(t, [])
+        if times:
+            print(f"   {t} (n={len(times)}): min={min(times):.2f}s  max={max(times):.2f}s  avg={sum(times)/len(times):.2f}s")
+
     print(f"\n🎉 Processing completed!")
     print(f"📊 Total documents processed: {len(extracted_metadata)}")
 

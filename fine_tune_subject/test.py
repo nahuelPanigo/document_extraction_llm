@@ -13,7 +13,7 @@ from pathlib import Path
 
 from utils.colors.colors_terminal import Bcolors
 from utils.text_extraction.pdf_reader import PdfReader
-from fine_tune_subject.strategies import (
+from utils.ml_strategies.strategies import (
     SVMTrainingStrategy,
     XGBoostTrainingStrategy,
     RandomForestTrainingStrategy,

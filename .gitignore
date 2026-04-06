@@ -25,6 +25,7 @@ lib/
 pyvenv.cfg
 !*output.json
 !*requirements.txt
+!graphs/*.xml
 /fine_tunning/results
 /results
 *fine-tuned-model*
@@ -36,3 +37,4 @@ pyvenv.cfg
 /validation/result/add_types.py
 /fine_tune_subject/model_results
 /fine_tune_subject/models
+*.png

@@ -2,6 +2,9 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[0]
 
+MAX_WORDS_NO_TAGS = 10000
+MAX_WORDS_WITH_TAGS = 4000
+
 MODEL_PARAMETERS = {
     "LOCATION" : ROOT_DIR / "fine-tuned-model",
 #    "NAME" :"vgaraujov/led-base-16384-spanish",

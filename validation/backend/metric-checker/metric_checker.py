@@ -41,10 +41,13 @@ class MetricChecker:
         """
         if text is None:
             return ""
-        
+
         if not isinstance(text, str):
             raise TypeError(f"_normalize_text only accepts strings or None, got {type(text)}")
-        
+
+        # Decode literal Unicode escape sequences (e.g. \u00fa -> ú)
+        text = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), text)
+
         # Convert to lowercase
         text = text.lower()
         

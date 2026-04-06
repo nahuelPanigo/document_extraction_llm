@@ -29,7 +29,7 @@ run_modules.bat <mode> [--python PY_EXE] [--reinstall]
 | `make_dataset` | Download, prepare, clean and normalize SEDICI dataset | 1. `sedici.csv` in `data/sedici/csv/` folder<br>2. `GOOGLE_API_KEY` in `.env` |
 | `fine_tunning` | Fine-tune models for metadata extraction | 1. JSON dataset from `make_dataset`<br>2. `TOKEN_HUGGING_FACE` in `.env` |
 | `validation` | Validate trained models | 1. JSON dataset + PDFs from `make_dataset`<br>2. Running API services<br>3. `ORCHESTRATOR_TOKEN` in `.env` |
-| `fine_tune_type` | Train document type classifier | 1. CSV + text files from `make_dataset`<br>2. Will be refactored |
+| `fine_tune_type` | Train document type classifier | 1. CSV + text files from `make_dataset` |
 | `fine_tune_subject` | Train subject/topic classifier | 1. CSV file from `make_dataset`<br>2. Text files from `make_dataset` |
 
 ### Examples
@@ -130,14 +130,15 @@ LLM_LED_TOKEN=your_llm_led_token
 - CSV file: `data/sedici/csv/sedici_filtered_2019_2024.csv` (created by `make_dataset`)  
 - Text files in `data/sedici/texts/` folder (created by `make_dataset`)
 
-**Output:**
-- `subject_classifier.pkl` - trained subject classifier model
-- `vectorizer.pkl` - TF-IDF vectorizer
-- `label_encoder.pkl` - label encoder for subjects
+**Output:** One set of model files per trained classifier under `fine_tune_subject/models/<model_name>/`. Each model saves its own prefixed files (e.g. `svm_classifier.pkl` + `svm_vectorizer.pkl` + `svm_label_encoder.pkl` for SVM, `minilm_classifier.pkl` + `minilm_label_encoder.pkl` + `minilm_model_info.pkl` for LaBSE, etc.).
 
 ### For `fine_tune_type` Mode
 
-**Note:** This module will be refactored. Current dependencies similar to `fine_tune_subject`.
+**Required Files:**
+- CSV file: `data/sedici/csv/types.csv` (created by `fine_tune_type/create_types_csv.py`)
+- Text files (no XML tags) in `data/sedici/texts_no_tags/` folder (created by `fine_tune_type/convert_pdfs_to_txt.py`)
+
+**Output:** One set of model files per trained classifier under `fine_tune_type/models/<model_name>/`
 
 ### Execution Order
 
@@ -359,30 +360,19 @@ document_extraction_llm
 
 ## TODO
  changes to do in dataset:
-- add 2 more thesis and 2 more objects of conference to our dataset to have 15 types of each.
-- check isbn (see if it is better to do with rules... make a validation if the isbn that appears match with the real isbn)
-- see date in dataset. (make a double check only for date to see if we can increase the llm prediction remove date format, we could have only years years and month and year day and month... think in a way to translate to formated way)
-- events check as in dates.. maybe we have to remove parts of the event for example the date and only get the event title that is what appears in the pdf.
 
-other changes and tasks for our api and fine_tuning:
-- run all validation again with no isRelatedWith field.
 
 
 
 for our thesis:
-- make the comparission for each model. compare loss in training and loss in validation. Also make a comparission with frontend for each type and also by metadata.
+
 - add times comparision. (text extraction, running n pages, simple cant of pages, comparission of with tags and with no tags, comparission with abstract with no abtract, comparission with obj confe with no obj conf, comp with keywords with no keywords, comparission with susbject and with subject extracted by ml model, type ml model. finally we could add a comparission with deep-analyze extracted with and with no, also with more tokens the times comparission).
 
 
 
 de la cahrla:
-docker  (probarlo)
-imagenes del proyecto (arquitectura completa de la api y del proyecto entero el flujo).
-check cant of pages/words used in eery machine learning model (see if accuracy changes, see if we could only extract first pages as for other documents. understand and explain the ml models in tesis, also add some explianations and details of the ml report and how to change easy for other subjects standard, new models or also new types)
 
 
-- chequear varios con titulos extrajo bien?? hizo la normalizacion??
-: AAAANNNNÁÁÁÁLLLLIIIISSSSIIIISSSS DDDDEEEE LLLLOOOOSSSS CCCCIIIIRRRRCCCCUUUUIIIITTTTOOOOSSSS CCCCOOOORRRRTTTTOOOOSSSS DDDDEEEE CCCCOOOOMMMMEEEERRRRCCCCIIIIAAAALLLLIIIIZZZZAAAACCCCIIIIÓÓÓÓNNNN DDDDEEEE HHHHOOOORRRRTTTTAAAALLLLIIIIZZZZAAAASSSS YYYY SSSSUUUUSSSS IIIIMMMMPPPPLLLLIIIICCCCAAAANNNNCCCCIIIIAAAASSSS TTTTEEEERRRRRRRRIIIITTTTOOOORRRRIIIIAAAALLLLEEEESSSS EEEENNNN EEEELLLL PPPPEEEERRRRIIIIUUUURRRRBBBBAAAANNNNOOOO SSSSUUUURRRR DDDDEEEELLLL ÁÁÁÁRRRREtodasEEEAAAA MMMMEEEETTTTRRRROOOOPPPPOOOOLLLLIIIITTTTAAAANNNNAAAA DDDDEEEE BBBBUUUUEEEENNNNOOOOSSSS AAAAIIIIRRRREEEESSSS EEEENNNNTTTTRRRREEEE 2222000000009999 YYYY 2222000011119999
 
 
 
@@ -390,3 +380,16 @@ cases of study maybe possible tesys improvements:
 
 - simil tables format in pdf (change extraction for this cases?)
 - as for tables what happends for pages with entire image?
+
+
+
+we cahnge volumes we remove the ones that have only date or not contains vol
+issn ok from the new one
+remove accents in unicode to real accentes in text and also in the fields.
+we put the real journalTitle the one taht match with the real metadata.
+in fields with person we remove all honorifics also the institution associated if appear and also . ath the end of a word (no for first letter.) this apply to creator, coodirector, director, publisher, editor, collaborator.
+Origin PLace and Insititucion de Desarrollo apply normalization and add to the prompt to rename abbreviation to real name e.g UNLP => UNiversidad De La Plata, also with capital letter and lowercase. Exclude Conicet from this because is named more time like this, that with real Name.
+case of accents wrong putted addeit in normalization e.g Astrono´micas => Astronómicas
+degree renamed as in original, and add in prompt that has to be the graduate name not carrear name (Licenciado en ciencias informaticas  no Licenciatura en ciencias informaticas)
+
+	

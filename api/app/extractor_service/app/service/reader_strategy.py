@@ -37,7 +37,7 @@ class Reader:
         else:
             raise ValueError(f"No strategy for extension: {ext}")
 
-    
+
     def extract(self, strategy_method: Callable[[str], str], normalization: bool = True, ocr: bool = False) -> str:
         if self.error:
             return {
@@ -66,10 +66,16 @@ class Reader:
             return {
                 "success": False,
                 "error": {"message": IN_E["ERROR_EXTARCTING_TEXT"],"code": IN_E["CODE_ERROR_EXTARCTING_TEXT"]}}
-          
 
-    def get_text(self, normalization: bool = True, ocr: bool = False):
-        return self.extract(self.strategy.extract_text, normalization, ocr)
 
-    def get_text_with_tags(self, normalization: bool = True, ocr: bool = False):
-        return self.extract(self.strategy.extract_text_with_xml_tags, normalization, ocr)
+    def get_text(self, normalization: bool = True, ocr: bool = False, max_words: int = None):
+        return self.extract(
+            lambda path, ocr: self.strategy.extract_text(path, ocr, max_words),
+            normalization, ocr
+        )
+
+    def get_text_with_tags(self, normalization: bool = True, ocr: bool = False, max_words: int = None):
+        return self.extract(
+            lambda path, ocr: self.strategy.extract_text_with_xml_tags(path, ocr, max_words),
+            normalization, ocr
+        )

@@ -103,7 +103,7 @@ class DocxReader(ReaderStrategy):
         }
 
 
-    def extract_text_with_xml_tags(self, docx_path:str, ocr: bool = False) -> str:
+    def extract_text_with_xml_tags(self, docx_path: str, ocr: bool = False, max_words: int = None) -> str:
         """
         Extract text with XML tags and optionally OCR from images
 
@@ -162,7 +162,7 @@ class DocxReader(ReaderStrategy):
 
         return text_with_tags
     
-    def extract_text(self, docx_path: str, ocr: bool = False) -> str:
+    def extract_text(self, docx_path: str, ocr: bool = False, max_words: int = None) -> str:
         """
         Extract plain text from DOCX and optionally OCR from images
 
@@ -187,3 +187,4 @@ class DocxReader(ReaderStrategy):
                 print("❌ EasyOCR not available. Install with: pip install easyocr")
 
         return "\n".join(lines)
+

@@ -59,7 +59,7 @@ def add_schema_and_structure(dict_dataset):
             schema_type =get_schema_by_type(item["type"]) 
             output_text = json.dumps(get_general_dict(item))
             step_data.append({"input": input_text_schema(original_text,SCHEMA_GENERAL), "output": output_text})
-            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject" and k != "isRelatedWith"}
+            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "dc.type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject" and k != "isRelatedWith" and k != "isrelatedwith"}
             output_text = json.dumps(final_dict)
             step_data.append({"input": input_text_schema(original_text,schema_type), "output": output_text})
         formatted_data[step] = step_data
@@ -80,7 +80,7 @@ def add_prompt_and_structure(dict_dataset):
             prompt_type =get_prompt_by_type(item["type"]) 
             output_text = json.dumps(get_general_dict(item))
             step_data.append({"input": input_text(original_text,PROMPT_GENERAL), "output": output_text})
-            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject" and k != "isRelatedWith"}
+            final_dict = {k: v for k, v in item.items() if  k != "type" and k != "dc.type" and k != "original_text" and k != "keywords" and k != "dc.uri" and k != "sedici.uri" and k != "abstract" and k != "subject" and k != "isRelatedWith" and k != "isrelatedwith"}
             output_text = json.dumps(final_dict)
             step_data.append({"input": input_text(original_text,prompt_type), "output": output_text})
         formatted_data[step] = step_data

@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from pathlib import Path
 import sys
 from typing import Optional, Dict, Any
@@ -42,7 +43,7 @@ class CloudLLMValidator:
         """Get default model for each provider"""
         defaults = {
             "gemini": "gemini-2.0-flash-exp",
-            "openai": "gpt-4o",
+            "openai": "gpt-5.4-mini",
             "anthropic": "claude-3-5-sonnet-20241022"
         }
         return defaults.get(self.provider, "gemini-2.0-flash-exp")
@@ -205,8 +206,7 @@ class CloudLLMValidator:
         try:
             response = self.llm_client.chat.completions.create(
                 model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1
+                messages=[{"role": "user", "content": prompt}]
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -277,7 +277,7 @@ def main():
         validator = CloudLLMValidator(provider=provider, model=model)
         
         # Read JSON file
-        json_file_path = RESULT_FOLDER_VALIDATION / "test_metadata_validada.json"
+        json_file_path = RESULT_FOLDER_VALIDATION / "final_to_compare_original.json"
 
         print(json_file_path)
         
@@ -293,28 +293,57 @@ def main():
         
         print(f"📋 Found {len(data)} documents to process")
         
+        def _norm_type(t):
+            t = str(t).lower()
+            if "tesis" in t: return "Tesis"
+            if "articulo" in t or "artículo" in t: return "Articulo"
+            if "libro" in t: return "Libro"
+            if "conferencia" in t: return "Objeto de conferencia"
+            return "Other"
+
         # Process each document
         results = {}
         successful_count = 0
-        
+        doc_times = []
+        type_times = {}
+
         for doc_id, metadata in data.items():
             if not doc_id:
                 continue
-            
+
             # Construct PDF filename
             pdf_filename = f"{doc_id}.pdf"
             pdf_path = PDF_FOLDER / pdf_filename
-            
+
             if not pdf_path.exists():
                 print(f"⚠️ PDF file not found: {pdf_path}")
                 continue
-            
+
             # Process document
+            t0 = time.time()
             result = validator.process_document(doc_id, pdf_path)
+            elapsed = time.time() - t0
+            doc_times.append(elapsed)
+            norm = _norm_type(metadata.get("type", ""))
+            type_times.setdefault(norm, []).append(elapsed)
+            print(f"⏱️  {doc_id} took {elapsed:.2f}s")
+
             if result:
                 results[doc_id] = result
                 successful_count += 1
-        
+
+        # Print timing stats
+        if doc_times:
+            print(f"\n⏱️  Timing stats ({len(doc_times)} docs):")
+            print(f"   Min : {min(doc_times):.2f}s")
+            print(f"   Max : {max(doc_times):.2f}s")
+            print(f"   Avg : {sum(doc_times)/len(doc_times):.2f}s")
+            print(f"\n⏱️  Timing by type:")
+            for t in ["Libro", "Tesis", "Articulo", "Objeto de conferencia"]:
+                times = type_times.get(t, [])
+                if times:
+                    print(f"   {t} (n={len(times)}): min={min(times):.2f}s  max={max(times):.2f}s  avg={sum(times)/len(times):.2f}s")
+
         # Save results
         if results:
             timestamp = int(time.time())
@@ -332,7 +361,6 @@ def main():
         raise
 
 if __name__ == "__main__":
-    import time
     print(RESULT_FOLDER_VALIDATION)
     print("hola")
     main()

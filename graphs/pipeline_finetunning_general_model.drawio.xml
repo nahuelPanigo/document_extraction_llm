@@ -1,0 +1,140 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.6.6">
+  <diagram name="Pipeline — Fine-tuning LLM" id="finetunning-model">
+    <mxGraphModel dx="1826" dy="694" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1380" pageHeight="690" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=22;fontColor=#0F172A;" value="&lt;b&gt;Pipeline — Preparación de Dataset y Fine-tuning LLM&lt;/b&gt;" vertex="1">
+          <mxGeometry height="36" width="1280" x="50" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="bg_data" parent="1" style="rounded=1;arcSize=3;fillColor=#F0FDF4;strokeColor=#16A34A;opacity=25;" value="" vertex="1">
+          <mxGeometry height="320" width="1354" x="12" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl" parent="1" style="text;html=1;strokeColor=#16A34A;fillColor=#DCFCE7;rounded=1;arcSize=15;fontColor=#14532D;fontSize=15;fontStyle=1;align=center;shadow=1;" value="&lt;b&gt;FINE-TUNING LLM&lt;/b&gt;" vertex="1">
+          <mxGeometry height="26" width="155" x="18" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="csv_filt" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#FEF9C3;strokeColor=#CA8A04;fontColor=#713F12;fontSize=15;shadow=1;" value="&lt;b&gt;📗 filtered_2019_2024.csv&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:13px;&quot;&gt;Filtrado y normalizado&lt;/font&gt;" vertex="1">
+          <mxGeometry height="76" width="175" x="22" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="dl" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#3B82F6;fontColor=#1E3A5F;fontSize=15;shadow=1;" value="📥 Descarga PDF" vertex="1">
+          <mxGeometry height="52" width="140" x="226" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ext" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;fontColor=#0C4A6E;fontSize=15;shadow=1;" value="📝 Extraer Texto con Tags" vertex="1">
+          <mxGeometry height="52" width="155" x="400" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ren" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=15;shadow=1;" value="Renombrar Materias" vertex="1">
+          <mxGeometry height="52" width="148" x="592" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="json" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=15;shadow=1;" value="{ } Armar JSON" vertex="1">
+          <mxGeometry height="52" width="140" x="778" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="pre_cln" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#F97316;fontColor=#7C2D12;fontSize=15;shadow=1;" value="🧹 Limpieza Pre-LLM" vertex="1">
+          <mxGeometry height="72" width="148" x="956" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="llm_cld" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#CCFBF1;strokeColor=#0D9488;fontColor=#134E4A;fontSize=15;fontStyle=1;shadow=1;" value="☁ LLM Cloud&lt;br&gt;PROMPT_CLEANER" vertex="1">
+          <mxGeometry height="82" width="178" x="1142" y="104" as="geometry" />
+        </mxCell>
+        <mxCell id="post_cln" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#F97316;fontColor=#7C2D12;fontSize=15;shadow=1;" value="🧹 Limpieza Post-LLM" vertex="1">
+          <mxGeometry height="72" width="148" x="22" y="276" as="geometry" />
+        </mxCell>
+        <mxCell id="rules" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#EF4444;fontColor=#7F1D1D;fontSize=15;shadow=1;" value="✅ Validación Campos exactos(issn, isbn, etc)" vertex="1">
+          <mxGeometry height="72" width="160" x="208" y="276" as="geometry" />
+        </mxCell>
+        <mxCell id="norm" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#F97316;fontColor=#7C2D12;fontSize=15;shadow=1;" value="🧪 Normalización Final" vertex="1">
+          <mxGeometry height="72" width="148" x="406" y="276" as="geometry" />
+        </mxCell>
+        <mxCell id="split" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=15;shadow=1;" value="✂ Split  80 / 10 / 10 %" vertex="1">
+          <mxGeometry height="72" width="148" x="592" y="276" as="geometry" />
+        </mxCell>
+        <mxCell id="final_json" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=15;fontStyle=1;shadow=1;" value="&lt;b&gt;📋 Dataset Final&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:13px;&quot;&gt;~2000 muestras · 3 splits&lt;/font&gt;" vertex="1">
+          <mxGeometry height="84" width="175" x="780" y="264" as="geometry" />
+        </mxCell>
+        <mxCell id="ef1" edge="1" parent="1" source="csv_filt" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#CA8A04;strokeWidth=2;" target="dl" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef2" edge="1" parent="1" source="dl" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B82F6;strokeWidth=2;" target="ext" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef3" edge="1" parent="1" source="ext" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;strokeWidth=2;" target="ren" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef4" edge="1" parent="1" source="ren" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;strokeWidth=2;" target="json" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef5" edge="1" parent="1" source="json" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F97316;strokeWidth=2;" target="pre_cln" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef6" edge="1" parent="1" source="pre_cln" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0D9488;strokeWidth=2;" target="llm_cld" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef_bend" edge="1" parent="1" source="llm_cld" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0D9488;strokeWidth=2;fontSize=13;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;" target="post_cln" value="metadata validada">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1231" y="240" />
+              <mxPoint x="96" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ef7" edge="1" parent="1" source="post_cln" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#EF4444;strokeWidth=2;" target="rules" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef8" edge="1" parent="1" source="rules" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#F97316;strokeWidth=2;" target="norm" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef9" edge="1" parent="1" source="norm" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#16A34A;strokeWidth=2;" target="split" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef10" edge="1" parent="1" source="split" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D97706;strokeWidth=2;" target="final_json" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ftbox" parent="1" style="swimlane;startSize=36;fillColor=#FDF4FF;strokeColor=#A855F7;fontColor=#581C87;fontSize=18;fontStyle=1;rounded=1;arcSize=3;shadow=1;" value="Fine-tuning LLM" vertex="1">
+          <mxGeometry height="258" width="415" x="22" y="404" as="geometry" />
+        </mxCell>
+        <mxCell id="ft_sub" parent="ftbox" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontColor=#A855F7;fontSize=14;fontStyle=2;" value="🤗 HuggingFace · Transformers · PEFT/LoRA" vertex="1">
+          <mxGeometry height="18" width="395" x="10" y="38" as="geometry" />
+        </mxCell>
+        <mxCell id="ft1" parent="ftbox" style="rounded=1;arcSize=15;fillColor=#F5D0FE;strokeColor=#A855F7;fontColor=#581C87;fontSize=16;" value="LED" vertex="1">
+          <mxGeometry height="40" width="190" x="10" y="64" as="geometry" />
+        </mxCell>
+        <mxCell id="ft2" parent="ftbox" style="rounded=1;arcSize=15;fillColor=#F5D0FE;strokeColor=#A855F7;fontColor=#581C87;fontSize=16;" value="Gemma (Google)" vertex="1">
+          <mxGeometry height="40" width="190" x="215" y="64" as="geometry" />
+        </mxCell>
+        <mxCell id="ft3" parent="ftbox" style="rounded=1;arcSize=15;fillColor=#F5D0FE;strokeColor=#A855F7;fontColor=#581C87;fontSize=16;" value="Mistral 7B" vertex="1">
+          <mxGeometry height="40" width="190" x="10" y="114" as="geometry" />
+        </mxCell>
+        <mxCell id="ft4" parent="ftbox" style="rounded=1;arcSize=15;fillColor=#F5D0FE;strokeColor=#A855F7;fontColor=#581C87;fontSize=16;" value="LLaMA 3" vertex="1">
+          <mxGeometry height="40" width="190" x="215" y="114" as="geometry" />
+        </mxCell>
+        <mxCell id="ft_note" parent="ftbox" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontColor=#7E22CE;fontSize=15;" value="Open-Source" vertex="1">
+          <mxGeometry height="22" width="395" x="10" y="162" as="geometry" />
+        </mxCell>
+        <mxCell id="ft_best" parent="ftbox" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontColor=#A855F7;fontSize=16;fontStyle=1;" value="⬇  &lt;b&gt;Mejor Modelo&lt;/b&gt;" vertex="1">
+          <mxGeometry height="28" width="395" x="10" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="ft_peft" parent="ftbox" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontColor=#7E22CE;fontSize=14;" value=".safetensors · HuggingFace Hub" vertex="1">
+          <mxGeometry height="22" width="395" x="10" y="224" as="geometry" />
+        </mxCell>
+        <mxCell id="ft_model" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#F5D0FE;strokeColor=#A855F7;fontColor=#581C87;fontSize=15;fontStyle=1;shadow=1;" value="&lt;b&gt;Modelo Fine-tuneado&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:13px;&quot;&gt;.safetensors · LED&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="195" x="490" y="468" as="geometry" />
+        </mxCell>
+        <mxCell id="api" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#1E3A5F;strokeColor=#0F172A;fontColor=#F8FAFC;fontSize=16;fontStyle=1;shadow=1;dashed=1;strokeWidth=2;" value="🚀 API Productiva" vertex="1">
+          <mxGeometry height="52" width="180" x="730" y="473" as="geometry" />
+        </mxCell>
+        <mxCell id="ef11" edge="1" parent="1" source="final_json" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#A855F7;strokeWidth=2.5;fontSize=13;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;" target="ftbox" value="ingesta de entrenamiento">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="388" />
+              <mxPoint x="230" y="388" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ef12" edge="1" parent="1" source="ftbox" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#A855F7;strokeWidth=2;exitX=1;exitY=0.65;exitDx=0;exitDy=0;entryX=0;entryY=0.5;" target="ft_model" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ef13" edge="1" parent="1" source="ft_model" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#581C87;strokeWidth=1.5;dashed=1;fontSize=14;" target="api" value="deploy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

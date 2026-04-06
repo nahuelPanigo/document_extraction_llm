@@ -52,7 +52,9 @@ curl -X POST http://localhost:8000/upload \
     "date": "...",
     "rights": "...",
     "director": "...",
-    "codirector": "..."
+    "codirector": "...",
+    "abstract": "...",
+    "keywords": {"real": "" , "suggested": ""}
   },
   "error": null
 }
@@ -122,7 +124,7 @@ Based on the detected (or provided) document type, a strategy is selected. Each 
 | Libro | Book | General + `publisher`, `isbn`, `compiler` |
 | Articulo | Article | General + `journalTitle`, `journalVolumeAndIssue`, `issn`, `event` |
 | Objeto de conferencia | Conference Object | General + `issn`, `event` |
-| General | Fallback | `creator`, `title`, `rights`, `rightsurl`, `date`, `originPlaceInfo` |
+| General | Fallback | `creator`, `title`, `rights`, `rightsurl`, `date`, `originPlaceInfo` , `abstract`, `keywords` |
 
 This is why type detection matters — the LLM only extracts the fields relevant to the document type.
 
@@ -137,6 +139,7 @@ All models must be placed in `api/app/orchestrator/app/models/`:
 | `svm_classifier.pkl` | ~66 MB | Subject SVM classifier |
 | `svm_vectorizer.pkl` | ~2.7 MB | TF-IDF vectorizer for subject classification |
 | `svm_label_encoder.pkl` | ~8 KB | Label encoder for subject predictions |
+| `tfidf_vectorizer.pkl` | ~198 KB | TF-IDF vectorizer for kewywords extraction |
 
 ## Requirements
 
@@ -147,6 +150,7 @@ scikit-learn>=1.2.0
 joblib>=1.2.0
 requests
 python-dotenv
+nltk
 ```
 
 ## Location
@@ -165,12 +169,14 @@ api/app/orchestrator/
     ├── models/
     │   ├── modelo_tipo_documento.pkl
     │   ├── vectorizador_tfidf.pkl
+    │   ├── tfidf_vectorizer.pkl
     │   ├── svm_classifier.pkl
     │   ├── svm_vectorizer.pkl
     │   └── svm_label_encoder.pkl
     └── service/
         ├── orchestrator.py          # Main coordination logic
-        ├── identifier/              # ML type & subject prediction
+        ├── pattern_extraction       # Keywords and abstract extraction
+        ├── identifier.py            # ML type & subject prediction
         └── strategy/
             └── type_strategy.py     # Type-specific prompt builders
 ```

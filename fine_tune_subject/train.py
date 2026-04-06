@@ -12,9 +12,10 @@ Usage:
 import sys
 import argparse
 import numpy as np
+from constants import CSV_FOLDER, CSV_SUBJECTS, TXT_FOLDER
 from utils.colors.colors_terminal import Bcolors
-from fine_tune_subject.utils.dataset.data_loader import load_csv_subjects, create_dataset
-from fine_tune_subject.strategies import (
+from utils.ml_strategies.data_loader import load_csv_labels, create_dataset
+from utils.ml_strategies.strategies import (
     SVMTrainingStrategy,
     XGBoostTrainingStrategy,
     RandomForestTrainingStrategy,
@@ -100,8 +101,8 @@ def train_single_model(model_name):
 
     # Load data
     print(f"\n{Bcolors.HEADER}=== Loading Data ==={Bcolors.ENDC}")
-    subject_mapping = load_csv_subjects()
-    documents, labels, document_ids = create_dataset(subject_mapping)
+    subject_mapping = load_csv_labels(CSV_FOLDER / CSV_SUBJECTS, label_column='subject')
+    documents, labels, document_ids = create_dataset(subject_mapping, TXT_FOLDER, min_frequency=5, max_per_label=200, random_state=42)
 
     if len(documents) == 0:
         print(f"{Bcolors.FAIL}No documents found!{Bcolors.ENDC}")
@@ -133,8 +134,8 @@ def train_all_models(run_compare=False):
 
     # Load data once for all models
     print(f"\n{Bcolors.HEADER}=== Loading Data ==={Bcolors.ENDC}")
-    subject_mapping = load_csv_subjects()
-    documents, labels, document_ids = create_dataset(subject_mapping)
+    subject_mapping = load_csv_labels(CSV_FOLDER / CSV_SUBJECTS, label_column='subject')
+    documents, labels, document_ids = create_dataset(subject_mapping, TXT_FOLDER, min_frequency=5, max_per_label=200, random_state=42)
 
     if len(documents) == 0:
         print(f"{Bcolors.FAIL}No documents found!{Bcolors.ENDC}")

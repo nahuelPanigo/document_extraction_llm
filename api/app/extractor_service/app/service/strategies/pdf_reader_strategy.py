@@ -16,69 +16,6 @@ class PdfReader(ReaderStrategy):
             cls.instance = super(PdfReader, cls).__new__(cls)
         return cls.instance
 
-    def _detect_column_layout(self, page):
-        """
-        Detect if a page has a 2-column layout and extract accordingly.
-        Returns column-extracted text if columns detected, None otherwise.
-        """
-        words = page.extract_words()
-        if not words:
-            return None
-
-        page_width = page.width
-        gap_threshold = page_width * 0.15
-
-        # Group words by row
-        rows = {}
-        for word in words:
-            row_key = round(word['top'] / 5) * 5
-            if row_key not in rows:
-                rows[row_key] = []
-            rows[row_key].append(word)
-
-        total_rows = len(rows)
-        if total_rows < 4:
-            return None
-
-        # Count how many rows have a large horizontal gap (column separator)
-        rows_with_gap = 0
-        for row_key in rows:
-            row_words = sorted(rows[row_key], key=lambda w: w['x0'])
-            for i in range(1, len(row_words)):
-                gap = row_words[i]['x0'] - row_words[i - 1]['x1']
-                if gap > gap_threshold:
-                    rows_with_gap += 1
-                    break
-
-        # Need >50% of rows with gaps to consider it a column layout
-        if rows_with_gap <= total_rows * 0.5:
-            return None
-
-        # It's a 2-column layout - split words by midpoint
-        mid_point = page_width / 2
-        left_words = [w for w in words if (w['x0'] + w['x1']) / 2 < mid_point]
-        right_words = [w for w in words if (w['x0'] + w['x1']) / 2 >= mid_point]
-
-        def words_to_text(col_words):
-            col_rows = {}
-            for word in col_words:
-                row_key = round(word['top'] / 5) * 5
-                if row_key not in col_rows:
-                    col_rows[row_key] = []
-                col_rows[row_key].append(word)
-            lines = []
-            for rk in sorted(col_rows.keys()):
-                rw = sorted(col_rows[rk], key=lambda w: w['x0'])
-                line = ' '.join(w['text'] for w in rw)
-                if line.strip():
-                    lines.append(line)
-            return '\n'.join(lines)
-
-        left_text = words_to_text(left_words)
-        right_text = words_to_text(right_words)
-
-        return f"{left_text}\n\n{right_text}"
-
     def get_correct_tag(self,font_size,sizes):
         """this function returns the correct tag based on the font size"""
         if font_size >= sizes['h1']:
@@ -88,21 +25,14 @@ class PdfReader(ReaderStrategy):
         return "p"
 
 
-    def extract_text_with_xml_tags(self, pdf_path, ocr=True):
-        """
-        Extract text with XML tags and optionally OCR from images
-        
-        Args:
-            pdf_path: Path to PDF file
-            ocr: Boolean flag to enable/disable OCR processing
-        """
+    def extract_text_with_xml_tags(self, pdf_path, ocr=True, max_words=None):
+        """Extract text with XML tags. If max_words is set, stops after that many words (per-page boundary)."""
         sizes_dict = self.get_fontsizes(pdf_path)
         print(sizes_dict)
-        
-        # Initialize OCR if enabled
+
         ocr_reader = None
-        processed_image_sizes = set()  # Track processed image sizes to avoid duplicates
-        
+        processed_image_sizes = set()
+
         if ocr:
             try:
                 import easyocr
@@ -111,53 +41,47 @@ class PdfReader(ReaderStrategy):
             except ImportError:
                 print("❌ EasyOCR not available. Install with: pip install easyocr")
                 ocr = False
-        
+
         with pdfplumber.open(pdf_path) as pdf:
-            # Get initial tag and font size
             try:
                 first_word = pdf.pages[0].extract_words()[0]
-                current_fontsize = round(float(first_word['height'])) 
+                current_fontsize = round(float(first_word['height']))
                 current_tag = self.get_correct_tag(current_fontsize, sizes_dict)
-            except:
-                current_tag = "p"    
+            except Exception:
+                current_tag = "p"
                 current_fontsize = 10
-                
+
             text_with_tags = f"<{current_tag}>"
             current_text = []
             words = 0
-            
-            # Process each page
+
             for page_idx, page in enumerate(pdf.pages):
                 page_words = page.extract_words()
                 words += len(page_words)
-                
-                # Extract text with tags (existing logic)
+
                 for obj in page_words:
                     font_size = round(float(obj['height']))
                     if current_fontsize != font_size:
-                        text_with_tags += " ".join(current_text) 
+                        text_with_tags += " ".join(current_text)
                         text_with_tags += f"</{current_tag}>"
                         current_text = []
                         current_fontsize = font_size
                         current_tag = self.get_correct_tag(current_fontsize, sizes_dict)
                         text_with_tags += f"<{current_tag}>"
                     current_text.append(obj['text'])
-                
-                # OCR processing at end of each page
+
                 if ocr and ocr_reader:
                     ocr_text = self._extract_ocr_from_page(
                         pdf_path, page_idx + 1, page, processed_image_sizes, ocr_reader
                     )
                     if ocr_text:
                         text_with_tags += ocr_text
-                
-                # Check word limit
-                if words > 4000:
-                    text_with_tags += " ".join(current_text) 
+
+                if max_words and words >= max_words:
+                    text_with_tags += " ".join(current_text)
                     text_with_tags += f"</{current_tag}>"
                     return text_with_tags
-            
-            # Close final tag
+
             text_with_tags += " ".join(current_text)
             text_with_tags += f"</{current_tag}>"
             return text_with_tags
@@ -284,48 +208,50 @@ class PdfReader(ReaderStrategy):
             }
 
 
-    def extract_text(self, pdf_path: str, ocr: bool = False) -> str:
+    def _process_page_plain(self, page, ocr_reader=None):
         """
-        Extract plain text from PDF and optionally OCR from images
+        Extract plain text from one page, optionally with OCR.
+        Returns (chunks, word_count) where chunks is a list of text strings.
+        """
+        chunks = []
+        text = page.extract_text()
+        word_count = len(text.split()) if text else 0
+        if text:
+            chunks.append(text.strip())
 
-        Args:
-            pdf_path: Path to PDF file
-            ocr: Boolean flag to enable/disable OCR processing
-        """
+        if ocr_reader:
+            try:
+                page_image = page.to_image(resolution=300).original
+                results = ocr_reader.readtext(page_image, detail=0)
+                ocr_text = "\n".join(results)
+                if ocr_text.strip():
+                    chunks.append(ocr_text.strip())
+            except Exception as e:
+                print(f"OCR failed on page: {e}")
+
+        return chunks, word_count
+
+    def extract_text(self, pdf_path: str, ocr: bool = False, max_words: int = None) -> str:
+        """Extract plain text. If max_words is set, stops after that many words (per-page boundary)."""
         print("Extracting text from PDF...")
-
-        # Initialize OCR if enabled
         ocr_reader = None
-        processed_image_sizes = set()
-
         if ocr:
             try:
                 import easyocr
-                print("🔧 Initializing EasyOCR for image text extraction...")
+                print("🔧 Initializing EasyOCR...")
                 ocr_reader = easyocr.Reader(['en', 'es'])
             except ImportError:
                 print("❌ EasyOCR not available. Install with: pip install easyocr")
-                ocr = False
 
         with pdfplumber.open(pdf_path) as pdf:
-            lines = []
-            for page_idx, page in enumerate(pdf.pages):
-                # Try column detection first, fall back to normal extraction
-                text = self._detect_column_layout(page)
-                if text is None:
-                    text = page.extract_text()
-                if text:
-                    lines.append(text.strip())
+            all_chunks = []
+            total_words = 0
+            for page in pdf.pages:
+                chunks, page_word_count = self._process_page_plain(page, ocr_reader)
+                all_chunks.extend(chunks)
+                total_words += page_word_count
+                if max_words and total_words >= max_words:
+                    break
 
-                # Extract OCR text from images if enabled
-                if ocr and ocr_reader:
-                    ocr_text = self._extract_ocr_from_page(
-                        pdf_path, page_idx + 1, page, processed_image_sizes, ocr_reader
-                    )
-                    if ocr_text:
-                        # Remove tags for plain text output
-                        ocr_plain = ocr_text.replace('<img>', '').replace('</img>', '')
-                        lines.append(ocr_plain.strip())
-
-            return "\n\n".join(lines) 
+        return "\n\n".join(all_chunks)
 

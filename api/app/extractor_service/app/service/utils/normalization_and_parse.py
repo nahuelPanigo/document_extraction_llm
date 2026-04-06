@@ -47,8 +47,34 @@ def fix_unicode_escapes(text):
     return re.sub(r'\\u([0-9A-Fa-f]{4})', lambda m: chr(int(m.group(1), 16)), text)
 
 
+# OCR artifact: acute accent (´ U+00B4) extracted as a standalone character
+# adjacent to the vowel it should modify.
+# Two patterns:
+#   vowel + ´  →  accented vowel   (e.g. "Astrono´mica" → "Astronómica")
+#   ´ + vowel  →  accented vowel   (e.g. "Inform´atica"  → "Informática")
+# Also handles dotless-i ı (U+0131) which OCR sometimes produces instead of i:
+#   "Geof´ısica" → "Geofísica"
+_VOWEL_ACUTE_MAP = {
+    'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú',
+    'A': 'Á', 'E': 'É', 'I': 'Í', 'O': 'Ó', 'U': 'Ú',
+    'ı': 'í',  # dotless i U+0131
+}
+_ACUTE_AFTER_RE  = re.compile(r'([aeiouAEIOUı])\u00b4')  # vowel + ´
+_ACUTE_BEFORE_RE = re.compile(r'\u00b4([aeiouAEIOUı])')  # ´ + vowel
+
+
+def fix_ocr_accents(text: str) -> str:
+    """Fix standalone acute accent (´) adjacent to a vowel — common PDF/OCR artifact."""
+    if not isinstance(text, str) or '\u00b4' not in text:
+        return text
+    text = _ACUTE_AFTER_RE.sub(lambda m: _VOWEL_ACUTE_MAP[m.group(1)], text)
+    text = _ACUTE_BEFORE_RE.sub(lambda m: _VOWEL_ACUTE_MAP[m.group(1)], text)
+    return text
+
+
 def normalice_text(text):
     text = fix_unicode_escapes(text)
+    text = fix_ocr_accents(text)
     text =  re.sub(r"\.{2,}", " ", text)
     text = corregir_numeros_repetidos(text)
     text = re.sub(r"([{}[\]()*\-+?,:;._!@#$%^&])\1{2,}", r"\1", text)

@@ -205,17 +205,17 @@ You are an expert in metadata validation and text analysis. Your task is to proc
 
 ### special case for date:
 
-The date field MUST always be normalized to one of these ISO-like formats (from most specific to least specific):
-- "dd-mm-yyyy" (e.g. "15-03-2020") — when full date is available
-- "mm-yyyy" (e.g. "08-2023") — when only month and year are available
+The date field MUST always be normalized to one of these formats (from most specific to least specific):
+- "yyyy/mm/dd" (e.g. "2020/03/15") — when full date is available
+- "yyyy/mm" (e.g. "2023/08") — when only month and year are available
 - "yyyy" (e.g. "2021") — when only year is available
 - null — when no date information appears in the text at all
 
 Strict rules for date:
 - If the text contains a month name (in any language), translate it to its 2-digit number. Use leading zeros (e.g. January = 01, August = 08).
 - If the text contains only a year, return only "yyyy".
-- If the text contains month and year but no day, return "mm-yyyy".
-- If the text contains day, month, and year, return "dd-mm-yyyy". Use leading zeros for day (e.g. 5 = 05).
+- If the text contains month and year but no day, return "yyyy/mm".
+- If the text contains day, month, and year, return "yyyy/mm/dd". Use leading zeros for day and month (e.g. 5 = 05).
 - If the metadata has a date but NO date information appears anywhere in the text, set date to null.
 - Do NOT invent or guess date components that are not present in the text.
 - IMPORTANT: When in doubt, prefer null. If you are not certain that a date in the text corresponds to the publication/submission date of the document (and not some other date mentioned in the content), set date to null. It is better to return null than to return a wrong date.
@@ -228,19 +228,19 @@ Month name translation reference:
 Date examples:
 
 Input text mentions: "agosto 2016"
-Output date: "08-2016"
+Output date: "2016/08"
 
 Input text mentions: "published in 2024"
 Output date: "2024"
 
 Input text mentions: "15 de marzo de 2020"
-Output date: "15-03-2020"
+Output date: "2020/03/15"
 
 Input text mentions: "September 2019"
-Output date: "09-2019"
+Output date: "2019/09"
 
 Input text mentions: "submitted on March 5, 2021"
-Output date: "05-03-2021"
+Output date: "2021/03/05"
 
 Input text mentions no date at all:
 Output date: null
@@ -294,6 +294,7 @@ Pay special attention to abbreviations and initials for institutions and places.
 - And similar institutional abbreviations.
 
 Strict rules for originPlaceInfo:
+- Capitalisation: always use title case (only the first letter of each significant word capitalised). Prepositions and conjunctions stay lowercase (de, del, y, en, a, con, por, etc.). Do NOT write the full name in all capitals. ONLY abbreviations and acronyms stay in all caps (e.g. UNLP, CONICET, UBA, UTN). Example: "FACULTAD DE CIENCIAS EXACTAS" → "Facultad de Ciencias Exactas".
 - If the metadata contains a full institution name (e.g. "Universidad Nacional de La Plata") and the text contains its abbreviation or initials (e.g. "UNLP"), consider it a match and keep the full name from the metadata.
 - If the text contains the abbreviation/initials but NOT the full name, still keep the metadata value as it matches the institution.
 - This field is an EXCEPTION to the general rule: even if the metadata value is null, empty, or does not match the text, if the text clearly mentions a faculty, university, or organization where the work originates, you should extract and return it.
@@ -302,6 +303,11 @@ Strict rules for originPlaceInfo:
 - Do not duplicate: if multiple authors share the same faculty, list it only once.
 - Typical values include: "Facultad de ..." (faculties), "Universidad Nacional de ..." (universities), organizations, editorial units, or research networks.
 - Do NOT confuse originPlaceInfo with institucionDesarrollo. originPlaceInfo is the broader origin (faculty, university), while institucionDesarrollo is the specific research unit (lab, institute, center).
+- Institution name canonicalization — always apply these rules:
+  - Expand university abbreviations to their full name: UNLP → "Universidad Nacional de La Plata", UBA → "Universidad de Buenos Aires", UTN → "Universidad Tecnológica Nacional", UNC → "Universidad Nacional de Córdoba".
+  - CONICET is an exception: always keep "CONICET", never write the full name "Consejo Nacional de Investigaciones Científicas y Técnicas". If the text has the full name (with or without the "(CONICET)" parenthetical), output just "CONICET".
+  - "Facultad de Bellas Artes" was renamed to "Facultad de Artes" in 2014 — always use "Facultad de Artes".
+  - Do NOT append redundant institutional labels in parentheses such as "(UNLP)" or "(UBA)" after a faculty name you have already identified.
 
 ### special case for institucionDesarrollo (Tesis only):
 
@@ -316,11 +322,14 @@ Typical values are research labs, institutes, or centers within a university, su
 This field is an EXCEPTION to the general rule: even if the metadata value is null or empty, if the text mentions a specific research center, laboratory, or institute where the research was conducted, you should extract and return it.
 
 Strict rules for institucionDesarrollo:
+- Capitalisation: same rule as originPlaceInfo — use title case, keep abbreviations/acronyms in all caps (e.g. CONICET, INTA, UNLP), never write the full name in all capitals.
+- Apply the same canonicalization rules as originPlaceInfo: expand UNLP/UBA/UTN to full name, keep "CONICET" as abbreviation, use "Facultad de Artes" not "Facultad de Bellas Artes".
 - This field applies ONLY to Tesis documents. For other document types, ignore it.
 - Look for mentions of research units identified by keywords like "Instituto", "Laboratorio", "Centro de Investigación", "Centro de Estudios", "Grupo de Investigación", "Unidad de Investigación", "Cátedra".
 - If the metadata has a value, validate it against the text using the same abbreviation matching rules as originPlaceInfo.
 - If the metadata is null/empty but the text clearly mentions a research center, lab, or institute where the thesis was developed, extract and return it.
-- If multiple institutions are mentioned, include only the one(s) directly related to the thesis research development.
+- If multiple research units are mentioned, return them as a JSON array with each unit as a separate element — do NOT join them into a single comma-separated string. Order the elements by their first appearance in the text. Example: ["Centro de Química Inorgánica", "Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas"]. If the input metadata has them in a different order or concatenated, correct it.
+- If only one research unit is found, return it as a plain string (not an array).
 - Use the full institutional name as it appears in the text. If only an abbreviation appears, return the abbreviation.
 - Do NOT confuse with originPlaceInfo: institucionDesarrollo is the specific research unit (lab/institute/center), not the faculty or university.
 
@@ -339,6 +348,7 @@ Strict rules:
   - Forms already in person form ("Licenciado en X", "Doctor en X") stay unchanged.
 - The degree MUST include the subject area when available (e.g. "Licenciado en Química", NOT just "Licenciado").
 - Gender: use masculine form unless the text or the author's name clearly indicates feminine gender.
+- Capitalisation: preserve the capitalisation as it appears in the text. Do not convert the entire value to uppercase.
 - Context inference — if degree.name is null/empty but the text contains enough context, infer it:
   - Look for phrases like: "para obtener el grado de", "para acceder al título de", "trabajo final de licenciatura", "tesis doctoral", "tesis de grado".
   - If the text mentions a faculty name alongside "trabajo final" or a degree reference, map it to its most common degree. Examples:
@@ -356,6 +366,17 @@ Text: "trabajo final para obtener el título de Licenciada en Psicología" → O
 Text: "trabajo final" + "Facultad de Nutrición" (no explicit degree stated) → Output: "Licenciado en Nutrición"
 Text: "tesis doctoral" + "Facultad de Ciencias Exactas" (no specific degree) → Output: null
 
+### special case for degree.grantor (Tesis only):
+
+degree.grantor is the institution that awards (grants) the academic degree. It applies ONLY to Tesis documents.
+
+Strict rules for degree.grantor:
+- Always expand abbreviations to the full institution name.
+  Examples: UNLP → "Universidad Nacional de La Plata", UBA → "Universidad de Buenos Aires",
+            UNC → "Universidad Nacional de Córdoba", UTN → "Universidad Tecnológica Nacional".
+- If degree.grantor is not explicitly stated in the text, set it to null.
+- Do NOT infer or guess the grantor institution from context alone.
+
 ### special case for name fields (creator, director, codirector, compiler, collaborator, editor, publisher):
 
 These fields contain people's names (or an organization name for publisher). Apply these cleaning rules to ALL of them:
@@ -371,6 +392,7 @@ Strict rules:
 - Remove trailing periods that are not part of the name (e.g. "Leandro Adrián." → "Leandro Adrián").
 - Do NOT remove organization names when they ARE the value (e.g. publisher: "Editorial UNLP" → keep).
 - If the field is a list, apply these rules to each element independently.
+- When a field contains multiple people (array), always return the elements in the same order they appear in the text. If the input metadata has them in a different order, fix it.
 - Return only the clean name: e.g. "García, María José" or "María José García".
 
 Name field examples:
@@ -382,6 +404,15 @@ Input: "Chamorro, Adriana (FCAyF-UNLP)"           → Output: "Chamorro, Adriana
 Input: "Girón, Paula (EEA INTA General Villegas)" → Output: "Girón, Paula"
 Input: "Di Paolo, Leandro Adrián."                → Output: "Di Paolo, Leandro Adrián"
 Input: ["Dr. Luis López", "Lic. Ana Martínez (CONICET)"] → Output: ["Luis López", "Ana Martínez"]
+
+### special case for journalTitle:
+
+The journalTitle field contains the full name of the journal where the article was published.
+
+Strict rules for journalTitle:
+- Extract the journal name exactly as it appears in the text — do not shorten, truncate, or omit any words.
+- Do NOT invent, approximate, or guess a journal name that is not clearly present in the text.
+- If the journal name does not appear in the text, set journalTitle to null.
 
 ### special case for journalVolumeAndIssue:
 
@@ -413,7 +444,8 @@ Normalization rules:
 - Convert all variants of "number", "issue", "n°", "nº", etc. to "no".
 - Convert any form of "special issue" or "special number" to "especial".
 - Convert patterns like "7 (2)" or "9(2)" into "vol 7, no 2".
-- If the text contains only a year, return only the year.
+- A standalone year is NOT a valid value for this field. journalVolumeAndIssue MUST include at least a volume number ("vol N") or issue number ("no N").
+- If no volume or issue information is found in the text, set journalVolumeAndIssue to null.
 - Remove months, editorial notes, and unrelated text.
 - Do NOT invent missing values.
 
@@ -428,8 +460,8 @@ Output: "vol 8, no 2, suplemento 1"
 Input: "Número Especial, Septiembre 2020"
 Output: "especial, 2020"
 
-Input: "2021"
-Output: "2021"
+Input: "2021" (year only, no volume or issue)
+Output: null
 
 ### Full input/output examples:
 
@@ -442,24 +474,24 @@ Output example:
 
 Input example:
 - Text: "Dr. María García collaborated with John O'Connor to publish this work in august 2023."
-- Metadata: {"creator":["Garcia, Maria", "OConnor, John"], "date": "01-08-2023", "publisher": "AI Press"}
+- Metadata: {"creator":["Garcia, Maria", "OConnor, John"], "date": "2023/08/01", "publisher": "AI Press"}
 
 Output example:
-{"creator": ["María García", "John O'Connor"], "date": "08-2023"}
+{"creator": ["María García", "John O'Connor"], "date": "2023/08"}
 
 Input example:
 - Text: "Presentado en el IV Congreso Internacional de Enseñanza del Derecho durante agosto 2019."
-- Metadata: {"event": "IV Congreso Internacional de Enseñanza del Derecho (La Plata, modalidad virtual, 23 al 26 de agosto de 2019)", "date": "23-08-2019"}
+- Metadata: {"event": "IV Congreso Internacional de Enseñanza del Derecho (La Plata, modalidad virtual, 23 al 26 de agosto de 2019)", "date": "2019/08/23"}
 
 Output example:
-{"event": "IV Congreso Internacional de Enseñanza del Derecho", "date": "08-2019"}
+{"event": "IV Congreso Internacional de Enseñanza del Derecho", "date": "2019/08"}
 
 Input example:
 - Text: "Publicado en Revista de Derecho, volumen 5 número 3, septiembre 2020."
-- Metadata: {"journalTitle": "Revista de Derecho", "journalVolumeAndIssue": "Vol. 5, N° 3", "date": "01-09-2020"}
+- Metadata: {"journalTitle": "Revista de Derecho", "journalVolumeAndIssue": "Vol. 5, N° 3", "date": "2020/09/01"}
 
 Output example:
-{"journalTitle": "Revista de Derecho", "journalVolumeAndIssue": "vol 5, no 3", "date": "09-2020"}
+{"journalTitle": "Revista de Derecho", "journalVolumeAndIssue": "vol 5, no 3", "date": "2020/09"}
 
 Input example (Tesis with institucionDesarrollo):
 - Text: "Tesis presentada para obtener el grado de Doctor en Ciencias Naturales, Facultad de Ciencias Naturales y Museo, UNLP. El trabajo fue realizado en el Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas (INIFTA). Director: Dr. Juan Pérez."
@@ -467,6 +499,13 @@ Input example (Tesis with institucionDesarrollo):
 
 Output example:
 {"originPlaceInfo": "Facultad de Ciencias Naturales y Museo", "institucionDesarrollo": "Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas", "director": "Juan Pérez", "degree.grantor": "Universidad Nacional de La Plata", "degree.name": "Doctor en Ciencias Naturales", "date": "2022"}
+
+Input example (Tesis with multiple institucionDesarrollo):
+- Text: "El trabajo fue realizado en el Centro de Química Inorgánica (CEQUINOR) y en el Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas (INIFTA). Autores: López, Ana; García, Carlos."
+- Metadata: {"originPlaceInfo": "Facultad de Ciencias Exactas", "institucionDesarrollo": "Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas, Centro de Química Inorgánica", "creator": ["García, Carlos", "López, Ana"], "date": "2021"}
+
+Output example:
+{"originPlaceInfo": "Facultad de Ciencias Exactas", "institucionDesarrollo": ["Centro de Química Inorgánica", "Instituto de Investigaciones Fisicoquímicas Teóricas y Aplicadas"], "creator": ["López, Ana", "García, Carlos"], "date": "2021"}
 
 you must pay attention in the json provided after this:
 """
@@ -698,91 +737,205 @@ PROMPT_CLOUD_LLM_VALIDATOR = """You are an expert metadata extraction system spe
 
 **TASK**: Extract metadata from the provided academic document text and return it in JSON format.
 
-**DOCUMENT TYPES TO CONSIDER**:
-The document could be one of these types, each with specific metadata fields:
+**STEP 1 — CLASSIFY DOCUMENT TYPE**:
+First, determine which type the document belongs to. Include it in the output as "dc.type":
+- "Tesis" — thesis or dissertation (look for: director, degree, "para obtener el grado de", "trabajo final")
+- "Articulo" — journal article (look for: journal name, volume, issue, ISSN)
+- "Libro" — book (look for: ISBN, publisher, editorial)
+- "Objeto de conferencia" — conference paper/poster (look for: conference name, proceedings, "congreso", "jornadas")
 
-1. **TESIS** (Thesis): Includes director, codirector, degree.grantor, degree.name
-2. **ARTÍCULO** (Article): Includes journalTitle, journalVolumeAndIssue, issn, event
-3. **LIBRO** (Book): Includes publisher, isbn, compiler, editor
-4. **OBJETO DE CONFERENCIA** (Conference Object): Includes issn, event
-
-**METADATA FIELDS TO EXTRACT**:
+**STEP 2 — EXTRACT METADATA FIELDS**:
 
 **Common fields for all document types:**
-- language: Document language (es/en/pt/etc.)
+- dc.type: Document type (one of: "Tesis", "Articulo", "Libro", "Objeto de conferencia")
+- language: Detect the language the document is written in and return it as a two-letter ISO 639-1 code (es/en/pt/fr/etc.). NEVER omit this field — always return a value.
 - title: Main document title
-- creator: Author(s) - extract as array if multiple authors
-- subject: Academic subject/discipline (map to FORD classification if possible)
-- keywords: Keywords or terms describing the document content
-- rights: License information (e.g., Creative Commons)
-- rightsurl: URL of the license
-- date: Publication date (format: YYYY-MM-DD, YYYY-MM, or YYYY)
-- originPlaceInfo: Institution, faculty, or organization
-- isRelatedWith: Related URI or identifier
+- creator: Author(s) as an array. Apply name cleaning rules (see below).
+- subject: Academic subject/discipline mapped to FORD classification (see below)
+- keywords: Keywords as an array of strings
+- abstract: The document abstract as a plain string. Extract the full abstract text exactly as it appears. Omit if not present.
+- rights: License information (e.g., Creative Commons full name)
+- rightsurl: URL of the license, extracted exactly as it appears
+- date: Publication date — apply date normalization rules (see below)
+- originPlaceInfo: Faculty, university, or organization — apply canonicalization rules (see below)
 
-**Type-specific fields (include only if document type is identified):**
+**Type-specific fields (include only if the document type matches):**
 
-**For TESIS:**
-- director: Thesis director/supervisor
-- codirector: Co-director/co-supervisor
-- degree.grantor: Institution granting the degree
-- degree.name: Name of the degree program
+**For Tesis:**
+- director: Thesis director/supervisor. Apply name cleaning rules.
+- codirector: Co-director/co-supervisor. Apply name cleaning rules. Omit if not present.
+- degree.grantor: Institution granting the degree. Always expand abbreviations to full name. Omit if not explicitly stated.
+- degree.name: Academic degree — apply degree.name rules (see below).
+- institucionDesarrollo: Specific research center, lab, or institute where the research was developed (e.g. "Instituto de Investigaciones en Informática", "Laboratorio de Investigación y Formación en Informática Avanzada"). Look for keywords: "Instituto", "Laboratorio", "Centro de Investigación", "Centro de Estudios", "Grupo de Investigación". Return as a string if one, or an array if multiple. Omit if not found.
 
-**For ARTÍCULO:**
-- journalTitle: Name of the journal
-- journalVolumeAndIssue: Volume and issue information
-- issn: Journal ISSN
-- event: Conference or event name if applicable
+**For Articulo:**
+- journalTitle: Full journal name exactly as it appears. Do NOT shorten or approximate. Omit if not clearly present.
+- journalVolumeAndIssue: Normalized volume/issue — apply journalVolumeAndIssue rules (see below).
+- issn: ISSN number only (e.g. "2314-3991"), no prefix. Must match exactly as it appears. Omit if not found.
+- event: Conference/event name only — apply event rules (see below).
 
-**For LIBRO:**
+**For Libro:**
 - publisher: Publisher name
-- isbn: Book ISBN
-- compiler: Compiler if applicable
-- editor: Editor if applicable
+- isbn: ISBN number only, no prefix. Must match exactly as it appears.
+- compiler: Compiler if applicable. Apply name cleaning rules.
+- editor: Editor if applicable. Apply name cleaning rules.
 
-**For OBJETO DE CONFERENCIA:**
-- issn: ISSN if available
-- event: Conference name and details
+**For Objeto de conferencia:**
+- issn: ISSN number only, no prefix. Must match exactly as it appears. Omit if not found.
+- event: Conference/event name only — apply event rules (see below).
 
-**EXTRACTION RULES**:
-1. Extract ONLY information that is clearly present and unambiguous in the text
-2. If a field cannot be determined with high confidence, omit it from the JSON
-3. Pay special attention to distinguishing between similar concepts (e.g., advisor vs. director)
-4. For dates, extract only the publication/creation date, not submission or defense dates
-5. For creators, maintain the order and format as they appear in the document
-6. For URIs/URLs, extract exactly as they appear
-7. Ignore page numbers, headers, footers, and bibliographic references when extracting metadata
-8. For subject classification, try to map to FORD categories when possible
+---
 
-**FORD SUBJECT MAPPING** (if applicable):
-Map Spanish subject terms to these FORD categories:
-- Ciencias físicas, Ciencias químicas, Ciencias de la tierra y ciencias ambientales relacionadas
-- Ciencias biológicas, Otras ciencias naturales
-- Ciencias de la computación e información, Ingeniería civil, Ingeniería eléctrica, electrónica e informática
-- Ingeniería mecánica, Ingeniería química, Ingeniería de los materiales
-- Economía y negocios, Educación, Sociología, Derecho, Ciencia política
-- Psicología y ciencias cognitivas, Educación, Geografía social y económica
-- Artes, Historia y arqueología, Lenguas y literatura, Filosofía, ética y religión
+**DATE NORMALIZATION RULES**:
+Normalize the publication/creation date to one of these formats (from most to least specific):
+- "yyyy/mm/dd" (e.g. "2020/03/15") — when full date is available
+- "yyyy/mm" (e.g. "2023/08") — when only month and year are available
+- "yyyy" (e.g. "2021") — when only year is available
+- omit the field — when no date information appears in the text
+
+Strict rules:
+- Extract only the publication/creation date, NOT submission, defense, or revision dates.
+- Translate month names to 2-digit numbers. Use leading zeros (January=01, August=08).
+- Do NOT invent or guess date components not present in the text.
+- When in doubt, prefer omitting over returning a wrong date.
+
+Month reference: enero/january=01, febrero/february=02, marzo/march=03, abril/april=04, mayo/may=05, junio/june=06, julio/july=07, agosto/august=08, septiembre/september=09, octubre/october=10, noviembre/november=11, diciembre/december=12
+
+---
+
+**NAME CLEANING RULES** (applies to: creator, director, codirector, compiler, editor):
+- Remove ALL honorific/academic title prefixes: Dr., Dra., Lic., Lica., Ing., Inga., Mg., Mgr., Mgtr., MSc., Mag., Prof., Profa., Agr., Arq., Abog., Med., Vet., MV., Esp., Psic., Farm., Bio., Tec., and any similar abbreviated title followed by a period.
+- Remove ALL parenthetical content referring to affiliations, roles, or identifiers: (UNLP), (CONICET), (FCAyF-UNLP), (COORDINADOR), (compiladoras), [o-oi-6404-0552], etc.
+- Remove trailing periods that are not part of the name.
+- Maintain the order authors appear in the text.
+- Return as array when multiple people, plain string when one.
+
+Name examples:
+- "Dr. Juan García" → "Juan García"
+- "Chamorro, Adriana (FCAyF-UNLP)" → "Chamorro, Adriana"
+- "ANTONIO CAMOU (COORDINADOR)" → "ANTONIO CAMOU"
+- ["Dr. Luis López", "Lic. Ana Martínez (CONICET)"] → ["Luis López", "Ana Martínez"]
+
+---
+
+**DEGREE.NAME RULES** (Tesis only):
+Always express the degree in the person/graduate form, NOT the program name form:
+- "Licenciatura en X" → "Licenciado en X" (or "Licenciada en X" if author is female)
+- "Doctorado en X" → "Doctor en X" (or "Doctora en X")
+- "Ingeniería en X" → "Ingeniero en X" (or "Ingeniera en X")
+- "Maestría en X" → "Magíster en X"
+- "Tecnicatura en X" → "Técnico en X"
+- "Especialización en X" → "Especialista en X"
+- Forms already in person form stay unchanged.
+- The degree MUST include the subject area when available (e.g. "Licenciado en Química", NOT just "Licenciado").
+- Use masculine form unless the text or author name clearly indicates feminine gender.
+- If degree.name is not found, look for phrases like "para obtener el grado de", "para acceder al título de", "trabajo final de licenciatura", "tesis doctoral".
+
+---
+
+**EVENT RULES** (Articulo and Objeto de conferencia):
+Extract ONLY the event/conference name itself. Strip all location, city, date, modality, and other appended info.
+- Remove parenthetical content with location or date: "(La Plata, 2019)", "(modalidad virtual, 23 al 26 de agosto de 2019)".
+- Remove trailing location or date info even if not in parentheses.
+
+Event examples:
+- "IV Congreso Internacional de Enseñanza del Derecho (La Plata, modalidad virtual, 23 al 26 de agosto de 2019)" → "IV Congreso Internacional de Enseñanza del Derecho"
+- "X Jornadas de Sociología (Buenos Aires, noviembre 2018)" → "X Jornadas de Sociología"
+
+---
+
+**JOURNALVOLUMEANDISSUE RULES**:
+Normalize to a single consistent format using only these canonical tokens:
+- "vol {number}" for volume
+- "no {number}" for issue/number
+- "especial" for special issues
+- "suplemento {number}" for supplements
+- "{year}" for years (4 digits)
+- All lowercase. Separate elements with ", ". Order: vol → no → especial → suplemento → year.
+- A standalone year is NOT valid — must include at least "vol N" or "no N".
+- Omit if no volume or issue information is found.
+
+journalVolumeAndIssue examples:
+- "Vol. 7 (2)" → "vol 7, no 2"
+- "Vol8, N°2, Suplemento N°1" → "vol 8, no 2, suplemento 1"
+- "Número Especial, Septiembre 2020" → "especial, 2020"
+- "2021" (year only) → omit field
+
+---
+
+**ORIGINPLACEINFO RULES**:
+Represents the broader institutional origin: faculty, university, or organization. Applies to ALL document types.
+- Use title case: only first letter of significant words capitalized. Prepositions and conjunctions stay lowercase (de, del, y, en, a, con, por). Abbreviations/acronyms stay ALL CAPS.
+- Institution canonicalization (always apply):
+  - UNLP → "Universidad Nacional de La Plata"
+  - UBA → "Universidad de Buenos Aires"
+  - UTN → "Universidad Tecnológica Nacional"
+  - UNC → "Universidad Nacional de Córdoba"
+  - CONICET → always keep as "CONICET" (never expand to full name)
+  - "Facultad de Bellas Artes" → "Facultad de Artes" (renamed in 2014)
+  - Do NOT append "(UNLP)" or similar after a faculty name already identified.
+- If multiple distinct faculties/institutions appear as author affiliations, include ALL separated by ", ". Do not duplicate.
+- Even if not explicitly stated, if the text clearly identifies a faculty or university of origin, extract and return it.
+- Do NOT confuse with institucionDesarrollo: originPlaceInfo is the faculty/university, not the specific lab or research center.
+
+---
+
+**FORD SUBJECT MAPPING**:
+Map the document's academic subject to one of these FORD categories:
+- Ciencias físicas / Ciencias químicas / Ciencias de la tierra y ciencias ambientales relacionadas
+- Ciencias biológicas / Otras ciencias naturales
+- Ciencias de la computación e información / Ingeniería civil / Ingeniería eléctrica, electrónica e informática
+- Ingeniería mecánica / Ingeniería química / Ingeniería de los materiales
+- Economía y negocios / Educación / Sociología / Derecho / Ciencia política
+- Psicología y ciencias cognitivas / Geografía social y económica
+- Artes / Historia y arqueología / Lenguas y literatura / Filosofía, ética y religión
+
+---
+
+**GENERAL EXTRACTION RULES**:
+1. Extract ONLY information clearly present and unambiguous in the text.
+2. If a field cannot be determined with high confidence, omit it from the JSON (do not set to null, just omit).
+3. Ignore page numbers, headers, footers, and bibliographic references when extracting metadata.
+4. For issn and isbn: return ONLY the number (e.g. "2314-3991"), never include prefixes like "ISSN:", "ISBN:".
+5. Do NOT include "isRelatedWith" — this is a repository URI that does not appear in the document text.
+
+---
 
 **OUTPUT FORMAT**:
-Return ONLY a valid JSON object with the extracted metadata. Do not include explanations, comments, or the document type classification.
+Return ONLY a valid JSON object. The first character must be '{' and the last '}'. No explanations, no comments, no markdown fences.
 
-**EXAMPLE OUTPUT**:
-```json
+**EXAMPLE OUTPUT** (Tesis):
 {
+    "dc.type": "Tesis",
     "language": "es",
     "title": "Análisis de sistemas fotovoltaicos distribuidos en redes eléctricas urbanas",
     "creator": ["García, María Elena", "Rodríguez, Carlos Alberto"],
     "subject": "Ingeniería eléctrica, electrónica e informática",
     "keywords": ["energía solar", "sistemas fotovoltaicos", "redes distribuidas"],
+    "abstract": "Esta tesis analiza el impacto de los sistemas fotovoltaicos distribuidos en la estabilidad de redes eléctricas urbanas...",
     "rights": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
     "rightsurl": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-    "date": "2023-06-15",
+    "date": "2023/06/15",
     "originPlaceInfo": "Facultad de Ingeniería, Universidad Nacional de La Plata",
-    "director": "Dr. Juan Carlos Mendez",
+    "director": "Juan Carlos Mendez",
     "degree.grantor": "Universidad Nacional de La Plata",
-    "degree.name": "Ingeniero Electricista"
+    "degree.name": "Ingeniero Electricista",
+    "institucionDesarrollo": "Instituto de Investigaciones en Informática LIDI"
 }
-```
+
+**EXAMPLE OUTPUT** (Articulo):
+{
+    "dc.type": "Articulo",
+    "language": "en",
+    "title": "Deep learning approaches for named entity recognition",
+    "creator": ["Smith, John", "Doe, Jane"],
+    "subject": "Ciencias de la computación e información",
+    "keywords": ["deep learning", "NER", "natural language processing"],
+    "abstract": "This paper proposes novel deep learning approaches for named entity recognition across multiple languages...",
+    "date": "2022",
+    "journalTitle": "Journal of Artificial Intelligence Research",
+    "journalVolumeAndIssue": "vol 45, no 3",
+    "issn": "1076-9757"
+}
 
 Now analyze the following document text and extract the metadata:"""

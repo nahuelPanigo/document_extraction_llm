@@ -5,9 +5,10 @@ from app.logging_config import logging
 import requests
 from app.service.indentifier import TypeIdentifier, SubjectIdentifier
 from app.service.strategies.type_strategy import LibroStrategy,TesisStrategy,ArticuloStrategy,ObjectConferenceStrategy,GeneralStrategy
+from app.service.pattern_extractors import extract_abstract, extract_keywords_regex, extract_keywords_tfidf, load_vectorizer
 import io
 from typing import Tuple, Optional, Union
-from app.constants.constant import PROMPT_DEEPANALYZE
+from app.constants.constant import PROMPT_DEEPANALYZE, MAX_WORDS_NO_TAGS, MAX_WORDS_WITH_TAGS
 import json
 import re
 
@@ -29,6 +30,13 @@ class Orchestrator:
             path_vectorizer=os.getenv("SUBJECT_IDENTIFIER_PATH_VECTORIZER", "models/svm_vectorizer.pkl"),
             path_label_encoder=os.getenv("SUBJECT_IDENTIFIER_PATH_LABEL_ENCODER", "models/svm_label_encoder.pkl")
         )
+
+        vectorizer_path = os.getenv("TFIDF_VECTORIZER_PATH", "app/models/tfidf_vectorizer.pkl")
+        self.vectorizer = load_vectorizer(vectorizer_path)
+        if self.vectorizer is not None:
+            self.logger.info(f"TF-IDF vectorizer loaded from: {vectorizer_path}")
+        else:
+            self.logger.warning(f"TF-IDF vectorizer not found at: {vectorizer_path} — tfidf keywords disabled")
 
         self.logger.info("Orchestrator service is up")
         self.logger.info(f"Extractor service url: {self.extractor_service_url}")
@@ -114,7 +122,7 @@ class Orchestrator:
         """Clean honorific titles from metadata fields that contain names"""
         # Fields that typically contain names and should be cleaned
         name_fields = ['creator', 'director', 'codirector', 'compiler', 'editor']
-        
+
         for field in name_fields:
             if field in metadata:
                 if isinstance(metadata[field], list):
@@ -123,7 +131,126 @@ class Orchestrator:
                 elif isinstance(metadata[field], str):
                     # Clean the string directly
                     metadata[field] = self._remove_honorifics(metadata[field])
-        
+
+        return metadata
+
+    @staticmethod
+    def _deduplicate_field(value):
+        """If value is a str, return as-is. If list, return list with duplicates removed (case-insensitive)."""
+        if isinstance(value, str):
+            return value
+        if isinstance(value, list):
+            seen = set()
+            result = []
+            for item in value:
+                key = item.strip().lower() if isinstance(item, str) else item
+                if key not in seen:
+                    seen.add(key)
+                    result.append(item)
+            return result
+        return value
+
+    def _deduplicate_person_fields(self, metadata: dict) -> dict:
+        for field in ('creator', 'director', 'codirector', 'publisher', 'editor'):
+            if field in metadata:
+                metadata[field] = self._deduplicate_field(metadata[field])
+        return metadata
+
+    @staticmethod
+    def _normalize_name(name: str) -> str:
+        """
+        Normalize a person name:
+        - Remove invalid chars: keep unicode letters, spaces, dots, apostrophes and backticks.
+        - Capitalize: first letter of each word uppercase, rest lowercase.
+          Special case: pure initials like 'L.' or 'A.B.' keep each letter uppercase.
+        """
+        if not isinstance(name, str):
+            return name
+
+        # Remove invalid characters: keep unicode letters, whitespace, dot, apostrophe, backtick
+        cleaned = re.sub(r"[^\w\s.'`]|[\d_]", '', name, flags=re.UNICODE)
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+
+        def capitalize_token(token: str) -> str:
+            # Pure initials: one or more (letter + dot) e.g. "L.", "A.B."
+            if re.fullmatch(r'([^\W\d_]\.)+', token, flags=re.UNICODE):
+                return re.sub(r'[^\W\d_]', lambda m: m.group().upper(), token, flags=re.UNICODE)
+            # Normal word: first letter upper, rest lower; non-letter chars (apostrophe, backtick, dot) kept as-is
+            result = []
+            first_letter_done = False
+            for ch in token:
+                if re.match(r'[^\W\d_]', ch, re.UNICODE):
+                    result.append(ch.upper() if not first_letter_done else ch.lower())
+                    first_letter_done = True
+                else:
+                    result.append(ch)
+            return ''.join(result)
+
+        return ' '.join(capitalize_token(t) for t in cleaned.split(' ') if t)
+
+    def _normalize_person_fields(self, metadata: dict) -> dict:
+        for field in ('creator', 'director', 'codirector', 'publisher', 'editor'):
+            if field not in metadata:
+                continue
+            value = metadata[field]
+            if isinstance(value, str):
+                metadata[field] = self._normalize_name(value)
+            elif isinstance(value, list):
+                metadata[field] = [self._normalize_name(item) for item in value]
+        return metadata
+
+    @staticmethod
+    def _validate_field_formats(metadata: dict) -> dict:
+        """
+        Post-processing validation of field formats.
+        If a field value doesn't match its expected format, remove it.
+        This guards against hallucinations like issn: '12-11-2020'.
+        """
+        # ISSN: exactly XXXX-XXXX (4 digits, hyphen, 4 alphanumeric for check digit)
+        if "issn" in metadata:
+            if not re.fullmatch(r'\d{4}-[\dXx]{4}', str(metadata.get("issn", ""))):
+                del metadata["issn"]
+
+        # ISBN: 10 or 13 digits, optionally hyphenated
+        if "isbn" in metadata:
+            isbn_digits = re.sub(r'[-\s]', '', str(metadata.get("isbn", "")))
+            if not re.fullmatch(r'[\dXx]{10}|[\dXx]{13}', isbn_digits):
+                del metadata["isbn"]
+
+        # date: YYYY or YYYY/MM or YYYY/MM/DD
+        if "date" in metadata:
+            date_val = str(metadata.get("date", ""))
+            if not re.fullmatch(r'\d{4}|\d{4}/\d{2}|\d{4}/\d{2}/\d{2}', date_val):
+                del metadata["date"]
+
+        # Remove fields that should never appear in model output
+        for field in ("dc.type", "isRelatedWith", "isrelatedwith", "sedici.uri", "dc.uri"):
+            metadata.pop(field, None)
+
+        return metadata
+
+    @staticmethod
+    def _validate_identifiers_in_text(metadata: dict, text: str) -> dict:
+        """
+        Validate that ISSN/ISBN values actually appear in the extracted text.
+        If a value is present in metadata but not found in the text, set it to None.
+        """
+        if not text:
+            return metadata
+
+        # ISSN: check if exact value (e.g. "1234-5678") appears in text
+        if metadata.get("issn"):
+            if str(metadata["issn"]) not in text:
+                metadata["issn"] = None
+
+        # ISBN: compare both raw and digit-only forms (handles hyphenation differences)
+        if metadata.get("isbn"):
+            isbn_raw = str(metadata["isbn"])
+            isbn_digits = re.sub(r'[-\s]', '', isbn_raw)
+            text_digits = re.sub(r'[-\s]', '', text)
+            if isbn_raw not in text and isbn_digits not in text_digits:
+                metadata["isbn"] = None
+
         return metadata
 
     def _extract_text(self, file_bytes: bytes, filename: str, content_type: str, normalization: bool, ocr: bool = False) -> Tuple[Optional[str], Optional[dict]]:
@@ -135,7 +262,7 @@ class Orchestrator:
             self.extractor_service_url + "/extract",
             headers=self._get_headers(api_key=self.extractor_service_api_key),
             files={"file": payload},
-            params={"normalization": normalization, "ocr": ocr}
+            data={"normalization": normalization, "ocr": ocr, "max_words": MAX_WORDS_NO_TAGS}
         )
 
         extractor_json = response_extractor.json()
@@ -215,7 +342,7 @@ class Orchestrator:
                 self.extractor_service_url + "/extract-with-tags",
                 headers=self._get_headers(api_key=self.extractor_service_api_key),
                 files={"file": payload2},
-                params={"normalization": normalization, "ocr": ocr}
+                data={"normalization": normalization, "ocr": ocr, "max_words": MAX_WORDS_WITH_TAGS}
             )
 
             extractor_with_tags_json = response_extractor_with_tags.json()
@@ -249,7 +376,21 @@ class Orchestrator:
             # Clean honorific titles from name fields before returning
             if error is None:
                 metadata = self._clean_metadata_honorifics(metadata)
-            
+                metadata = self._deduplicate_person_fields(metadata)
+                metadata = self._normalize_person_fields(metadata)
+                metadata = self._validate_field_formats(metadata)
+                metadata = self._validate_identifiers_in_text(metadata, extracted_text_with_metadata)
+
+                # step 5: pattern-based abstract + keywords on plain text
+                if not metadata.get("abstract"):
+                    extracted_abstract = extract_abstract(plain_text)
+                    if extracted_abstract:
+                        metadata["abstract"] = extracted_abstract
+
+                kw_real      = extract_keywords_regex(plain_text)
+                kw_suggested = extract_keywords_tfidf(plain_text, self.vectorizer)
+                metadata["keywords"] = {"real": kw_real, "suggested": kw_suggested}
+
             return metadata, error
         
         except Exception as e:

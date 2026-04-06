@@ -2,12 +2,12 @@
 Model Comparison Framework for Subject Classification.
 Thin wrapper around shared utils/ml_strategies/model_comparison_framework.
 """
-from constants import SUBJECT_MODEL_RESULTS_FOLDER
+from constants import SUBJECT_MODEL_RESULTS_FOLDER, CSV_FOLDER, CSV_SUBJECTS, TXT_FOLDER
 from utils.colors.colors_terminal import Bcolors
 from utils.ml_strategies.model_comparison_framework import ModelComparator as _ModelComparator
 from utils.ml_strategies.model_comparison_framework import ModelResults
-from fine_tune_subject.utils.dataset.data_loader import load_csv_subjects, create_dataset
-from fine_tune_subject.strategies import (
+from utils.ml_strategies.data_loader import load_csv_labels, create_dataset
+from utils.ml_strategies.strategies import (
     SVMTrainingStrategy,
     XGBoostTrainingStrategy,
     RandomForestTrainingStrategy,
@@ -20,8 +20,8 @@ from fine_tune_subject.strategies import (
 
 def _load_subject_data():
     """Load subject data for comparison"""
-    subject_mapping = load_csv_subjects()
-    return create_dataset(subject_mapping, min_frequency=5, max_per_subject=200, random_state=42)
+    subject_mapping = load_csv_labels(CSV_FOLDER / CSV_SUBJECTS, label_column='subject')
+    return create_dataset(subject_mapping, TXT_FOLDER, min_frequency=5, max_per_label=200, random_state=42)
 
 
 class ModelComparator(_ModelComparator):

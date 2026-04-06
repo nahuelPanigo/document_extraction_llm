@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.6.6">
+  <diagram name="Pipeline — Modelo de Materia" id="subject-model">
+    <mxGraphModel dx="1598" dy="608" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1620" pageHeight="430" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=22;fontColor=#0F172A;" value="&lt;b&gt;Pipeline — Modelo Clasificador de Materia (Tema)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="36" width="1520" x="50" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="bg" parent="1" style="rounded=1;arcSize=3;fillColor=#DBEAFE;strokeColor=#3B82F6;opacity=20;" value="" vertex="1">
+          <mxGeometry height="368" width="1580" x="20" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl" parent="1" style="text;html=1;strokeColor=#3B82F6;fillColor=#DBEAFE;rounded=1;arcSize=15;fontColor=#1E3A5F;fontSize=15;fontStyle=1;align=center;" value="&lt;b&gt;MATERIAS&lt;/b&gt;" vertex="1">
+          <mxGeometry height="26" width="100" x="26" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="src" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#FEF3C7;strokeColor=#D97706;fontColor=#78350F;fontSize=16;fontStyle=1;shadow=1;" value="&lt;b&gt;📗 sedici.csv&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:14px;&quot;&gt;Catálogo SEDICI&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="155" x="36" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="subj_csv" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#FEF9C3;strokeColor=#CA8A04;fontColor=#713F12;fontSize=16;shadow=1;" value="&lt;b&gt;📗 subjects.csv&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:14px;&quot;&gt;Artículos con materia&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="170" x="236" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="dl" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#3B82F6;fontColor=#1E3A5F;fontSize=16;shadow=1;" value="📥 Descarga PDF" vertex="1">
+          <mxGeometry height="52" width="148" x="460" y="196" as="geometry" />
+        </mxCell>
+        <mxCell id="ext" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#E0F2FE;strokeColor=#0284C7;fontColor=#0C4A6E;fontSize=16;shadow=1;" value="📝 Extraer Texto" vertex="1">
+          <mxGeometry height="52" width="148" x="656" y="196" as="geometry" />
+        </mxCell>
+        <mxCell id="ren" parent="1" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#14532D;fontSize=16;shadow=1;" value="Renombrar Materias" vertex="1">
+          <mxGeometry height="52" width="158" x="852" y="196" as="geometry" />
+        </mxCell>
+        <mxCell id="mlbox" parent="1" style="swimlane;startSize=36;fillColor=#FAF5FF;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=18;fontStyle=1;rounded=1;arcSize=3;shadow=1;" value="Evaluación de Modelos ML" vertex="1">
+          <mxGeometry height="358" width="434" x="1068" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="ml_sub" parent="mlbox" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontColor=#7C3AED;fontSize=14;fontStyle=2;" value="utils/ml_strategies/" vertex="1">
+          <mxGeometry height="18" width="414" x="10" y="38" as="geometry" />
+        </mxCell>
+        <mxCell id="ml1" parent="mlbox" style="rounded=1;arcSize=15;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=15;" value="SVM-Linear + TF-IDF" vertex="1">
+          <mxGeometry height="38" width="204" x="10" y="62" as="geometry" />
+        </mxCell>
+        <mxCell id="ml2" parent="mlbox" style="rounded=1;arcSize=15;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=15;" value="XGBoost" vertex="1">
+          <mxGeometry height="38" width="200" x="224" y="62" as="geometry" />
+        </mxCell>
+        <mxCell id="ml3" parent="mlbox" style="rounded=1;arcSize=15;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=15;" value="Random Forest" vertex="1">
+          <mxGeometry height="38" width="204" x="10" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="ml4" parent="mlbox" style="rounded=1;arcSize=15;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=15;" value="Embeddings + Reg. Logística" vertex="1">
+          <mxGeometry height="38" width="200" x="224" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="ml5" parent="mlbox" style="rounded=1;arcSize=15;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=15;" value="Embeddings + KNN" vertex="1">
+          <mxGeometry height="38" width="204" x="10" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="ml6" parent="mlbox" style="rounded=1;arcSize=15;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=15;" value="KNN" vertex="1">
+          <mxGeometry height="38" width="200" x="224" y="158" as="geometry" />
+        </mxCell>
+        <mxCell id="ml7" parent="mlbox" style="rounded=1;arcSize=15;fillColor=#EDE9FE;strokeColor=#7C3AED;fontColor=#4C1D95;fontSize=15;" value="MiniLM + PyTorch" vertex="1">
+          <mxGeometry height="38" width="210" x="112" y="206" as="geometry" />
+        </mxCell>
+        <mxCell id="ml_div" parent="mlbox" style="line;strokeColor=#7C3AED;strokeWidth=1.5;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="10" width="414" x="10" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="ml_note" parent="mlbox" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontColor=#6D28D9;fontSize=14;" value="&lt;i&gt;F1 · Accuracy · Confusion Matrix&lt;/i&gt;" vertex="1">
+          <mxGeometry height="20" width="414" x="10" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="ml_out" parent="mlbox" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontColor=#7C3AED;fontSize=16;fontStyle=1;" value="⬇  &lt;b&gt;Mejor Modelo de Materia&lt;/b&gt;" vertex="1">
+          <mxGeometry height="28" width="414" x="10" y="306" as="geometry" />
+        </mxCell>
+        <mxCell id="mod_subj" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#EDE9FE;strokeColor=#6D28D9;fontColor=#4C1D95;fontSize=16;fontStyle=1;shadow=1;" value="&lt;b&gt;Modelo de Materia&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:14px;&quot;&gt;TF-IDF + SVM Linear&lt;/font&gt;" vertex="1">
+          <mxGeometry height="72" width="185" x="730" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="api" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#1E3A5F;strokeColor=#0F172A;fontColor=#F8FAFC;fontSize=16;fontStyle=1;shadow=1;dashed=1;strokeWidth=2;" value="🚀 API Productiva" vertex="1">
+          <mxGeometry height="50" width="175" x="260" y="332" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="src" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#D97706;strokeWidth=2;" target="subj_csv" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="subj_csv" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#CA8A04;strokeWidth=2;" target="dl" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="dl" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#3B82F6;strokeWidth=2;" target="ext" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="ext" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#0284C7;strokeWidth=2;" target="ren" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="ren" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#7C3AED;strokeWidth=2;" target="mlbox" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="mlbox" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6D28D9;strokeWidth=2.5;entryX=0;entryY=0.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="mod_subj" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1250" y="420" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="mod_subj" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6D28D9;strokeWidth=1.5;dashed=1;fontSize=14;" target="api" value="deploy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

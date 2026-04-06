@@ -146,7 +146,7 @@ def main():
         # Read JSON file
         #json_file_path = RESULT_FOLDER_VALIDATION / "test_metadata_validada.json"
 
-        json_file_path = RESULT_FOLDER_VALIDATION / "test_metadata_to_validate.json"
+        json_file_path = RESULT_FOLDER_VALIDATION / "final_to_compare_original.json"
 
         try:
             data = read_data_json(json_file_path, 'utf-8')
@@ -160,9 +160,19 @@ def main():
 
         print(f"📋 Found {len(data)} documents to process")
 
+        def _norm_type(t):
+            t = str(t).lower()
+            if "tesis" in t: return "Tesis"
+            if "articulo" in t or "artículo" in t: return "Articulo"
+            if "libro" in t: return "Libro"
+            if "conferencia" in t: return "Objeto de conferencia"
+            return "Other"
+
         # Process each document
         results = {}
         successful_count = 0
+        doc_times = []
+        type_times = {}
 
         for doc_id, metadata in data.items():
             if not doc_id:
@@ -186,6 +196,7 @@ def main():
             doc_type = metadata.get("type", metadata.get("dc.type", "None"))
 
             # Process document
+            t0 = time.time()
             result = validator.process_document(
                 doc_id=doc_id,
                 pdf_path=pdf_path,
@@ -193,10 +204,27 @@ def main():
                 deepanalyze=deepanalyze,
                 doc_type=doc_type
             )
+            elapsed = time.time() - t0
+            doc_times.append(elapsed)
+            norm = _norm_type(doc_type)
+            type_times.setdefault(norm, []).append(elapsed)
+            print(f"⏱️  {doc_id} took {elapsed:.2f}s")
 
             if result:
                 results[doc_id] = result
                 successful_count += 1
+
+        # Print timing stats
+        if doc_times:
+            print(f"\n⏱️  Timing stats ({len(doc_times)} docs):")
+            print(f"   Min : {min(doc_times):.2f}s")
+            print(f"   Max : {max(doc_times):.2f}s")
+            print(f"   Avg : {sum(doc_times)/len(doc_times):.2f}s")
+            print(f"\n⏱️  Timing by type:")
+            for t in ["Libro", "Tesis", "Articulo", "Objeto de conferencia"]:
+                times = type_times.get(t, [])
+                if times:
+                    print(f"   {t} (n={len(times)}): min={min(times):.2f}s  max={max(times):.2f}s  avg={sum(times)/len(times):.2f}s")
 
         # Save results
         if results:

@@ -49,6 +49,33 @@ def _filter_data_by_types(data, common_ids, allowed_types, original_data):
     return filtered
 
 
+def _discover_list_fields(original_data: dict, fields: set) -> set:
+    """
+    Detect which fields contain list values in the ground truth data.
+    A field is considered a list field if at least one document has a list value
+    (or a string that parses as a list) for that field.
+    """
+    import ast
+    list_fields = set()
+    for item in original_data.values():
+        if not isinstance(item, dict):
+            continue
+        for field in fields:
+            if field in list_fields:
+                continue
+            value = item.get(field)
+            if isinstance(value, list):
+                list_fields.add(field)
+            elif isinstance(value, str):
+                try:
+                    parsed = ast.literal_eval(value)
+                    if isinstance(parsed, list):
+                        list_fields.add(field)
+                except (ValueError, SyntaxError):
+                    pass
+    return list_fields
+
+
 def _get_checker_for_field(field_name, predicted_data, original_data, common_ids, default_checker):
     """Return the appropriate checker for a field: filtered by type if type-specific, or the default."""
     allowed_types = _get_types_for_field(field_name)
@@ -110,10 +137,10 @@ def run_metric_comparison(original_content: bytes, predicted_content: bytes):
         except Exception as e:
             continue
 
-    # 5. List percentage matching for fields that might be lists
-    commonly_list_fields = ['subject', 'keywords', 'creator', 'author', 'contributors', 'editors']
+    # 5. List percentage matching for fields that actually contain lists in the ground truth
+    list_fields = _discover_list_fields(original_data, all_fields)
 
-    for field in commonly_list_fields:
+    for field in list_fields:
         if field in all_fields:
             try:
                 field_checker = _get_checker_for_field(field, predicted_data, original_data, common_ids, checker)
@@ -221,16 +248,15 @@ def generate_type_specific_results(predicted_data: dict, original_data: dict) ->
                 except Exception:
                     continue
             
-            # List percentage matching for commonly list-type fields
-            commonly_list_fields = ['subject', 'keywords', 'creator', 'author', 'contributors', 'editors']
-            
-            for field in commonly_list_fields:
-                if field in type_fields:  # Only check if field exists in this type's data
-                    try:
-                        list_percentage = type_checker.list_percentage_match_metric(field_name=field)
-                        type_results.append(list_percentage)
-                    except Exception:
-                        continue
+            # List percentage matching for fields that actually contain lists in the ground truth
+            list_fields = _discover_list_fields(filtered_original, type_fields)
+
+            for field in list_fields:
+                try:
+                    list_percentage = type_checker.list_percentage_match_metric(field_name=field)
+                    type_results.append(list_percentage)
+                except Exception:
+                    continue
             
             # Create summary for this type
             type_summary = create_summary_statistics(type_results)
