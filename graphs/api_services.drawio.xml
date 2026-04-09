@@ -1,0 +1,163 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.6.6">
+  <diagram name="API Services" id="api-services">
+    <mxGraphModel dx="2200" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=28;fontColor=#0F172A;" value="&lt;b&gt;Servicios de la API — Parámetros de Entrada y Salida&lt;/b&gt;" vertex="1">
+          <mxGeometry x="40" y="10" width="1620" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- BOX 1 — Orchestrator :8000                   -->
+        <!-- ════════════════════════════════════════════ -->
+        <mxCell id="orch" parent="1" style="swimlane;startSize=58;fillColor=#EFF6FF;strokeColor=#2563EB;fontColor=#1E3A5F;fontSize=26;fontStyle=1;rounded=1;arcSize=3;shadow=1;" value="🎯  Orchestrator  —  :8000" vertex="1">
+          <mxGeometry x="40" y="70" width="780" height="490" as="geometry" />
+        </mxCell>
+
+        <!-- Endpoint label -->
+        <mxCell id="orch_ep" parent="orch" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#93C5FD;fontColor=#1E40AF;fontSize=22;fontStyle=1;" value="POST /upload  ·  Bearer: ORCHESTRATOR_TOKEN" vertex="1">
+          <mxGeometry x="12" y="66" width="756" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA label -->
+        <mxCell id="orch_in_lbl" parent="orch" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#93C5FD;strokeColor=#2563EB;fontColor=#1E3A5F;fontSize=22;fontStyle=1;align=left;" value="  📥  ENTRADA" vertex="1">
+          <mxGeometry x="12" y="116" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA params -->
+        <mxCell id="orch_in" parent="orch" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#DBEAFE;strokeColor=#93C5FD;fontColor=#1E3A5F;fontSize=22;align=left;verticalAlign=middle;" value="  &lt;b&gt;file&lt;/b&gt; (PDF/DOCX)  ·  &lt;b&gt;normalization&lt;/b&gt; (bool, default: true)  ·  &lt;b&gt;ocr&lt;/b&gt; (bool, default: false)&lt;br&gt;  &lt;b&gt;type&lt;/b&gt; (Tesis | Libro | Artículo | Conferencia | General | None)  ·  &lt;b&gt;deepanalyze&lt;/b&gt; (bool, default: false)" vertex="1">
+          <mxGeometry x="12" y="158" width="756" height="112" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA label -->
+        <mxCell id="orch_out_lbl" parent="orch" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#86EFAC;strokeColor=#16A34A;fontColor=#14532D;fontSize=22;fontStyle=1;align=left;" value="  📤  SALIDA" vertex="1">
+          <mxGeometry x="12" y="278" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA params -->
+        <mxCell id="orch_out" parent="orch" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#86EFAC;fontColor=#14532D;fontSize=22;align=left;verticalAlign=middle;" value="  { success, &lt;b&gt;type&lt;/b&gt;, &lt;b&gt;subject&lt;/b&gt;, &lt;b&gt;title&lt;/b&gt;, &lt;b&gt;creator&lt;/b&gt;, &lt;b&gt;date&lt;/b&gt;, &lt;b&gt;rights&lt;/b&gt;,&lt;br&gt;    &lt;b&gt;director&lt;/b&gt;, &lt;b&gt;codirector&lt;/b&gt; / &lt;b&gt;isbn&lt;/b&gt; / &lt;b&gt;issn&lt;/b&gt; / &lt;b&gt;event&lt;/b&gt;,&lt;br&gt;    &lt;b&gt;abstract&lt;/b&gt;, &lt;b&gt;keywords&lt;/b&gt; { real, suggested }, error }" vertex="1">
+          <mxGeometry x="12" y="320" width="756" height="152" as="geometry" />
+        </mxCell>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- BOX 2 — Extractor Service :8001              -->
+        <!-- ════════════════════════════════════════════ -->
+        <mxCell id="ext" parent="1" style="swimlane;startSize=58;fillColor=#E0F7FA;strokeColor=#00838F;fontColor=#004D40;fontSize=26;fontStyle=1;rounded=1;arcSize=3;shadow=1;" value="📄  Extractor Service  —  :8001" vertex="1">
+          <mxGeometry x="880" y="70" width="780" height="490" as="geometry" />
+        </mxCell>
+
+        <!-- Endpoint label -->
+        <mxCell id="ext_ep" parent="ext" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#B2EBF2;strokeColor=#4DD0E1;fontColor=#004D40;fontSize=22;fontStyle=1;" value="POST /extract  ·  POST /extract-with-tags  ·  Bearer: EXTRACTOR_TOKEN" vertex="1">
+          <mxGeometry x="12" y="66" width="756" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA label -->
+        <mxCell id="ext_in_lbl" parent="ext" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#4DD0E1;strokeColor=#00838F;fontColor=#004D40;fontSize=22;fontStyle=1;align=left;" value="  📥  ENTRADA" vertex="1">
+          <mxGeometry x="12" y="116" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA params -->
+        <mxCell id="ext_in" parent="ext" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#B2EBF2;strokeColor=#4DD0E1;fontColor=#004D40;fontSize=22;align=left;verticalAlign=middle;" value="  &lt;b&gt;file&lt;/b&gt; (PDF/DOCX)  ·  &lt;b&gt;normalization&lt;/b&gt; (bool)  ·  &lt;b&gt;ocr&lt;/b&gt; (bool)" vertex="1">
+          <mxGeometry x="12" y="158" width="756" height="112" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA label -->
+        <mxCell id="ext_out_lbl" parent="ext" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#86EFAC;strokeColor=#16A34A;fontColor=#14532D;fontSize=22;fontStyle=1;align=left;" value="  📤  SALIDA" vertex="1">
+          <mxGeometry x="12" y="278" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA params -->
+        <mxCell id="ext_out" parent="ext" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#86EFAC;fontColor=#14532D;fontSize=22;align=left;verticalAlign=middle;" value="  /extract              →  { text: &amp;quot;plain text sin etiquetas&amp;quot; }&lt;br&gt;  /extract-with-tags  →  { text: &amp;quot;&lt;b&gt;&amp;lt;h1&amp;gt;&lt;/b&gt;…&lt;b&gt;&amp;lt;h2&amp;gt;&lt;/b&gt;…&lt;b&gt;&amp;lt;p&amp;gt;&lt;/b&gt;…&lt;b&gt;&amp;lt;img&amp;gt;&lt;/b&gt;…&amp;quot; }&lt;br&gt;  Estrategia: pdfplumber + PyMuPDF + EasyOCR (si ocr=true)" vertex="1">
+          <mxGeometry x="12" y="320" width="756" height="152" as="geometry" />
+        </mxCell>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- BOX 3 — LLM Service :8002                    -->
+        <!-- ════════════════════════════════════════════ -->
+        <mxCell id="llm" parent="1" style="swimlane;startSize=58;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontColor=#4A148C;fontSize=26;fontStyle=1;rounded=1;arcSize=3;shadow=1;" value="🤖  LLM Service  —  :8002" vertex="1">
+          <mxGeometry x="40" y="620" width="780" height="490" as="geometry" />
+        </mxCell>
+
+        <!-- Endpoint label -->
+        <mxCell id="llm_ep" parent="llm" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#CE93D8;fontColor=#4A148C;fontSize=22;fontStyle=1;" value="POST /consume-llm  ·  Bearer: LLM_LED_TOKEN  ·  Modelo: LED fine-tuneado (HuggingFace)" vertex="1">
+          <mxGeometry x="12" y="66" width="756" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA label -->
+        <mxCell id="llm_in_lbl" parent="llm" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#CE93D8;strokeColor=#6A1B9A;fontColor=#4A148C;fontSize=22;fontStyle=1;align=left;" value="  📥  ENTRADA" vertex="1">
+          <mxGeometry x="12" y="116" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA params -->
+        <mxCell id="llm_in" parent="llm" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#CE93D8;fontColor=#4A148C;fontSize=22;align=left;verticalAlign=middle;" value="  &lt;b&gt;text&lt;/b&gt; (string)  —  prompt tipo-específico + xml_text construido por el Orchestrator&lt;br&gt;  El prompt varía según tipo: Tesis · Libro · Artículo · Conferencia · General" vertex="1">
+          <mxGeometry x="12" y="158" width="756" height="112" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA label -->
+        <mxCell id="llm_out_lbl" parent="llm" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#86EFAC;strokeColor=#16A34A;fontColor=#14532D;fontSize=22;fontStyle=1;align=left;" value="  📤  SALIDA" vertex="1">
+          <mxGeometry x="12" y="278" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA params -->
+        <mxCell id="llm_out" parent="llm" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#86EFAC;fontColor=#14532D;fontSize=22;align=left;verticalAlign=middle;" value="  { &lt;b&gt;title&lt;/b&gt;, &lt;b&gt;creator&lt;/b&gt;, &lt;b&gt;date&lt;/b&gt;, &lt;b&gt;rights&lt;/b&gt; }  — campos comunes&lt;br&gt;  + campos tipo-específicos:  &lt;b&gt;director&lt;/b&gt; · &lt;b&gt;isbn&lt;/b&gt; · &lt;b&gt;issn&lt;/b&gt; · &lt;b&gt;event&lt;/b&gt; · &lt;b&gt;journalTitle&lt;/b&gt; · …&lt;br&gt;  Salida raw del modelo → normalizada con regex antes de parsear JSON" vertex="1">
+          <mxGeometry x="12" y="320" width="756" height="152" as="geometry" />
+        </mxCell>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- BOX 4 — DeepAnalyze :8003 (opcional)         -->
+        <!-- ════════════════════════════════════════════ -->
+        <mxCell id="deep" parent="1" style="swimlane;startSize=58;fillColor=#FFF3E0;strokeColor=#E65100;fontColor=#BF360C;fontSize=26;fontStyle=1;rounded=1;arcSize=3;shadow=1;dashed=1;" value="🔬  DeepAnalyze  —  :8003  (opcional)" vertex="1">
+          <mxGeometry x="880" y="620" width="780" height="490" as="geometry" />
+        </mxCell>
+
+        <!-- Endpoint label -->
+        <mxCell id="deep_ep" parent="deep" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FFCC80;fontColor=#BF360C;fontSize=22;fontStyle=1;dashed=1;" value="POST /consume-llm  ·  Bearer: LLM_DEEPANALYZE_TOKEN  ·  Modelo: Qwen via Ollama" vertex="1">
+          <mxGeometry x="12" y="66" width="756" height="42" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA label -->
+        <mxCell id="deep_in_lbl" parent="deep" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#E65100;fontColor=#BF360C;fontSize=22;fontStyle=1;align=left;" value="  📥  ENTRADA" vertex="1">
+          <mxGeometry x="12" y="116" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRADA params -->
+        <mxCell id="deep_in" parent="deep" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#FFCC80;fontColor=#BF360C;fontSize=22;align=left;verticalAlign=middle;" value="  &lt;b&gt;text&lt;/b&gt; (string)  —  metadata JSON del LLM + xml_text para validación&lt;br&gt;  Construido por el Orchestrator  ·  Solo se llama si &lt;b&gt;deepanalyze=true&lt;/b&gt;" vertex="1">
+          <mxGeometry x="12" y="158" width="756" height="112" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA label -->
+        <mxCell id="deep_out_lbl" parent="deep" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#86EFAC;strokeColor=#16A34A;fontColor=#14532D;fontSize=22;fontStyle=1;align=left;" value="  📤  SALIDA" vertex="1">
+          <mxGeometry x="12" y="278" width="756" height="36" as="geometry" />
+        </mxCell>
+
+        <!-- SALIDA params -->
+        <mxCell id="deep_out" parent="deep" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#86EFAC;fontColor=#14532D;fontSize=22;align=left;verticalAlign=middle;" value="  Misma estructura que LLM Service&lt;br&gt;  { &lt;b&gt;title&lt;/b&gt;, &lt;b&gt;creator&lt;/b&gt;, &lt;b&gt;date&lt;/b&gt;, &lt;b&gt;rights&lt;/b&gt;, campos tipo-específicos }&lt;br&gt;  Valida y refina la metadata generada por el LLM fine-tuneado" vertex="1">
+          <mxGeometry x="12" y="320" width="756" height="152" as="geometry" />
+        </mxCell>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- Arrows                                        -->
+        <!-- ════════════════════════════════════════════ -->
+
+        <!-- Orch → Extractor (horizontal top) -->
+        <mxCell id="arr_orch_ext" edge="1" parent="1" source="orch" target="ext" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#00838F;strokeWidth=3;fontSize=20;fontStyle=1;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;" value="/extract + /extract-with-tags">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orch → LLM (vertical left) -->
+        <mxCell id="arr_orch_llm" edge="1" parent="1" source="orch" target="llm" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6A1B9A;strokeWidth=3;fontSize=20;fontStyle=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="/consume-llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orch → DeepAnalyze (diagonal, dashed, optional) -->
+        <mxCell id="arr_orch_deep" edge="1" parent="1" source="orch" target="deep" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#E65100;strokeWidth=2;fontSize=20;fontStyle=1;dashed=1;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;" value="/consume-llm (si deepanalyze=true)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
