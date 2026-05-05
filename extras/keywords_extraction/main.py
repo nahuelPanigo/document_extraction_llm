@@ -518,6 +518,8 @@ def run():
     names    = ["A_regex", "B_yake", "C_keybert", "D_tfidf", "E_rake"]
     found    = {k: 0   for k in names}
     overlaps = {k: []  for k in names}
+    found_ner    = {k: 0   for k in names}
+    overlaps_ner = {k: []  for k in names}
     rows     = []
 
     print("\n" + "=" * 90)
@@ -542,40 +544,63 @@ def run():
             "E_rake":    strategy_e_rake(text)              if RAKE_AVAILABLE    else [],
         }
 
-        # Apply NER filter to all strategies
-        if blacklist:
-            for k in res:
-                res[k] = _filter_ner(res[k], blacklist)
+        # Apply NER filter — keep both versions for comparison
+        res_ner = {k: _filter_ner(v, blacklist) for k, v in res.items()} if blacklist else res
 
         print(f"\n[{doc['type']}] {doc['full_id']}")
+        if blacklist:
+            print(f"  NER blacklist: {sorted(blacklist)}")
         print(f"  truth: {truth[:5]}")
-        for n, kws in res.items():
-            ov = loose_overlap(kws, truth)
+
+        for n in names:
+            kws     = res[n]
+            kws_ner = res_ner[n]
+            removed = [k for k in kws if k not in kws_ner]
+
+            ov     = loose_overlap(kws, truth)
+            ov_ner = loose_overlap(kws_ner, truth)
             overlaps[n].append(ov)
-            if kws: found[n] += 1
-            print(f"  {n:12s}  ov={ov:.2f}  {', '.join(kws[:6]) or '(nothing)'}")
+            overlaps_ner[n].append(ov_ner)
+            if kws:     found[n]     += 1
+            if kws_ner: found_ner[n] += 1
+
+            line = f"  {n:12s}  ov={ov:.2f}  {', '.join(kws[:6]) or '(nothing)'}"
+            if removed:
+                line += f"  →NER removed: [{', '.join(removed)}]  ov_ner={ov_ner:.2f}"
+            print(line)
 
         rows.append({
-            "fileid":          doc["full_id"],
-            "type":            doc["type"],
-            "regex_finds":     " | ".join(res["A_regex"]),
-            "yake_predict":    " | ".join(res["B_yake"]),
-            "keybert_predict": " | ".join(res["C_keybert"]),
-            "tfidf_predict":   " | ".join(res["D_tfidf"]),
-            "rake_predict":    " | ".join(res["E_rake"]),
-            "sedici_keywords": " | ".join(truth),
+            "fileid":              doc["full_id"],
+            "type":                doc["type"],
+            "ner_blacklist":       " | ".join(sorted(blacklist)),
+            "regex_finds":         " | ".join(res["A_regex"]),
+            "yake_predict":        " | ".join(res["B_yake"]),
+            "keybert_predict":     " | ".join(res["C_keybert"]),
+            "tfidf_predict":       " | ".join(res["D_tfidf"]),
+            "rake_predict":        " | ".join(res["E_rake"]),
+            "regex_ner":           " | ".join(res_ner["A_regex"]),
+            "yake_ner":            " | ".join(res_ner["B_yake"]),
+            "keybert_ner":         " | ".join(res_ner["C_keybert"]),
+            "tfidf_ner":           " | ".join(res_ner["D_tfidf"]),
+            "rake_ner":            " | ".join(res_ner["E_rake"]),
+            "sedici_keywords":     " | ".join(truth),
         })
 
     total = len(subset)
     print("\n" + "=" * 90)
     print(f"SUMMARY  ({total} docs)\n")
     print(f"  NOTE: overlap vs SEDICI taxonomy — rough signal only.\n")
-    print(f"  {'Strategy':<14} {'Found':>6} {'%':>6}  {'Avg overlap':>12}")
-    print(f"  {'-'*14} {'-'*6} {'-'*6}  {'-'*12}")
+    ner_label = "(NER on)" if NER_AVAILABLE else "(NER off)"
+    print(f"  {'Strategy':<14} {'Found':>6} {'%':>6}  {'Avg ov':>8}  {'Found NER':>10} {'Avg ov NER':>12}  {ner_label}")
+    print(f"  {'-'*14} {'-'*6} {'-'*6}  {'-'*8}  {'-'*10} {'-'*12}")
     for n in names:
-        sc = overlaps[n]
-        avg = sum(sc)/len(sc) if sc else 0.0
-        print(f"  {n:<14} {found[n]:>6} {100*found[n]/total:>5.1f}%  {avg:>12.3f}")
+        sc     = overlaps[n]
+        sc_ner = overlaps_ner[n]
+        avg     = sum(sc)    /len(sc)     if sc     else 0.0
+        avg_ner = sum(sc_ner)/len(sc_ner) if sc_ner else 0.0
+        diff = avg_ner - avg
+        diff_str = f"({diff:+.3f})" if NER_AVAILABLE else "  n/a  "
+        print(f"  {n:<14} {found[n]:>6} {100*found[n]/total:>5.1f}%  {avg:>8.3f}  {found_ner[n]:>10} {avg_ner:>12.3f}  {diff_str}")
     print()
 
     with open(RESULTS_CSV, "w", newline="", encoding="utf-8") as f:

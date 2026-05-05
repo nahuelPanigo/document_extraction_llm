@@ -71,7 +71,8 @@ GROBID_FOLDER = RESULT_FOLDER_VALIDATION / "GROBID"
 
 
 # DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata.json" #final dataset
-DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata_with_ocr.json" #final dataset with ocr
+# DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetunnig_metadata_with_ocr.json" #final dataset with ocr
+DATASET_WITH_METADATA_AND_TEXT_DOC_CHECKED = "sedici_finetuning_dataset.json" #final dataset (uploaded to HF as sedici-ml-models)
 # DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED="metadata_sedici_and_text_cleaned.json" #after cleaning with gemini
 DATASET_WITH_METADATA_AND_TEXT_DOC_CLEANED="metadata_sedici_and_text_cleaned_with_ocr.json" #after cleaning with gemini with ocr
 DATASET_WITH_METADATA = "metadata_sedici.json" #initial dataset from filtered csv
