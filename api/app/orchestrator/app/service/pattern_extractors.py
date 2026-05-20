@@ -50,8 +50,9 @@ except Exception:
 # ABSTRACT EXTRACTION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_ABSTRACT_WORDS = r"(resumen|abstract|summary|resumo|abstracto|r[eé]sum[eé]|resúmen)"
-_NUM_PREFIX     = r"(?:\d{1,2}\s*[\.\-–—]\s*)?"
+_ABSTRACT_WORDS         = r"(resumen|abstract|summary|resumo|abstracto|r[eé]sum[eé]|resúmen)"
+_SPANISH_ABSTRACT_WORDS = r"(resumen|abstracto|resúmen)"
+_NUM_PREFIX             = r"(?:\d{1,2}\s*[\.\-–—]\s*)?"
 
 _ABSTRACT_HEADINGS = re.compile(
     r"^" + _NUM_PREFIX + _ABSTRACT_WORDS + r"[.:\-–—]?\s*$",
@@ -59,6 +60,14 @@ _ABSTRACT_HEADINGS = re.compile(
 )
 _ABSTRACT_INLINE = re.compile(
     r"^" + _NUM_PREFIX + _ABSTRACT_WORDS + r"\s*[.:\-–—]?\s+(.*)",
+    re.IGNORECASE | re.DOTALL,
+)
+_SPANISH_ABSTRACT_HEADINGS = re.compile(
+    r"^" + _NUM_PREFIX + _SPANISH_ABSTRACT_WORDS + r"[.:\-–—]?\s*$",
+    re.IGNORECASE,
+)
+_SPANISH_ABSTRACT_INLINE = re.compile(
+    r"^" + _NUM_PREFIX + _SPANISH_ABSTRACT_WORDS + r"\s*[.:\-–—]?\s+(.*)",
     re.IGNORECASE | re.DOTALL,
 )
 _ABSTRACT_STOP_HEADINGS = {
@@ -71,7 +80,7 @@ _ABSTRACT_STOP_HEADINGS = {
     "referencias", "references", "bibliografía", "bibliography",
     "palabras clave", "palabras claves", "palabras-clave",
     "keywords", "key words", "mots clés",
-    "summary", "resumo",
+    "abstract", "summary", "resumo",
     "fundamentación", "fundamentacion",
     "justificación", "justificacion",
     "marco teórico", "marco teorico", "marco conceptual",
@@ -92,7 +101,17 @@ _TOC_INLINE = re.compile(
     r"|^\(cid:",
     re.IGNORECASE,
 )
-_MAX_ABSTRACT_CHARS = 4000
+_MAX_ABSTRACT_CHARS = 8000
+# Detects a new bilingual abstract section starting inline, e.g. "Abstract. This paper..."
+# Requires mandatory punctuation after the heading word to avoid false positives like "Abstract concepts..."
+_ABSTRACT_SECTION_START = re.compile(
+    r"^" + _NUM_PREFIX + _ABSTRACT_WORDS + r"\s*[.:\-–—]\s",
+    re.IGNORECASE,
+)
+_REPOSITORY_METADATA_LINE = re.compile(
+    r"^(multimedia)$|https?://|www\.|sedici\.unlp",
+    re.IGNORECASE,
+)
 
 
 def _is_numbered_section_stop(line: str) -> bool:
@@ -119,13 +138,28 @@ def _collect_after_heading(lines: list, start_idx: int) -> str:
             parts.append("")
             continue
         if _PAGE_MARKER.match(stripped):
-            continue
-        if stripped.lower() in _ABSTRACT_STOP_HEADINGS:
+            last_text = next((p for p in reversed(parts) if p), "")
+            if not last_text or last_text[-1] in '.!?:;':
+                continue  # true standalone page marker between sections — skip
+            if last_text[-1].isalpha():
+                # mid-word split (e.g. "XI" + "II" → "XIII") — concatenate without space
+                for idx in range(len(parts) - 1, -1, -1):
+                    if parts[idx]:
+                        parts[idx] += stripped
+                        total += len(stripped)
+                        break
+                continue
+            # mid-sentence but not mid-word — treat as normal content (fall through)
+        if stripped.lower().rstrip(".:;-–—!") in _ABSTRACT_STOP_HEADINGS:
+            break
+        if _ABSTRACT_SECTION_START.match(stripped):
             break
         if _is_numbered_section_stop(stripped):
             break
         if _KEYWORDS_PREFIX.match(stripped):
             break
+        if _REPOSITORY_METADATA_LINE.search(stripped):
+            continue
         parts.append(stripped)
         total += len(stripped)
         if total >= _MAX_ABSTRACT_CHARS:
@@ -137,30 +171,54 @@ def _is_toc_match(first_part: str) -> bool:
     return not first_part or bool(_TOC_INLINE.match(first_part))
 
 
+def _is_heading_text(text: str) -> bool:
+    """True when first_part looks like a title/table-header (all-caps words) rather than
+    abstract content. Catches e.g. 'DE LA PRODUCCIÓN TÍTULO BREVE' from 'RESUMEN DE LA PRODUCCIÓN'.
+    Punctuation (.: etc.) is ignored — only alphabetic tokens are checked."""
+    words = [w for w in text.split() if w.isalpha()]
+    return len(words) >= 2 and all(w.isupper() for w in words)
+
+
+def _starts_with_uppercase(text: str) -> bool:
+    """True if the first alphabetic character is uppercase (rejects mid-sentence matches)."""
+    for ch in text:
+        if ch.isalpha():
+            return ch.isupper()
+    return True
+
+
+def _try_extract(lines: list, heading_re, inline_re) -> str:
+    for i, line in enumerate(lines):
+        m = inline_re.match(line.strip())
+        if m:
+            first_part = m.group(2).strip()
+            if _is_toc_match(first_part) or _is_heading_text(first_part):
+                continue
+            rest = _collect_after_heading(lines, i + 1)
+            result = (first_part + " " + rest).strip()
+            if result and _starts_with_uppercase(result):
+                return result
+    for i, line in enumerate(lines):
+        if heading_re.match(line.strip()):
+            result = _collect_after_heading(lines, i + 1)
+            if result and _starts_with_uppercase(result):
+                return result
+    return ""
+
+
 def extract_abstract(text: str) -> str:
     """
     Extract abstract from plain text using regex heading detection.
+    Prioritizes Spanish headings (Resumen/Abstracto) over other languages.
     Returns empty string if not found.
     """
     if not text:
         return ""
     lines = text.splitlines()
-    # Try inline heading first
-    for i, line in enumerate(lines):
-        m = _ABSTRACT_INLINE.match(line.strip())
-        if m:
-            first_part = m.group(2).strip()
-            if _is_toc_match(first_part):
-                continue
-            rest = _collect_after_heading(lines, i + 1)
-            return (first_part + " " + rest).strip()
-    # Fallback: standalone heading
-    for i, line in enumerate(lines):
-        if _ABSTRACT_HEADINGS.match(line.strip()):
-            result = _collect_after_heading(lines, i + 1)
-            if result:
-                return result
-    return ""
+    result = _try_extract(lines, _SPANISH_ABSTRACT_HEADINGS, _SPANISH_ABSTRACT_INLINE)
+    if result:
+        return result
+    return _try_extract(lines, _ABSTRACT_HEADINGS, _ABSTRACT_INLINE)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

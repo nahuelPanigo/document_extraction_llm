@@ -49,7 +49,9 @@ async def extract_text(
     file: UploadFile = File(...),
     normalization: Optional[bool] = Form(True, description="Apply text normalization"),
     ocr: Optional[bool] = Form(True, description="Apply text extraction from images with ocr"),
-    max_words: Optional[int] = Form(None, description="Stop extraction after this many words (per page boundary)")
+    max_words: Optional[int] = Form(None, description="Stop extraction after this many words (per page boundary)"),
+    multicolumn: Optional[bool] = Form(False, description="Reorder text column-by-column for multi-column layouts"),
+    strip_footers: Optional[bool] = Form(False, description="Remove text in the bottom 6% of each page"),
 ):
     if not is_valid_filetype(file.filename, FILETYPES):
         return error_response(
@@ -57,7 +59,13 @@ async def extract_text(
             message=f"Unsupported file type. Allowed types are: {', '.join(FILETYPES)}"
         )
     reader = Reader(file)
-    result = reader.get_text(normalization=normalization, ocr=ocr, max_words=max_words)
+    result = reader.get_text(
+        normalization=normalization,
+        ocr=ocr,
+        max_words=max_words,
+        multicolumn=multicolumn,
+        strip_footers=strip_footers,
+    )
 
     if not result["success"]:
         return error_response(

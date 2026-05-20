@@ -1,5 +1,6 @@
 import pdfplumber
 from app.service.strategies.reader_strategy import ReaderStrategy
+from app.service.utils.multicolumn import detect_page_columns
 
 import subprocess
 import tempfile
@@ -7,6 +8,8 @@ import glob
 import os
 from PIL import Image
 import numpy as np
+from collections import defaultdict
+from typing import Tuple
 
 
 
@@ -208,6 +211,96 @@ class PdfReader(ReaderStrategy):
             }
 
 
+    @staticmethod
+    def _is_full_width_line(words: list, page, split_xs: list) -> bool:
+        if not split_xs or len(words) < 2:
+            return False
+        min_x = min(w["x0"] for w in words)
+        max_x = max(w["x1"] for w in words)
+        if not any(min_x < sx < max_x for sx in split_xs):
+            return False
+        sorted_words = sorted(words, key=lambda w: w["x0"])
+        gap_threshold = max(20.0, page.width * 0.035)
+        for left, right in zip(sorted_words, sorted_words[1:]):
+            gap = right["x0"] - left["x1"]
+            if gap >= gap_threshold and any(left["x1"] <= sx <= right["x0"] for sx in split_xs):
+                return False
+        return True
+
+    def _extract_words_column_ordered(self, page, split_x, n_cols: int, strip_footers: bool = False) -> str:
+        words = page.extract_words()
+        if not words:
+            return page.extract_text() or ""
+
+        if strip_footers:
+            words = [w for w in words if w["bottom"] < page.height * 0.94]
+
+        if not words:
+            return ""
+
+        if not split_x:
+            split_xs = [page.width * i / n_cols for i in range(1, n_cols)]
+        else:
+            split_xs = [split_x] if n_cols == 2 else [page.width * i / n_cols for i in range(1, n_cols)]
+
+        boundaries = [0.0] + split_xs + [float(page.width)]
+
+        line_map: dict[int, list] = defaultdict(list)
+        for w in words:
+            y_key = round(w["top"] / 2) * 2
+            line_map[y_key].append(w)
+
+        col_lines: list[list[str]] = [[] for _ in range(n_cols)]
+
+        for y_key in sorted(line_map):
+            line_words = sorted(line_map[y_key], key=lambda w: w["x0"])
+            line_text = " ".join(w["text"] for w in line_words)
+
+            if self._is_full_width_line(line_words, page, split_xs):
+                col_lines[0].append(line_text)
+                continue
+
+            col_word_groups: list[list[str]] = [[] for _ in range(n_cols)]
+            for w in line_words:
+                x_center = (w["x0"] + w["x1"]) / 2
+                col_idx = n_cols - 1
+                for i in range(n_cols):
+                    if boundaries[i] <= x_center < boundaries[i + 1]:
+                        col_idx = i
+                        break
+                col_word_groups[col_idx].append(w["text"])
+
+            for i, group in enumerate(col_word_groups):
+                if group:
+                    col_lines[i].append(" ".join(group))
+
+        parts = ["\n".join(lines) for lines in col_lines if lines]
+        return "\n\n".join(parts)
+
+    def _process_page_column_aware(self, page, page_det: dict, strip_footers: bool = False) -> Tuple[list, int]:
+        n_cols = page_det["columns"]
+        split_x = page_det["method_b"].get("split_x")
+
+        if n_cols > 1:
+            text = self._extract_words_column_ordered(page, split_x, n_cols, strip_footers)
+        else:
+            if strip_footers:
+                words = [w for w in page.extract_words() if w["bottom"] < page.height * 0.94]
+                line_map: dict[int, list] = defaultdict(list)
+                for w in words:
+                    y_key = round(w["top"] / 2) * 2
+                    line_map[y_key].append(w)
+                lines = []
+                for y_key in sorted(line_map):
+                    lw = sorted(line_map[y_key], key=lambda w: w["x0"])
+                    lines.append(" ".join(w["text"] for w in lw))
+                text = "\n".join(lines)
+            else:
+                text = page.extract_text() or ""
+
+        word_count = len(text.split()) if text else 0
+        return ([text.strip()] if text.strip() else []), word_count
+
     def _process_page_plain(self, page, ocr_reader=None):
         """
         Extract plain text from one page, optionally with OCR.
@@ -231,11 +324,17 @@ class PdfReader(ReaderStrategy):
 
         return chunks, word_count
 
-    def extract_text(self, pdf_path: str, ocr: bool = False, max_words: int = None) -> str:
-        """Extract plain text. If max_words is set, stops after that many words (per-page boundary)."""
+    def extract_text(self, pdf_path: str, ocr: bool = False, max_words: int = None,
+                     multicolumn: bool = False, strip_footers: bool = False) -> Tuple[str, bool]:
+        """Extract plain text. Returns (text, is_multicolumn).
+
+        multicolumn=True: reorder words column-by-column per page (left col first, then right).
+        strip_footers=True: skip text in the bottom 6% of each page.
+        is_multicolumn is computed from per-page detection on the first 5 content pages.
+        """
         print("Extracting text from PDF...")
         ocr_reader = None
-        if ocr:
+        if ocr and not multicolumn:
             try:
                 import easyocr
                 print("🔧 Initializing EasyOCR...")
@@ -243,15 +342,43 @@ class PdfReader(ReaderStrategy):
             except ImportError:
                 print("❌ EasyOCR not available. Install with: pip install easyocr")
 
+        all_chunks = []
+        total_words = 0
+        multi_page_votes: list[bool] = []
+
         with pdfplumber.open(pdf_path) as pdf:
-            all_chunks = []
-            total_words = 0
-            for page in pdf.pages:
-                chunks, page_word_count = self._process_page_plain(page, ocr_reader)
+            for page_idx, page in enumerate(pdf.pages):
+                page_det = None
+
+                # Always detect on first 5 pages to build the is_multicolumn vote.
+                if page_idx < 5:
+                    page_det = detect_page_columns(page)
+                    page_word_count = len(page.extract_words())
+                    if page_word_count >= 25:
+                        multi_page_votes.append(page_det["columns"] > 1)
+
+                if multicolumn:
+                    # For pages beyond the first 5 we still need per-page detection
+                    # to decide whether that individual page is multi-column.
+                    if page_det is None:
+                        page_det = detect_page_columns(page)
+                    chunks, wc = self._process_page_column_aware(page, page_det, strip_footers)
+                else:
+                    chunks, wc = self._process_page_plain(page, ocr_reader)
+
                 all_chunks.extend(chunks)
-                total_words += page_word_count
+                total_words += wc
                 if max_words and total_words >= max_words:
                     break
 
-        return "\n\n".join(all_chunks)
+        n = len(multi_page_votes)
+        multi_count = sum(multi_page_votes)
+        if n == 0:
+            is_multicolumn = False
+        elif n <= 2:
+            is_multicolumn = multi_count >= 1
+        else:
+            is_multicolumn = (multi_count / n) > 0.60
+
+        return "\n\n".join(all_chunks), is_multicolumn
 

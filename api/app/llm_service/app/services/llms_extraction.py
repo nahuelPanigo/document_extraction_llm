@@ -28,7 +28,7 @@ class ModelExtraction:
             max_length_output = int(os.getenv("MAX_TOKENS_OUTPUT", 512))
             special_tokens_treatment = self._str_to_bool(os.getenv("SPECIAL_TOKENS_TREATMENT",True))
             errors_treatment = os.getenv("ERRORS_TREATMENT","replace")
-            self.strategy = HuggingFaceStrategy(model,max_length_input,max_length_output,os.getenv("TRUNACTION",True),special_tokens_treatment,errors_treatment)
+            self.strategy = HuggingFaceStrategy(model,max_length_input,max_length_output,self._str_to_bool(os.getenv("TRUNACTION","True")),special_tokens_treatment,errors_treatment)
 
 
     @staticmethod

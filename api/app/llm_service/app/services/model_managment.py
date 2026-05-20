@@ -37,9 +37,9 @@ def get_model(model_name, quantized=False, custom_path=None):
 
 def get_truncation(tokenizer, truncation):
     if isinstance(tokenizer, PreTrainedTokenizer):
-        truncation = truncation
+        return truncation
     else:
-        truncation = "only_first"
+        return "only_first"
 
 
 # Clase base para todos los modelos
@@ -73,7 +73,7 @@ class BaseModel:
             self.model = model_class.from_pretrained(self.base_model_name, quantization_config=bnb_config, low_cpu_mem_usage=True)
         else:
             self.model = model_class.from_pretrained(self.base_model_name)
-        self.tokenizer = tokenizer_class.from_pretrained(self.base_model_name)
+        self.tokenizer = tokenizer_class.from_pretrained(self.base_model_name, use_fast=False)
 
 
     def load_model_and_tokenizer(self):

@@ -109,7 +109,7 @@ echo set LLM_LED_URL=%LLM_LED_URL%>> run_orchestrator_temp.bat
 echo set LLM_DEEPANALYZE_URL=%LLM_DEEPANALYZE_URL%>> run_orchestrator_temp.bat
 echo set IDENTIFIER_PATH_MODEL=%IDENTIFIER_PATH_MODEL%>> run_orchestrator_temp.bat
 echo set IDENTIFIER_PATH_VECTORIZER=%IDENTIFIER_PATH_VECTORIZER%>> run_orchestrator_temp.bat
-echo uvicorn app.main:app --port 8000 --reload>> run_orchestrator_temp.bat
+echo uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload>> run_orchestrator_temp.bat
 start run_orchestrator_temp.bat
 cd ..
 

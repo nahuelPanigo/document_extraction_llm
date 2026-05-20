@@ -230,6 +230,16 @@ class Orchestrator:
         return metadata
 
     @staticmethod
+    def _fix_hyphenation(text: str) -> str:
+        """Fix OCR line-break artifacts: 'word- word' → 'wordword'.
+        Safe because valid compound words (teórico-práctico) never have spaces around their hyphens,
+        and numeric ranges (10-20 mg) are excluded by the letter-only pattern before the hyphen.
+        """
+        if not isinstance(text, str):
+            return text
+        return re.sub(r'([A-Za-záéíóúüñÁÉÍÓÚÜÑ])-\s+([a-záéíóúüñ])', r'\1\2', text)
+
+    @staticmethod
     def _validate_identifiers_in_text(metadata: dict, text: str) -> dict:
         """
         Validate that ISSN/ISBN values actually appear in the extracted text.
@@ -253,7 +263,7 @@ class Orchestrator:
 
         return metadata
 
-    def _extract_text(self, file_bytes: bytes, filename: str, content_type: str, normalization: bool, ocr: bool = False) -> Tuple[Optional[str], Optional[dict]]:
+    def _extract_text(self, file_bytes: bytes, filename: str, content_type: str, normalization: bool, ocr: bool = False) -> Tuple[Optional[str], bool, Optional[dict]]:
         self.logger.info("calling extractor service only text")
         stream = io.BytesIO(file_bytes)
         payload = (filename, stream, content_type)
@@ -271,10 +281,36 @@ class Orchestrator:
             error_response = {
                 "error": extractor_json["error"]["message"]
             }, extractor_json["error"]["code"]
-            return None, error_response
+            return None, False, error_response
 
         plain_text = extractor_json["data"].get("text")
-        return plain_text, None
+        is_multicolumn = extractor_json["data"].get("is_multicolumn", False)
+        return plain_text, is_multicolumn, None
+
+    def _extract_text_multicolumn(self, file_bytes: bytes, filename: str, content_type: str, normalization: bool) -> Tuple[Optional[str], Optional[dict]]:
+        self.logger.info("calling extractor service with multicolumn + strip_footers for abstract")
+        stream = io.BytesIO(file_bytes)
+        payload = (filename, stream, content_type)
+
+        response_extractor = requests.post(
+            self.extractor_service_url + "/extract",
+            headers=self._get_headers(api_key=self.extractor_service_api_key),
+            files={"file": payload},
+            data={
+                "normalization": normalization,
+                "ocr": False,
+                "max_words": MAX_WORDS_NO_TAGS,
+                "multicolumn": True,
+                "strip_footers": True,
+            }
+        )
+
+        extractor_json = response_extractor.json()
+        if response_extractor.status_code != 200:
+            self.logger.error(f"Extractor multicolumn error: {extractor_json['error']}")
+            return None, {"error": extractor_json["error"]["message"]}
+
+        return extractor_json["data"].get("text"), None
 
 
     def call_deepanalyze(self, text: str, metadata: dict) -> Tuple[dict, Optional[int]]:
@@ -318,7 +354,7 @@ class Orchestrator:
             content_type = file.content_type
 
             # step 1: extract text for subject and type prediction
-            plain_text, error_response = self._extract_text(file_bytes, filename, content_type, normalization, ocr)
+            plain_text, is_multicolumn, error_response = self._extract_text(file_bytes, filename, content_type, normalization, ocr)
             if error_response is not None:
                 return error_response
 
@@ -332,6 +368,17 @@ class Orchestrator:
                 dc_type = self.type_identifier.predecir_tipo_documento(plain_text)
             else:
                 dc_type = type
+
+            # step 2b: for multi-column docs get column-ordered text for abstract extraction only.
+            # plain_text (with footer intact) is kept for type/subject/keywords.
+            abstract_text = plain_text
+            if is_multicolumn:
+                self.logger.info("multi-column document detected — fetching column-ordered text for abstract")
+                mc_text, mc_error = self._extract_text_multicolumn(file_bytes, filename, content_type, normalization)
+                if mc_text and not mc_error:
+                    abstract_text = mc_text
+                else:
+                    self.logger.warning("multicolumn extraction failed, falling back to plain text for abstract")
 
             # step 3: extract with tags
             self.logger.info("calling extractor service with tags")
@@ -381,11 +428,19 @@ class Orchestrator:
                 metadata = self._validate_field_formats(metadata)
                 metadata = self._validate_identifiers_in_text(metadata, extracted_text_with_metadata)
 
-                # step 5: pattern-based abstract + keywords on plain text
+                # step 5: pattern-based abstract on column-ordered text (or plain if single-column);
+                # keywords always use plain_text (footer content helps type/subject models).
                 if not metadata.get("abstract"):
-                    extracted_abstract = extract_abstract(plain_text)
+                    extracted_abstract = extract_abstract(abstract_text)
+                    self.logger.info(f"DEBUG abstract raw: {repr(extracted_abstract[:400]) if extracted_abstract else 'EMPTY'}")
                     if extracted_abstract:
                         metadata["abstract"] = extracted_abstract
+
+                if metadata.get("abstract"):
+                    before = metadata["abstract"]
+                    metadata["abstract"] = self._fix_hyphenation(metadata["abstract"])
+                    if before != metadata["abstract"]:
+                        self.logger.info(f"DEBUG hyphenation changed abstract: {repr(before[:120])} → {repr(metadata['abstract'][:120])}")
 
                 kw_real      = extract_keywords_regex(plain_text)
                 kw_suggested = extract_keywords_tfidf(plain_text, self.vectorizer)

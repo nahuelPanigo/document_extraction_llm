@@ -68,11 +68,41 @@ class Reader:
                 "error": {"message": IN_E["ERROR_EXTARCTING_TEXT"],"code": IN_E["CODE_ERROR_EXTARCTING_TEXT"]}}
 
 
-    def get_text(self, normalization: bool = True, ocr: bool = False, max_words: int = None):
-        return self.extract(
-            lambda path, ocr: self.strategy.extract_text(path, ocr, max_words),
-            normalization, ocr
-        )
+    def get_text(self, normalization: bool = True, ocr: bool = False, max_words: int = None,
+                 multicolumn: bool = False, strip_footers: bool = False):
+        if self.error:
+            return {
+                "success": False,
+                "error": {"message": self.error["error"], "code": self.error["code"]}
+            }
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{self.ext}') as temp_file:
+            shutil.copyfileobj(self.file.file, temp_file)
+            temp_file_path = temp_file.name
+
+        try:
+            logging.info(f"Extracting text from {temp_file_path}")
+            if self.ext == "pdf":
+                text, is_multicolumn = self.strategy.extract_text(
+                    temp_file_path, ocr, max_words, multicolumn, strip_footers
+                )
+            else:
+                text = self.strategy.extract_text(temp_file_path, ocr, max_words)
+                is_multicolumn = False
+
+            if normalization:
+                text = normalice_text(text)
+
+            return {
+                "success": True,
+                "data": {"text": text, "is_multicolumn": is_multicolumn}
+            }
+        except Exception as e:
+            logging.error("Error extracting text: %s", e)
+            return {
+                "success": False,
+                "error": {"message": IN_E["ERROR_EXTARCTING_TEXT"], "code": IN_E["CODE_ERROR_EXTARCTING_TEXT"]}
+            }
 
     def get_text_with_tags(self, normalization: bool = True, ocr: bool = False, max_words: int = None):
         return self.extract(

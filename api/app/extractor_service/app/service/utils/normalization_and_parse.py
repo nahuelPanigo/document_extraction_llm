@@ -72,14 +72,31 @@ def fix_ocr_accents(text: str) -> str:
     return text
 
 
+_ROMAN_ONLY_RE = re.compile(r'^[IVXLCDMivxlcdm]+$')
+_LETTER_DEDUP_RE = re.compile(r'([A-Za-zÁÉÍÓÚáéíóúÑñ])\1{2,}')
+_WORD_RE = re.compile(r'[A-Za-zÁÉÍÓÚáéíóúÑñ]+')
+
+
+def _dedup_letters(text):
+    # Collapse 3+ consecutive identical letters, but skip words that are
+    # entirely Roman numeral characters (I, V, X, L, C, D, M) so that
+    # sequences like XIII, XXII, VIII are preserved.
+    def _process_word(m):
+        word = m.group(0)
+        if _ROMAN_ONLY_RE.match(word):
+            return word
+        return _LETTER_DEDUP_RE.sub(r'\1', word)
+    return _WORD_RE.sub(_process_word, text)
+
+
 def normalice_text(text):
     text = fix_unicode_escapes(text)
     text = fix_ocr_accents(text)
-    text =  re.sub(r"\.{2,}", " ", text)
+    text = re.sub(r"\.{2,}", " ", text)
     text = corregir_numeros_repetidos(text)
     text = re.sub(r"([{}[\]()*\-+?,:;._!@#$%^&])\1{2,}", r"\1", text)
     text = re.sub(r"([{}[\]()*\-+?,:;._!@#$%^&])\1{2,}", r"\1", text)
-    return  re.sub(r"([A-Za-zÁÉÍÓÚáéíóúÑñ])\1{2,}", r"\1", text)
+    return _dedup_letters(text)
 
 
 # NOTE: normalice_latin_char is defined here but not called in this service.

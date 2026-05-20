@@ -58,9 +58,12 @@ class MetricChecker:
         text = unicodedata.normalize('NFD', text)
         text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
         
+        # Strip trailing punctuation ("identidad." -> "identidad")
+        text = text.rstrip('.,;:!?-–')
+
         # Remove extra whitespace
         text = ' '.join(text.split())
-        
+
         return text
     
     def _normalize_value(self, value: Any) -> Any:
@@ -78,7 +81,13 @@ class MetricChecker:
         """
         if value is None or isinstance(value, str):
             return self._normalize_text(value)
-        
+
+        if isinstance(value, dict):
+            value = value.get("real") if "real" in value else value
+            if not isinstance(value, dict):
+                return self._normalize_value(value)
+            return value
+
         if isinstance(value, list):
             normalized_list = []
             for item in value:
@@ -87,8 +96,8 @@ class MetricChecker:
                 else:
                     normalized_list.append(item)  # Preserve non-string items as-is
             return normalized_list
-        
-        # For other types (int, float, bool, dict, etc.), return as-is
+
+        # For other types (int, float, bool), return as-is
         return value
     
     def _normalize_name_parts(self, name: str) -> set:
@@ -274,6 +283,9 @@ class MetricChecker:
         Returns:
             List of strings or empty list if parsing fails
         """
+        if isinstance(value, dict):
+            value = value.get("real") if "real" in value else None
+            return self._safe_parse_list(value)
         if isinstance(value, list):
             return [str(item) for item in value]
         elif isinstance(value, str):
@@ -397,6 +409,8 @@ class MetricChecker:
             return False
         if isinstance(value, list) and len(value) == 0:
             return False
+        if isinstance(value, dict) and "real" in value:
+            return self._is_value_present(value["real"])
         return True
 
     def f1_score_metric(self, field_name: str = None) -> Dict[str, Any]:
