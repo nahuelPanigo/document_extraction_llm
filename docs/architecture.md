@@ -55,10 +55,18 @@ sequenceDiagram
 
     Client->>Orchestrator: POST /upload (PDF)
     Orchestrator->>Extractor: POST /extract (PDF)
-    Extractor-->>Orchestrator: plain_text + xml_text
+    Extractor-->>Orchestrator: plain_text + is_multicolumn
 
     Note over Orchestrator: Classify document type<br/>(TF-IDF + sklearn model)
     Note over Orchestrator: Classify subject<br/>(SVM model)
+
+    opt is_multicolumn
+        Orchestrator->>Extractor: POST /extract (multicolumn + strip_footers)
+        Extractor-->>Orchestrator: column-ordered text (for abstract only)
+    end
+
+    Orchestrator->>Extractor: POST /extract-with-tags (PDF)
+    Extractor-->>Orchestrator: xml_text
 
     Orchestrator->>LLM: POST /consume-llm (text + type prompt)
     LLM-->>Orchestrator: extracted metadata JSON
@@ -67,6 +75,9 @@ sequenceDiagram
         Orchestrator->>Deep: POST /consume-llm (metadata for validation)
         Deep-->>Orchestrator: validated/refined metadata
     end
+
+    Note over Orchestrator: Post-process: honorifics, dedup,<br/>name normalization, field-format validation
+    Note over Orchestrator: pattern_extractors: abstract (regex)<br/>+ keywords (regex + TF-IDF)
 
     Orchestrator-->>Client: Final metadata JSON
 ```
@@ -78,14 +89,16 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    PDF[PDF Document] --> EXT[Text Extraction\npdfplumber + EasyOCR]
+    PDF[PDF Document] --> EXT["Text Extraction\npdfplumber + EasyOCR\n(+ multi-column detection)"]
     EXT --> TYPE[Type Classification\nTF-IDF + sklearn]
     EXT --> SUBJ[Subject Classification\nSVM]
     EXT --> LLM[LLM Extraction\nFine-tuned LED]
+    EXT --> PAT["Pattern Extraction\nabstract (regex)\nkeywords (regex + TF-IDF)"]
 
     TYPE --> MERGE[Merge Results]
     SUBJ --> MERGE
     LLM --> MERGE
+    PAT --> MERGE
     MERGE --> JSON[Structured\nMetadata JSON]
 ```
 

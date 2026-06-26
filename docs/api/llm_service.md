@@ -178,7 +178,7 @@ The path is configured via `MODEL_PATH` environment variable.
 
 ```
 fastapi[standard]
-transformers==4.41.2
+transformers
 uvicorn
 torch
 torchvision

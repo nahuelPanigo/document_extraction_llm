@@ -26,6 +26,24 @@ The LLM Service structure is reusable — DeepAnalyze is another instance of the
 
 ## Running the API
 
+### Setup: `init.sh`
+
+Before running the API for the first time, run the init script from `api/app/`:
+
+```bash
+cd api/app
+./init.sh
+```
+
+It does not start the API itself — it just gets you ready to do so. Specifically it:
+
+1. Creates `.env` from `.env.example` if missing
+2. Checks the bearer tokens (`ORCHESTRATOR_TOKEN`, `EXTRACTOR_TOKEN`, `LLM_LED_TOKEN`, `LLM_DEEPANALYZE_TOKEN`) and offers to auto-generate secure random values for any that are missing or still set to the example placeholder
+3. Fills in any missing non-secret config vars with sensible defaults
+4. Downloads the public model artifacts from Hugging Face (no token required): the fine-tuned LED model into `llm_service/app/models/fine-tuned-model-led`, and the sklearn type/subject classifiers into `orchestrator/app/models/` — skipped if the files are already present
+
+Re-run it any time; it's idempotent and only fills in what's missing.
+
 ### Option 1: Docker
 
 ```bash
@@ -81,11 +99,12 @@ All variables are set in the root `.env` file. Below is the complete list:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `IDENTIFIER_PATH_MODEL` | `models/modelo_tipo_documento.pkl` | Type classifier model |
-| `IDENTIFIER_PATH_VECTORIZER` | `models/vectorizador_tfidf.pkl` | Type classifier vectorizer |
-| `SUBJECT_IDENTIFIER_PATH_CLASSIFIER` | `models/svm_classifier.pkl` | Subject SVM model |
-| `SUBJECT_IDENTIFIER_PATH_VECTORIZER` | `models/svm_vectorizer.pkl` | Subject vectorizer |
-| `SUBJECT_IDENTIFIER_PATH_LABEL_ENCODER` | `models/svm_label_encoder.pkl` | Subject label encoder |
+| `IDENTIFIER_PATH_MODEL` | `models/type_svm_classifier.pkl` | Type classifier model |
+| `IDENTIFIER_PATH_VECTORIZER` | `models/type_svm_vectorizer.pkl` | Type classifier vectorizer |
+| `IDENTIFIER_PATH_LABEL_ENCODER` | `models/type_svm_label_encoder.pkl` | Type label encoder |
+| `SUBJECT_IDENTIFIER_PATH_CLASSIFIER` | `models/subject_svm_classifier.pkl` | Subject SVM model |
+| `SUBJECT_IDENTIFIER_PATH_VECTORIZER` | `models/subject_svm_vectorizer.pkl` | Subject vectorizer |
+| `SUBJECT_IDENTIFIER_PATH_LABEL_ENCODER` | `models/subject_svm_label_encoder.pkl` | Subject label encoder |
 
 ### LLM Service 1 (Fine-tuned, port 8002)
 
@@ -109,7 +128,7 @@ All variables are set in the root `.env` file. Below is the complete list:
 | `ENABLE_QWEN_SERVICE` | `false` | Enable the DeepAnalyze service |
 | `IS_LOCAL_MODEL2` | `false` | Use local model |
 | `IS_OLLAMA_MODEL2` | `true` | Use Ollama-hosted model |
-| `MODEL_SELECTED_SERVICE2` | `QWEN` | Model name |
+| `MODEL_SELECTED_SERVICE2` | `qwen3:8b` | Model name (Ollama model tag) |
 | `OLLAMA_HOST_URL` | `http://localhost:11434` | Ollama server URL |
 
 ## Docker Compose Structure
@@ -117,6 +136,7 @@ All variables are set in the root `.env` file. Below is the complete list:
 ```
 api/app/
 ├── docker-compose.yml
+├── init.sh
 ├── run_all_services.sh / .bat
 ├── .env
 ├── orchestrator/

@@ -38,3 +38,4 @@ pyvenv.cfg
 /fine_tune_subject/model_results
 /fine_tune_subject/models
 *.png
+!/api/app/init.sh

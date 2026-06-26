@@ -4,17 +4,19 @@ This module evaluates the whole metadata extraction pipeline by comparing predic
 
 ## Validation Scripts
 
-There is no single `main.py`. Instead, there are 3 independent scripts, each validating a different extraction method:
+There is no single `main.py`. Instead, there are independent scripts, each validating a different extraction method, plus a benchmark script and a full cross-system comparison runner:
 
-| Script | What it validates |
+| Script | What it does |
 |--------|-------------------|
-| `validation_finetunning.py` | Our fine-tuned model (via the API) |
-| `validation_grobid.py` | GROBID-based extraction |
-| `validation_langsmith.py` | Cloud LLM extraction (OpenAI, Gemini, etc.) |
+| `validation_finetunning.py` | Extracts metadata with our fine-tuned model (via the Orchestrator API) |
+| `validation_grobid.py` | Sends PDFs to GROBID, parses the returned TEI XML into metadata; times PDF→XML and XML→metadata separately per document |
+| `validation_langsmith.py` | Extracts metadata via cloud LLMs (OpenAI, Gemini) using `PROMPT_CLOUD_LLM_VALIDATOR` |
+| `benchmark_extraction.py` | Times the Extractor service's `/extract` and `/extract-with-tags` endpoints across all validation PDFs, broken down by document type, flags docs slower than 45s |
+| `run_comparison.py` | Runs the metric-checker comparison (via the backend API if running, else a direct import fallback) for FINETUNNED, CLOUDLLM and GROBID against the same ground truth in one pass, and writes a combined report |
 
-Each script:
+Each per-method script:
 
-1. Takes documents from the test dataset
+1. Takes documents from the test dataset (ground truth: `validation/result/final_to_compare_original.json`)
 2. Extracts metadata using its respective method
 3. Compares predictions with ground truth
 4. Saves results to its own subfolder inside `result/`
@@ -23,13 +25,27 @@ Each script:
 
 ```
 validation/result/
-├── original_metadata.json          # Ground truth (stays at root level)
-├── extracted_metadata.json         # General extracted results
+├── final_to_compare_original.json  # Ground truth (stays at root level)
+├── full_comparison_results.json    # run_comparison.py: raw per-system metrics
+├── full_comparison_report.txt      # run_comparison.py: human-readable summary
+├── extraction_benchmark.json       # benchmark_extraction.py output
 ├── FINETUNNED/                     # Fine-tuned model results
 ├── GROBID/                         # GROBID results
 ├── CLOUDLLM/                       # Cloud LLM results (OpenAI, Gemini, etc.)
 └── LEDEN/                          # LED model results
 ```
+
+## Full Comparison Runner (`run_comparison.py`)
+
+```bash
+# With the metric-checker backend running (validation/backend/metric-checker, python index.py):
+python validation/run_comparison.py
+
+# Without it — falls back to importing run_metrics directly:
+python validation/run_comparison.py
+```
+
+Compares `FINETUNNED`, `CLOUDLLM` and `GROBID` predictions against the same ground truth in a single run. Before comparing, `normalize_predicted()` flattens the `keywords: {real, suggested}` dict (see [Orchestrator API docs](../api/orchestrator.md) for how that shape is produced) down to the `real` list, since the metric checker expects a plain keyword list. Also flags fields where more than 80% of a system's predictions are null (`NULL_THRESHOLD`).
 
 ## Metric Checker Dashboard
 

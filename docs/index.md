@@ -28,7 +28,7 @@ flowchart LR
 | `fine_tune_type/` | Document type classifier (Libro, Tesis, Articulo, Objeto de conferencia) |
 | `fine_tune_subject/` | Subject/topic classifier using multiple ML models (SVM, XGBoost, etc.) |
 | `validation/` | Model evaluation and comparison against ground truth |
-| `utils/` | Shared utilities (text extraction, normalization, API clients) |
+| `utils/` | Shared utilities (text extraction, normalization, ML training strategies, API clients) |
 | `data/` | Data storage (CSVs, PDFs, extracted texts, JSONs) |
 | `constants.py` | Global configuration, prompts, model definitions, field mappings |
 | `run_modules.sh` / `run_modules.bat` | Entry-point scripts to run each module |
