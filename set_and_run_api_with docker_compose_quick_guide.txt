@@ -1,0 +1,93 @@
+ Levantar la API — guía rápida
+
+  1. Clonar el repo y posicionarse
+
+  git clone git@github.com:nahuelPanigo/document_extraction_llm.git
+  cd document_extraction_llm/api/app
+
+  ---
+  2. Correr el script de init
+
+  chmod +x init.sh
+  ./init.sh
+
+  El script hace tres cosas:
+  - Crea el .env a partir de .env.example si no existe
+  - Descarga los modelos sklearn y el modelo LED desde Hugging Face (solo la primera vez, ~650 MB)
+  - Pregunta si querés auto-generar los tokens de los servicios
+
+  Opciones para los tokens:
+
+  A) Auto-generar (recomendado para desarrollo rápido)
+  Auto-generate secure random tokens for them now? [y/N] y
+  El script genera tokens aleatorios con openssl rand -hex 32 y los escribe en .env.
+
+  B) Setear manualmente
+  Editá api/app/.env y completá estas variables:
+  ORCHESTRATOR_TOKEN=tu-token-aqui
+  EXTRACTOR_TOKEN=tu-token-aqui
+  LLM_LED_TOKEN=tu-token-aqui
+  LLM_DEEPANALYZE_TOKEN=tu-token-aqui
+  Luego volvé a correr ./init.sh.
+
+  ---
+  3. Build y levantar los contenedores
+
+  docker compose build
+  docker compose up -d
+
+  Servicios que quedan corriendo:
+
+  ┌───────────────────┬────────┬───────────────────────────────┐
+  │    Contenedor     │ Puerto │              Rol              │
+  ├───────────────────┼────────┼───────────────────────────────┤
+  │ orchestrator      │ 8000   │ Punto de entrada público      │
+  ├───────────────────┼────────┼───────────────────────────────┤
+  │ extractor_service │ 8001   │ Extrae texto del PDF          │
+  ├───────────────────┼────────┼───────────────────────────────┤
+  │ llm_service_led   │ 8002   │ Modelo LED (resumen/metadata) │
+  └───────────────────┴────────┴───────────────────────────────┘
+  
+  
+  EL deepanalyze si bien setea el token esta desactivado por defecto.
+
+  ---
+  4. Obtener el token del .env
+
+  grep ORCHESTRATOR_TOKEN api/app/.env
+  # ORCHESTRATOR_TOKEN=abc123...
+
+
+
+# prueba:
+
+
+  Extracción de metadata desde un PDF:
+  curl -X POST http://localhost:8000/upload \
+    -H "Authorization: Bearer <ORCHESTRATOR_TOKEN>" \
+    -F "file=@/ruta/al/documento.pdf" \
+    -F "normalization=true" 
+
+  Parámetros opcionales del POST /upload:
+
+  ┌───────────────┬────────┬─────────┬─────────────────────────────────────────────────────────────────────┐
+  │   Parámetro   │  Tipo  │ Default │                             Descripción                             │
+  ├───────────────┼────────┼─────────┼─────────────────────────────────────────────────────────────────────┤
+  │ normalization │ bool   │ true    │ Normaliza el texto extraído                                         │
+  ├───────────────┼────────┼─────────┼─────────────────────────────────────────────────────────────────────┤
+  │ type          │ string │ None    │ Forzar tipo: Articulo, Libro, Tesis, General, Objeto de conferencia │
+  ├───────────────┼────────┼─────────┼─────────────────────────────────────────────────────────────────────┤
+  │ deepanalyze   │ bool   │ false   │ Usa el servicio Qwen (requiere perfil qwen activo)                  │
+  ├───────────────┼────────┼─────────┼─────────────────────────────────────────────────────────────────────┤
+  │ ocr           │ bool   │ false   │ Activa OCR para PDFs escaneados (escanea pagina entera el de las    |
+  |               |        |         | imagenes pequenas esta activado por defecto)                        │
+  └───────────────┴────────┴─────────┴─────────────────────────────────────────────────────────────────────┘
+
+  Respuesta exitosa:
+  {
+    "success": true,
+    "data": { ... metadata extraída ... },
+    "error": null
+  }
+
+
